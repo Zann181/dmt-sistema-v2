@@ -25,7 +25,7 @@ export function BranchLogoHeader() {
 
   if (!mounted) {
     return (
-      <h1 className="text-xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+      <h1 className="text-xl font-black tracking-tight text-primary">
         DMT
       </h1>
     )
@@ -63,7 +63,7 @@ export function BranchLogoHeader() {
   }
 
   return (
-    <h1 className="text-xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
+    <h1 className="text-xl font-black tracking-tight text-primary">
       DMT
     </h1>
   )

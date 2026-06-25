@@ -24,12 +24,15 @@ export class AttendeeService {
       return attendee
     }
 
+    const userExists = checkedInById ? await prisma.user.findUnique({ where: { id: checkedInById } }) : null
+    const validCheckedInById = userExists ? checkedInById : null
+
     return prisma.attendee.update({
       where: { id: attendee.id },
       data: {
         hasCheckedIn: true,
         checkedInAt: new Date(),
-        checkedInById
+        checkedInById: validCheckedInById
       },
       include: {
         category: true

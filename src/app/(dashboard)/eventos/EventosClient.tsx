@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Calendar, Plus, Edit2, ShieldAlert, Users, QrCode, MapPin, Mail, Settings, Upload } from "lucide-react"
 import Link from "next/link"
@@ -67,6 +67,7 @@ interface Event {
   emailCardColor: string
   emailHeaderBackgroundColor: string
   emailTextColor: string
+  emailTitleColor: string
   emailMutedTextColor: string
   emailAccentColor: string
   emailBorderColor: string
@@ -129,7 +130,7 @@ const getInitialCreateForm = (branchId: string) => ({
   emailHeading: "Hola {nombre_asistente}",
   emailIntro: "Tu asistencia ha sido confirmada. Abajo tienes la info oficial del evento:",
   emailMessageTitle: "Mensaje del evento",
-  emailBody: "Tu registro para {nombre_evento} fue confirmado.\n\nSucursal: {nombre_sucursal}\nFecha: {fecha_evento}\nCategoria: {nombre_categoria}\nQR: {codigo_qr}\n\nAdjuntamos tu codigo QR para el ingreso.",
+  emailBody: "Tu registro para {nombre_evento} fue confirmado.\n\nFecha: {fecha_evento}\nCategoria: {nombre_categoria}\nQR: {codigo_qr}\n\nAdjuntamos tu codigo QR para el ingreso.",
   emailWarningTitle: "Importante",
   emailWarningText: "Ingreso Early hasta las 11:00 PM. Después de esa hora aplica multa de $25.000.",
   emailDetailsTitle: "Detalles",
@@ -139,19 +140,20 @@ const getInitialCreateForm = (branchId: string) => ({
   emailQrNote: "Preséntalo junto a tu cédula en la entrada.",
   emailFooter: "Presenta este correo en la entrada del evento.",
   emailClosingText: "Nos vemos pronto.",
-  emailTeamSignature: "Equipo {nombre_evento}",
+  emailTeamSignature: "{nombre_sucursal}",
   emailLegalNote: "Correo automático - conserva tu QR hasta el día del evento.",
 
   // Email Colors
-  emailBackgroundColor: "#f6f2eb",
-  emailCardColor: "#ffffff",
-  emailHeaderBackgroundColor: "#111315",
-  emailTextColor: "#172121",
-  emailMutedTextColor: "#bdbdbd",
-  emailAccentColor: "#c44536",
-  emailBorderColor: "#1f1f22",
-  emailSectionBackgroundColor: "#18191b",
-  emailWarningBackgroundColor: "#2a1c17",
+  emailBackgroundColor: "#000000",
+  emailCardColor: "#0c0c0e",
+  emailHeaderBackgroundColor: "#000000",
+  emailTextColor: "#ffffff",
+  emailTitleColor: "#ffffff",
+  emailMutedTextColor: "#a1a1aa",
+  emailAccentColor: "#00ffcc",
+  emailBorderColor: "#1f1f26",
+  emailSectionBackgroundColor: "#070709",
+  emailWarningBackgroundColor: "#1c0d0d",
 })
 
 export function EventosClient({ initialEvents, branches }: { initialEvents: Event[]; branches: Branch[] }) {
@@ -165,6 +167,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
   const [activeConfigTab, setActiveConfigTab] = useState<"general" | "qr" | "venue" | "email" | "products">("general")
   const [errorMsg, setErrorMsg] = useState("")
 
+
   const filteredEvents = activeBranchId
     ? events.filter(e => e.branchId === activeBranchId)
     : events
@@ -177,9 +180,63 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
   const [configForm, setConfigForm] = useState<any>({})
 
-  const effectiveLogoUrl = configForm.qrLogoUrl || selectedEvent?.branch?.logoUrl || ""
-  const effectiveLogoBgColor = configForm.qrLogoUrl ? (configForm.qrLogoBackgroundColor || "#ffffff") : (selectedEvent?.branch?.logoBgColor || configForm.qrLogoBackgroundColor || "#ffffff")
-  const effectiveLogoScale = configForm.qrLogoUrl ? (configForm.qrLogoScale || 4) : (selectedEvent?.branch?.logoSize ? Math.round(selectedEvent.branch.logoSize / 16) : (configForm.qrLogoScale || 4))
+  const [qrPreviewImage, setQrPreviewImage] = useState<string | null>(null)
+  const [isGeneratingQr, setIsGeneratingQr] = useState(false)
+
+  useEffect(() => {
+    if (activeConfigTab !== "qr" && activeConfigTab !== "email") return
+    const timeoutId = setTimeout(async () => {
+      setIsGeneratingQr(true)
+      try {
+        const payloadLogoUrl = configForm.qrLogoUrl || selectedEvent?.branch?.logoUrl || ""
+        const payloadLogoBgColor = configForm.qrLogoBackgroundColor || "#ffffff"
+        const payloadLogoScale = configForm.qrLogoScale || 4
+
+        const res = await fetch("/api/events/qr-preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            qrPrefix: configForm.qrPrefix,
+            qrFillColor: configForm.qrFillColor,
+            qrBackgroundColor: configForm.qrBackgroundColor,
+            qrLogoBackgroundColor: payloadLogoBgColor,
+            qrLogoScale: payloadLogoScale,
+            qrLogoUrl: payloadLogoUrl,
+          })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.debug) console.log("QR Debug:", data.debug)
+          setQrPreviewImage(data.data)
+          // Keep configForm.qrLogoUrl as the uploaded URL instead of overwriting with the massive SVG.
+        } else {
+          const text = await res.text()
+          console.error("QR preview error response:", text)
+          alert("Error generando vista previa QR: " + text)
+        }
+      } catch (err: any) {
+        console.error("Error fetching QR preview:", err)
+        alert("Error de red al generar QR: " + err.message)
+      } finally {
+        setIsGeneratingQr(false)
+      }
+    }, 500)
+    return () => clearTimeout(timeoutId)
+  }, [
+    activeConfigTab,
+    configForm.qrPrefix,
+    configForm.qrFillColor,
+    configForm.qrBackgroundColor,
+    configForm.qrLogoBackgroundColor,
+    configForm.qrLogoScale,
+    configForm.qrLogoUrl,
+    selectedEvent?.branch?.logoUrl,
+    selectedEvent?.branch?.logoBgColor,
+    selectedEvent?.branch?.logoSize,
+  ])
+  const effectiveLogoUrl = selectedEvent?.branch?.logoUrl || ""
+  const effectiveLogoBgColor = configForm.qrLogoBackgroundColor || "#ffffff"
+  const effectiveLogoScale = configForm.qrLogoScale || 4
 
   // Si el logo es un SVG inline (texto), convertirlo a data URL para que <image href> lo pueda renderizar
   const effectiveLogoHref = (() => {
@@ -203,7 +260,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
     return effectiveLogoUrl
   })()
 
-  const effectiveEmailLogoUrl = configForm.logoUrl || selectedEvent?.logoUrl || selectedEvent?.branch?.logoUrl || ""
+  const effectiveEmailLogoUrl = selectedEvent?.branch?.logoUrl || ""
   const effectiveEmailLogoHref = (() => {
     if (!effectiveEmailLogoUrl) return ""
     const trimmed = effectiveEmailLogoUrl.trim()
@@ -267,6 +324,16 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       return hex.padStart(2, "0")
     }
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+  }
+
+  const replacePreviewTemplates = (text: string) => {
+    if (!text || !selectedEvent) return ""
+    return text
+      .replace(/{nombre_asistente}/g, "Juan Pérez")
+      .replace(/{nombre_evento}/g, selectedEvent.name)
+      .replace(/{nombre_sucursal}/g, selectedEvent.branch?.name || "")
+      .replace(/{fecha_evento}/g, new Date(selectedEvent.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
+      .replace(/{hora_evento}/g, `${new Date(selectedEvent.startsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(selectedEvent.endsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`)
   }
 
   const handleAnalyzeFlyerColors = () => {
@@ -333,18 +400,19 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
         const domHsl = hexToHsl(dominant)
         const accHsl = hexToHsl(accent)
 
-        const emailBackgroundColor = hslToHex(domHsl.h, Math.min(domHsl.s, 15), 96)
-        const emailCardColor = "#ffffff"
-        const emailHeaderBackgroundColor = hslToHex(domHsl.h, Math.max(domHsl.s, 30), 12)
-        const emailTextColor = hslToHex(domHsl.h, 15, 10)
-        const emailMutedTextColor = hslToHex(domHsl.h, 10, 50)
+        const emailBackgroundColor = hslToHex(domHsl.h, Math.min(domHsl.s, 10), 4)
+        const emailCardColor = hslToHex(domHsl.h, Math.min(domHsl.s, 8), 7)
+        const emailHeaderBackgroundColor = hslToHex(domHsl.h, Math.min(domHsl.s, 12), 4)
+        const emailTextColor = "#ffffff"
+        const emailTitleColor = "#ffffff"
+        const emailMutedTextColor = hslToHex(domHsl.h, 10, 75)
         
-        const adjustedAccL = accHsl.l > 75 ? 60 : (accHsl.l < 30 ? 45 : accHsl.l)
-        const emailAccentColor = hslToHex(accHsl.h, Math.max(accHsl.s, 60), adjustedAccL)
+        const adjustedAccL = accHsl.l > 75 ? 60 : (accHsl.l < 30 ? 55 : accHsl.l)
+        const emailAccentColor = hslToHex(accHsl.h, Math.max(accHsl.s, 80), adjustedAccL)
         
-        const emailBorderColor = hslToHex(domHsl.h, 10, 85)
-        const emailSectionBackgroundColor = hslToHex(domHsl.h, 12, 14)
-        const emailWarningBackgroundColor = hslToHex(accHsl.h, 25, 15)
+        const emailBorderColor = hslToHex(domHsl.h, 15, 14)
+        const emailSectionBackgroundColor = hslToHex(domHsl.h, 10, 6)
+        const emailWarningBackgroundColor = hslToHex(accHsl.h, 30, 9)
 
         setConfigForm((prev: any) => ({
           ...prev,
@@ -352,6 +420,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
           emailCardColor,
           emailHeaderBackgroundColor,
           emailTextColor,
+          emailTitleColor,
           emailMutedTextColor,
           emailAccentColor,
           emailBorderColor,
@@ -549,15 +618,16 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       emailLegalNote: event.emailLegalNote || "",
 
       // Email Colors
-      emailBackgroundColor: event.emailBackgroundColor || "#f6f2eb",
-      emailCardColor: event.emailCardColor || "#ffffff",
-      emailHeaderBackgroundColor: event.emailHeaderBackgroundColor || "#111315",
-      emailTextColor: event.emailTextColor || "#172121",
-      emailMutedTextColor: event.emailMutedTextColor || "#bdbdbd",
-      emailAccentColor: event.emailAccentColor || "#c44536",
-      emailBorderColor: event.emailBorderColor || "#1f1f22",
-      emailSectionBackgroundColor: event.emailSectionBackgroundColor || "#18191b",
-      emailWarningBackgroundColor: event.emailWarningBackgroundColor || "#2a1c17",
+      emailBackgroundColor: event.emailBackgroundColor || "#000000",
+      emailCardColor: event.emailCardColor || "#0c0c0e",
+      emailHeaderBackgroundColor: event.emailHeaderBackgroundColor || "#000000",
+      emailTextColor: event.emailTextColor || "#ffffff",
+      emailTitleColor: event.emailTitleColor || "#ffffff",
+      emailMutedTextColor: event.emailMutedTextColor || "#a1a1aa",
+      emailAccentColor: event.emailAccentColor || "#00ffcc",
+      emailBorderColor: event.emailBorderColor || "#1f1f26",
+      emailSectionBackgroundColor: event.emailSectionBackgroundColor || "#070709",
+      emailWarningBackgroundColor: event.emailWarningBackgroundColor || "#1c0d0d",
     })
     setActiveConfigTab("general")
     setErrorMsg("")
@@ -596,20 +666,36 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
             className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-                <Calendar className="text-zinc-600 dark:text-zinc-400 w-6 h-6" />
+              {event.flyerUrl ? (
+                <div className="w-12 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm shrink-0">
+                  <img
+                    src={event.flyerUrl}
+                    alt="Flyer Preview"
+                    className="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(event.flyerUrl || "", "_blank");
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg shrink-0">
+                  <Calendar className="text-zinc-600 dark:text-zinc-400 w-6 h-6" />
+                </div>
+              )}
+              <div className="flex flex-col items-end gap-2">
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    event.status === "ACTIVE"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                      : event.status === "DRAFT"
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  {event.status}
+                </span>
               </div>
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  event.status === "ACTIVE"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : event.status === "DRAFT"
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                    : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                }`}
-              >
-                {event.status}
-              </span>
             </div>
 
             <h3 className="font-semibold text-lg leading-tight">{event.name}</h3>
@@ -739,6 +825,40 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
               {showAdvancedCreate && (
                 <div className="space-y-4 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 max-h-[35vh] overflow-y-auto pr-1">
+                  {/* Imágenes */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Imágenes del Evento</p>
+                    <div>
+                      <label className="text-xs text-zinc-500 block mb-1">Flyer del Evento (Imagen)</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={createForm.flyerUrl || ""}
+                          onChange={(e) => setCreateForm({ ...createForm, flyerUrl: e.target.value })}
+                          placeholder="URL del Flyer"
+                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <label className="p-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 shrink-0">
+                          <Upload size={14} />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              const reader = new FileReader()
+                              reader.onload = (event) => {
+                                setCreateForm({ ...createForm, flyerUrl: event.target?.result as string })
+                              }
+                              reader.readAsDataURL(file)
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Lugar y Fecha */}
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Lugar y Código de Vestimenta</p>
@@ -1192,16 +1312,6 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">URL de Logo para Código QR</label>
-                    <input
-                      type="text"
-                      value={configForm.qrLogoUrl}
-                      onChange={(e) => setConfigForm({ ...configForm, qrLogoUrl: e.target.value })}
-                      placeholder="https://..."
-                      className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
                 </div>
               )}
 
@@ -1317,37 +1427,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
                     <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Imágenes del Evento</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-zinc-500 block mb-1">Logo del Evento (Email)</label>
-                        <div className="flex gap-2 items-center">
-                          <input
-                            type="text"
-                            value={configForm.logoUrl}
-                            onChange={(e) => setConfigForm({ ...configForm, logoUrl: e.target.value })}
-                            placeholder="URL o SVG del Logo"
-                            className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          />
-                          <label className="p-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 shrink-0">
-                            <Upload size={14} />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (!file) return
-                                const reader = new FileReader()
-                                reader.onload = (event) => {
-                                  setConfigForm({ ...configForm, logoUrl: event.target?.result as string })
-                                }
-                                reader.readAsDataURL(file)
-                              }}
-                              className="hidden"
-                            />
-                          </label>
-                        </div>
-                      </div>
-
+                    <div className="grid grid-cols-1 gap-3">
                       <div>
                         <label className="text-xs font-semibold text-zinc-500 block mb-1">Flyer del Evento</label>
                         <div className="flex gap-2 items-center">
@@ -1483,6 +1563,114 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                           />
                         </div>
                       </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Color Texto Principal</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailTextColor || "#f3f4f6"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailTextColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailTextColor || "#f3f4f6"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailTextColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Color de Títulos</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailTitleColor || "#ffffff"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailTitleColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailTitleColor || "#ffffff"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailTitleColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Color Texto Secundario</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailMutedTextColor || "#8e9296"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailMutedTextColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailMutedTextColor || "#8e9296"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailMutedTextColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Color de Bordes</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailBorderColor || "#1f1f26"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailBorderColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailBorderColor || "#1f1f26"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailBorderColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Fondo Detalle de Evento</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailSectionBackgroundColor || "#060608"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailSectionBackgroundColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailSectionBackgroundColor || "#060608"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailSectionBackgroundColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-zinc-500">Fondo de Advertencia</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="color"
+                            value={configForm.emailWarningBackgroundColor || "#1c0d0d"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailWarningBackgroundColor: e.target.value })}
+                            className="w-8 h-8 border rounded cursor-pointer shrink-0"
+                          />
+                          <input
+                            type="text"
+                            value={configForm.emailWarningBackgroundColor || "#1c0d0d"}
+                            onChange={(e) => setConfigForm({ ...configForm, emailWarningBackgroundColor: e.target.value })}
+                            className="w-full text-xs p-1 border rounded bg-zinc-50 dark:bg-zinc-950"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1609,89 +1797,19 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                      {activeConfigTab === "qr" && (
                        <div className="space-y-4 text-center w-full">
                          <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Vista Previa QR</h4>
-                         <div className="p-6 rounded-xl flex items-center justify-center shadow-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 w-fit mx-auto">
-                           <svg viewBox="0 0 100 100" style={{ backgroundColor: configForm.qrBackgroundColor || "#f8f9fa" }} className="w-48 h-48 rounded-lg shadow-inner">
-                             <defs>
-                               <clipPath id="qr-logo-circle-clip">
-                                 <circle cx="50" cy="50" r={effectiveLogoScale ? effectiveLogoScale * 2 : 8} />
-                               </clipPath>
-                             </defs>
-                             <rect x="6" y="6" width="18" height="18" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="9" y="9" width="12" height="12" fill={configForm.qrBackgroundColor || "#f8f9fa"} />
-                             <rect x="11" y="11" width="8" height="8" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="76" y="6" width="18" height="18" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="79" y="9" width="12" height="12" fill={configForm.qrBackgroundColor || "#f8f9fa"} />
-                             <rect x="81" y="11" width="8" height="8" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="6" y="76" width="18" height="18" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="9" y="79" width="12" height="12" fill={configForm.qrBackgroundColor || "#f8f9fa"} />
-                             <rect x="11" y="81" width="8" height="8" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="72" y="72" width="6" height="6" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="74" y="74" width="2" height="2" fill={configForm.qrBackgroundColor || "#f8f9fa"} />
- 
-                             <rect x="30" y="6" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="38" y="10" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="30" y="16" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="44" y="6" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="52" y="10" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="64" y="6" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             
-                             <rect x="6" y="30" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="14" y="34" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="30" y="30" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="38" y="30" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="54" y="34" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="62" y="30" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="74" y="30" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="82" y="34" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="6" y="44" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="22" y="44" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="30" y="44" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="38" y="44" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="50" y="44" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="58" y="44" width="8" height="12" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="70" y="44" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="78" y="44" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="86" y="44" width="8" height="12" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="6" y="56" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="14" y="60" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="30" y="56" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="46" y="60" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="70" y="60" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="30" y="70" width="4" height="12" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="38" y="76" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="54" y="70" width="4" height="8" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="62" y="76" width="4" height="4" fill={configForm.qrFillColor || "#102542"} />
- 
-                             <rect x="38" y="86" width="8" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="50" y="86" width="12" height="4" fill={configForm.qrFillColor || "#102542"} />
-                             <rect x="66" y="82" width="4" height="12" fill={configForm.qrFillColor || "#102542"} />
- 
-                             {effectiveLogoUrl && (
-                                 <circle
-                                  cx="50"
-                                  cy="50"
-                                  r={effectiveLogoScale ? effectiveLogoScale * 2.5 : 10}
-                                  fill={effectiveLogoBgColor || "#ffffff"}
-                                />
-                              )}
-                              {effectiveLogoUrl && (
-                                 <image
-                                  href={effectiveLogoHref}
-                                  x={50 - (effectiveLogoScale ? effectiveLogoScale * 2 : 8)}
-                                  y={50 - (effectiveLogoScale ? effectiveLogoScale * 2 : 8)}
-                                  width={effectiveLogoScale ? effectiveLogoScale * 4 : 16}
-                                  height={effectiveLogoScale ? effectiveLogoScale * 4 : 16}
-                                  preserveAspectRatio="xMidYMid slice"
-                                  clipPath="url(#qr-logo-circle-clip)"
-                                />
-                              )}
-                           </svg>
+                         <div className="p-6 rounded-xl flex items-center justify-center shadow-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 w-fit mx-auto relative min-h-[200px] min-w-[200px]">
+                           {isGeneratingQr && (
+                             <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-zinc-950/50 rounded-xl z-10">
+                               <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                             </div>
+                           )}
+                           {qrPreviewImage ? (
+                             <img src={qrPreviewImage} alt="QR Preview" className="w-48 h-48 rounded-lg shadow-inner object-contain" />
+                           ) : (
+                             <div className="w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 rounded-lg text-zinc-400">
+                               <QrCode size={48} />
+                             </div>
+                           )}
                          </div>
                          <p className="text-xs text-zinc-500 font-semibold max-w-xs mx-auto">
                            Escaneando este código se decodificará como: <br/>
@@ -1708,7 +1826,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                          
                          <div 
                            className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 text-xs shadow-md max-h-[480px] overflow-y-auto flex flex-col"
-                           style={{ backgroundColor: configForm.emailBackgroundColor || "#f6f2eb" }}
+                           style={{ 
+                             backgroundColor: configForm.emailBackgroundColor || "#000000",
+                             backgroundImage: `radial-gradient(circle at 15% 20%, ${(configForm.emailAccentColor || "#00ffcc")}1a 0%, transparent 55%), radial-gradient(circle at 85% 80%, ${(configForm.emailAccentColor || "#00ffcc")}15 0%, transparent 55%)`
+                           }}
                          >
                            <div className="bg-white dark:bg-zinc-950 p-2.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
                              <div className="text-zinc-600 dark:text-zinc-400">
@@ -1717,7 +1838,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                <br/>
                                <span className="text-zinc-400 font-semibold">Asunto: </span>
                                <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                                 {configForm.emailSubject?.replace("{nombre_evento}", selectedEvent.name) || `Tu acceso está listo: ${selectedEvent.name}`}
+                                  {replacePreviewTemplates(configForm.emailSubject || "Tu acceso está listo: {nombre_evento}")}
                                </span>
                              </div>
                              <span className="text-[10px] text-zinc-400 font-mono shrink-0">10:00 AM</span>
@@ -1753,13 +1874,13 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                 </div>
  
                                <div className="p-4 space-y-4" style={{ color: configForm.emailTextColor || "#172121" }}>
-                                 <h1 className="text-base font-bold tracking-tight">
-                                   {configForm.emailHeading?.replace("{nombre_asistente}", "Juan Pérez") || "Hola Juan Pérez"}
+                                 <h1 className="text-base font-bold tracking-tight" style={{ color: configForm.emailTitleColor || configForm.emailTextColor || "#172121" }}>
+                                   {replacePreviewTemplates(configForm.emailHeading || "Hola {nombre_asistente}")}
                                  </h1>
                                  
                                  {configForm.emailIntro && (
-                                   <p className="whitespace-pre-line text-zinc-600 dark:text-zinc-400">
-                                     {configForm.emailIntro}
+                                   <p className="whitespace-pre-line" style={{ color: configForm.emailMutedTextColor || "#a1a1aa" }}>
+                                     {replacePreviewTemplates(configForm.emailIntro)}
                                    </p>
                                  )}
 
@@ -1774,30 +1895,35 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                  )}
  
                                  <div 
-                                   className="p-3 rounded-lg border space-y-1.5 text-white"
+                                   className="p-3 rounded-lg border space-y-1.5"
                                    style={{ 
                                      backgroundColor: configForm.emailSectionBackgroundColor || "#18191b",
-                                     borderColor: configForm.emailBorderColor || "#1f1f22"
+                                     borderColor: configForm.emailBorderColor || "#1f1f22",
+                                     color: configForm.emailTextColor || "#172121"
                                    }}
                                  >
-                                   <p className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
+                                   <p className="text-[10px] uppercase font-bold tracking-wider" style={{ color: configForm.emailAccentColor || "#c44536" }}>
                                      {configForm.emailDetailsTitle || "Detalles del Evento"}
                                    </p>
                                    <p className="font-semibold">
-                                     {configForm.emailDateText?.replace("{fecha_evento}", "Sábado, 27 de Junio, 2026") || "Sábado, 27 de Junio, 2026"}
+                                     {replacePreviewTemplates(configForm.emailDateText || "{fecha_evento}")}
                                    </p>
-                                   <p className="text-zinc-300">
-                                     {configForm.emailTimeText?.replace("{hora_evento}", "22:00 - 04:00") || "22:00 - 04:00"}
+                                   <p className="text-xs" style={{ color: configForm.emailMutedTextColor || "#a1a1aa" }}>
+                                     {replacePreviewTemplates(configForm.emailTimeText || "{hora_evento}")}
                                    </p>
-                                   <p className="text-xs text-zinc-400 font-semibold italic">
+                                   <p className="text-xs font-semibold italic" style={{ color: configForm.emailAccentColor || "#c44536" }}>
                                      📍 {configForm.venueName || "Venue principal sucursal"}
                                    </p>
                                  </div>
  
                                  {configForm.emailBody && (
-                                   <div className="whitespace-pre-line pt-2 border-t border-dashed text-zinc-600 dark:text-zinc-400" style={{ borderColor: configForm.emailBorderColor || "#1f1f22" }}>
-                                     {configForm.emailMessageTitle && <p className="font-bold text-xs mb-1 text-zinc-800 dark:text-zinc-200">{configForm.emailMessageTitle}</p>}
-                                     <p>{configForm.emailBody}</p>
+                                   <div className="whitespace-pre-line pt-2 border-t border-dashed" style={{ borderColor: configForm.emailBorderColor || "#1f1f22" }}>
+                                     {configForm.emailMessageTitle && (
+                                       <p className="font-bold text-xs mb-1" style={{ color: configForm.emailAccentColor || "#c44536" }}>
+                                         {configForm.emailMessageTitle}
+                                       </p>
+                                     )}
+                                     <p>{replacePreviewTemplates(configForm.emailBody)}</p>
                                    </div>
                                  )}
  
@@ -1809,11 +1935,11 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                        borderLeft: `3px solid ${configForm.emailAccentColor || "#c44536"}`
                                      }}
                                    >
-                                     <p className="font-bold text-red-400 text-[10px] uppercase tracking-wider">
+                                     <p className="font-bold text-[10px] uppercase tracking-wider" style={{ color: configForm.emailAccentColor || "#c44536" }}>
                                        ⚠️ {configForm.emailWarningTitle || "Importante"}
                                      </p>
-                                     <p className="text-zinc-300 text-[11px] leading-relaxed">
-                                       {configForm.emailWarningText}
+                                     <p className="text-[11px] leading-relaxed">
+                                       {replacePreviewTemplates(configForm.emailWarningText)}
                                      </p>
                                    </div>
                                  )}
@@ -1883,40 +2009,40 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                        )}
                                      </svg>
                                    </div>
+                                   <p className="text-[10px]" style={{ color: configForm.emailMutedTextColor || "#a1a1aa" }}>
+                                     {configForm.emailQrNote || "Preséntalo junto a tu cédula en la entrada."}
+                                   </p>
                                    
-                                   <p className="text-[10px] text-zinc-400">
-                                     {configForm.emailQrNote || "Presenta este código en la entrada del evento."}
-                                   </p>
-                                 </div>
- 
-                                 <div className="text-center pt-2 space-y-1">
-                                   <p className="font-semibold text-xs">{configForm.emailClosingText || "Nos vemos pronto!"}</p>
-                                   <p className="font-bold text-xs uppercase tracking-wider" style={{ color: configForm.emailAccentColor || "#c44536" }}>
-                                     {configForm.emailTeamSignature?.replace("{nombre_evento}", selectedEvent.name) || `Equipo ${selectedEvent.name}`}
-                                   </p>
-                                 </div>
-                               </div>
- 
-                               {configForm.emailFooter && (
-                                 <div 
-                                   className="p-3 text-center text-[10px] text-zinc-400 border-t" 
-                                   style={{ 
-                                     backgroundColor: configForm.emailBackgroundColor || "#f6f2eb",
-                                     borderColor: configForm.emailBorderColor || "#1f1f22" 
-                                   }}
-                                 >
-                                   <p>{configForm.emailFooter}</p>
-                                   {configForm.emailLegalNote && <p className="mt-1 font-semibold text-[9px]">{configForm.emailLegalNote}</p>}
-                                 </div>
-                               )}
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 )}
-               </div>
+                                   <div className="text-center pt-2 space-y-1">
+                                      <p className="font-semibold text-xs">{replacePreviewTemplates(configForm.emailClosingText || "Nos vemos pronto!")}</p>
+                                      <p className="font-bold text-xs uppercase tracking-wider" style={{ color: configForm.emailTitleColor || configForm.emailAccentColor || "#c44536" }}>
+                                        {replacePreviewTemplates(configForm.emailTeamSignature || "{nombre_sucursal}")}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {configForm.emailFooter && (
+                                    <div 
+                                      className="p-3 text-center text-[10px] border-t" 
+                                      style={{ 
+                                        backgroundColor: configForm.emailBackgroundColor || "#000000",
+                                        borderColor: configForm.emailBorderColor || "#1f1f22",
+                                        color: configForm.emailMutedTextColor || "#a1a1aa"
+                                      }}
+                                    >
+                                      <p>{replacePreviewTemplates(configForm.emailFooter)}</p>
+                                      {configForm.emailLegalNote && <p className="mt-1 font-semibold text-[9px]">{replacePreviewTemplates(configForm.emailLegalNote)}</p>}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
  
                <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
                  <button

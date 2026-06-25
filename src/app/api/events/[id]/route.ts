@@ -16,7 +16,7 @@ const updateEventSchema = z.object({
   qrFillColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   qrBackgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   qrLogoBackgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  qrLogoScale: z.number().int().min(2).max(6).optional(),
+  qrLogoScale: z.number().int().min(2).max(8).optional(),
 
   // Media
   logoUrl: z.string().nullable().optional(),
@@ -63,6 +63,7 @@ const updateEventSchema = z.object({
   emailCardColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailHeaderBackgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailTextColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  emailTitleColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailMutedTextColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailAccentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailBorderColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),

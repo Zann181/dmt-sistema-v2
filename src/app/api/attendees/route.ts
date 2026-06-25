@@ -62,22 +62,42 @@ export async function POST(req: Request) {
 
     if (!branchId || !eventId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
 
+    const existingAttendee = await prisma.attendee.findUnique({
+      where: {
+        eventId_cc: {
+          eventId,
+          cc: parsed.cc,
+        },
+      },
+    })
+    if (existingAttendee) {
+      return NextResponse.json(
+        { error: `La cédula ${parsed.cc} ya está registrada para este evento` },
+        { status: 400 }
+      )
+    }
+
     const category = await prisma.attendeeCategory.findUnique({ where: { id: parsed.categoryId } })
     if (!category) return NextResponse.json({ error: "Categoría no encontrada" }, { status: 400 })
 
     const branch = await prisma.branch.findUnique({ where: { id: branchId } })
-    const event = await prisma.event.findUnique({ where: { id: eventId } })
+    const event = await prisma.event.findUnique({ where: { id: eventId }, include: { branch: true } })
     if (!branch || !event) return NextResponse.json({ error: "Error de contexto" }, { status: 400 })
 
     const uniqueId = Math.random().toString(36).substring(2, 12)
     const qrCode = `${branch.codePrefix}-${event.slug.substring(0, 5).toUpperCase()}-${uniqueId}`
+
+    const userExists = session.user.id
+      ? await prisma.user.findUnique({ where: { id: session.user.id } })
+      : null
+    const createdById = userExists ? session.user.id : null
 
     const attendee = await prisma.attendee.create({
       data: {
         ...parsed,
         branchId,
         eventId,
-        createdById: session.user.id,
+        createdById,
         origin: "MANUAL",
         qrCode,
         includedBalance: category.includedConsumptions,
@@ -86,88 +106,160 @@ export async function POST(req: Request) {
       }
     })
 
+    let mailError: string | null = null
     if (parsed.email) {
-      (async () => {
-        try {
-          const fillColor = event.qrFillColor || "#102542"
-          const backgroundColor = event.qrBackgroundColor || "#f8f9fa"
-          const logoBackgroundColor = event.qrLogoBackgroundColor || "#ffffff"
-          const logoScale = event.qrLogoScale || 4
-          const qrLogoUrl = event.qrLogoUrl || branch.logoUrl
+      try {
+        const fillColor = event.qrFillColor || "#102542"
+        const backgroundColor = event.qrBackgroundColor || "#f8f9fa"
+        const logoBackgroundColor = event.qrLogoBackgroundColor || "#ffffff"
+        const logoScale = event.qrLogoScale || 4
+        const qrLogoUrl = event.qrLogoUrl || branch.logoUrl
 
-          const qrOptions = {
-            color: {
-              dark: fillColor,
-              light: backgroundColor,
-            }
+        const qrOptions = {
+          color: {
+            dark: fillColor,
+            light: backgroundColor,
           }
-
-          let qrBuffer: Buffer
-
-          if (qrLogoUrl) {
-            let logoBuffer: Buffer = Buffer.from("")
-            const trimmed = qrLogoUrl.trim()
-            try {
-              if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
-                logoBuffer = Buffer.from(trimmed)
-              } else if (trimmed.startsWith("data:")) {
-                const base64Data = trimmed.split(",")[1]
-                logoBuffer = Buffer.from(base64Data, "base64")
-              } else if (trimmed.startsWith("http")) {
-                const res = await fetch(trimmed)
-                if (res.ok) {
-                  logoBuffer = Buffer.from(await res.arrayBuffer())
-                }
-              }
-            } catch (e) {
-              console.error("Error loading QR logo buffer:", e)
-            }
-
-            if (logoBuffer.length > 0) {
-              qrBuffer = await QrCodeService.generateWithLogo(
-                qrCode,
-                logoBuffer,
-                {
-                  scale: logoScale,
-                  backgroundColor: logoBackgroundColor,
-                },
-                qrOptions
-              )
-            } else {
-              qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
-            }
-          } else {
-            qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
-          }
-
-          const htmlContent = EmailService.compileTemplate(event, parsed.name)
-          const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}").replace("{nombre_evento}", event.name)
-          await EmailService.sendTicketEmail(
-            parsed.email!,
-            subject,
-            htmlContent,
-            qrBuffer,
-            "acceso_qr.png",
-            {
-              host: event.emailHost,
-              port: event.emailPort,
-              secure: event.emailSecure,
-              user: event.emailUser,
-              pass: event.emailPassword,
-              from: event.emailFrom,
-            }
-          )
-        } catch (mailError) {
-          console.error("⚠️ Error en el envío del correo del ticket:", mailError)
         }
+
+        let qrBuffer: Buffer
+
+        if (qrLogoUrl) {
+  let logoBuffer: Buffer = Buffer.from("")
+  const trimmed = qrLogoUrl.trim()
+  try {
+    if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
+      logoBuffer = Buffer.from(trimmed)
+    } else if (trimmed.startsWith("data:")) {
+      const base64Data = trimmed.split(",")[1]
+      logoBuffer = Buffer.from(base64Data, "base64")
+    } else {
+      const absoluteUrl = trimmed.startsWith("http") ? trimmed : (() => {
+        let baseUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000"
+        if (baseUrl.includes("localhost")) baseUrl = baseUrl.replace("localhost", "127.0.0.1")
+        const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
+        const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`
+        return `${cleanBase}${cleanPath}`
       })()
+      const res = await fetch(absoluteUrl)
+      if (res.ok) {
+        logoBuffer = Buffer.from(await res.arrayBuffer())
+      }
+    }
+  } catch (e) {
+    console.error("Error loading QR logo buffer:", e)
+  }
+
+  if (logoBuffer.length > 0) {
+    const processedLogo = QrCodeService.preprocessLogoBuffer(logoBuffer)
+    qrBuffer = await QrCodeService.generateWithLogo(
+      qrCode,
+      processedLogo,
+      {
+        scale: logoScale,
+        backgroundColor: logoBackgroundColor,
+      },
+      qrOptions
+    )
+  } else {
+    qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
+  }
+} else {
+  qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
+}
+
+        const { html: htmlContent, attachments: extraAttachments } = EmailService.compileTemplate(event, parsed.name, qrCode, category.name)
+        const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
+          .replace(/{nombre_evento}/g, event.name)
+          .replace(/{nombre_sucursal}/g, event.branch?.name || "")
+        await EmailService.sendTicketEmail(
+          parsed.email!,
+          subject,
+          htmlContent,
+          qrBuffer,
+          "acceso_qr.png",
+          {
+            host: event.emailHost,
+            port: event.emailPort,
+            secure: event.emailSecure,
+            user: event.emailUser,
+            pass: event.emailPassword,
+            from: event.emailFrom,
+          },
+          extraAttachments
+        )
+      } catch (err: any) {
+        console.error("⚠️ Error en el envío del correo del ticket:", err)
+        mailError = err.message || "Error al enviar correo electrónico"
+      }
     }
 
-    return NextResponse.json({ data: attendee })
+    return NextResponse.json({ data: attendee, mailError })
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
     }
     return NextResponse.json({ error: err.message }, { status: 400 })
+  }
+}
+
+export async function PUT(req: Request) {
+  const session = await auth()
+  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  try {
+    const url = new URL(req.url)
+    const id = url.searchParams.get("id")
+    if (!id) return NextResponse.json({ error: "Falta ID del asistente" }, { status: 400 })
+
+    const body = await req.json()
+    const parsed = attendeeSchema.partial().parse(body)
+
+    if (parsed.cc) {
+      const attendee = await prisma.attendee.findUnique({ where: { id } })
+      if (!attendee) return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
+
+      const existingAttendee = await prisma.attendee.findFirst({
+        where: {
+          eventId: attendee.eventId,
+          cc: parsed.cc,
+          id: { not: id }
+        }
+      })
+      if (existingAttendee) {
+        return NextResponse.json({ error: `La cédula ${parsed.cc} ya está registrada para este evento` }, { status: 400 })
+      }
+    }
+
+    const updated = await prisma.attendee.update({
+      where: { id },
+      data: parsed
+    })
+
+    return NextResponse.json({ data: updated })
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
+    }
+    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: Request) {
+  const session = await auth()
+  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  try {
+    const url = new URL(req.url)
+    const id = url.searchParams.get("id")
+    if (!id) return NextResponse.json({ error: "Falta ID del asistente" }, { status: 400 })
+
+    await prisma.attendee.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ message: "Asistente eliminado con éxito" })
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 })
   }
 }

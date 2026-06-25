@@ -7,16 +7,46 @@ export class QrCodeService {
       errorCorrectionLevel: "H",
       margin: 1,
       width: 512,
-      version: 5,
+      version: 10,
       ...options
     })
+  }
+
+  static preprocessLogoBuffer(logoBuffer: Buffer): Buffer {
+    try {
+      const content = logoBuffer.toString("utf8").trim()
+      if (content.startsWith("<svg") || content.startsWith("<?xml")) {
+        // 1. Detect if it's a wrapped image (PNG/JPG wrapped in SVG by the frontend)
+        const match = content.match(/<image\s+[^>]*href=["'](data:[^"']+)["']/i) || 
+                      content.match(/<image\s+[^>]*xlink:href=["'](data:[^"']+)["']/i)
+        if (match && match[1]) {
+          const dataUri = match[1]
+          const base64Matches = dataUri.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.*)$/)
+          if (base64Matches && base64Matches[2]) {
+            return Buffer.from(base64Matches[2], "base64")
+          }
+        }
+
+        // 2. It's a native SVG. Ensure it has xmlns and absolute dimensions.
+        let cleanSvg = content
+        if (!cleanSvg.includes("xmlns=")) {
+          cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+        }
+        cleanSvg = cleanSvg.replace(/width=["']100%["']/gi, 'width="500"')
+        cleanSvg = cleanSvg.replace(/height=["']100%["']/gi, 'height="500"')
+        return Buffer.from(cleanSvg)
+      }
+    } catch (e) {
+      console.error("Error preprocessing logo buffer:", e)
+    }
+    return logoBuffer
   }
 
   static async generateWithLogo(
     text: string, 
     logoBuffer: Buffer, 
     logoOptions?: {
-      scale?: number             // 2 - 6 (default 4)
+      scale?: number             // 2 - 8 (default 4)
       backgroundColor?: string   // HEX (default "#ffffff")
     },
     qrOptions?: QRCode.QRCodeToBufferOptions
@@ -34,14 +64,15 @@ export class QrCodeService {
     const circleRadius = circleSize / 2
 
     // Resize logo to fit inside the container with transparent background
-    const logoResized = await sharp(logoBuffer)
+    const processedLogo = this.preprocessLogoBuffer(logoBuffer)
+    const logoResized = await sharp(processedLogo)
       .resize(logoSize, logoSize, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
       .png()
       .toBuffer()
 
     // Create a circle mask to crop the resized logo
     const maskSvg = Buffer.from(`
-      <svg width="${logoSize}" height="${logoSize}">
+      <svg width="${logoSize}" height="${logoSize}" xmlns="http://www.w3.org/2000/svg">
         <circle cx="${logoRadius}" cy="${logoRadius}" r="${logoRadius}" fill="white" />
       </svg>
     `)
@@ -54,7 +85,7 @@ export class QrCodeService {
 
     // Create a circular colored background
     const circleSvg = Buffer.from(`
-      <svg width="${circleSize}" height="${circleSize}">
+      <svg width="${circleSize}" height="${circleSize}" xmlns="http://www.w3.org/2000/svg">
         <circle cx="${circleRadius}" cy="${circleRadius}" r="${circleRadius}" fill="${bgColor}" />
       </svg>
     `)

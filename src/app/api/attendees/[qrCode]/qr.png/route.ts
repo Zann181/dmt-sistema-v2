@@ -48,7 +48,13 @@ export async function GET(
         const base64Data = trimmed.split(",")[1]
         logoBuffer = Buffer.from(base64Data, "base64")
       } else {
-        const res = await fetch(trimmed)
+        const absoluteUrl = trimmed.startsWith("http") ? trimmed : (() => {
+          const baseUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
+          const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`
+          return `${cleanBase}${cleanPath}`
+        })()
+        const res = await fetch(absoluteUrl)
         if (!res.ok) throw new Error("Error fetching logo from URL")
         logoBuffer = Buffer.from(await res.arrayBuffer())
       }

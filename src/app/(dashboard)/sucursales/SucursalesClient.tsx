@@ -16,6 +16,8 @@ interface Branch {
   pageBackgroundColor: string
   surfaceColor: string
   panelColor: string
+  textColor: string
+  titleColor: string
   logoUrl: string | null
   logoBgColor: string | null
   logoSize: number | null
@@ -44,11 +46,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
   const [form, setForm] = useState({
     name: "",
-    primaryColor: "#102542",
-    secondaryColor: "#ffffff",
-    pageBackgroundColor: "#f8f9fa",
-    surfaceColor: "#ffffff",
-    panelColor: "#f0f0f0",
+    primaryColor: "#39ff14",
+    secondaryColor: "#39ff14",
+    pageBackgroundColor: "#000000",
+    surfaceColor: "#050505",
+    panelColor: "#000000",
+    textColor: "#ffffff",
+    titleColor: "#ffffff",
     logoUrl: "" as string,
     logoBgColor: "#f4f4f5" as string,
     logoSize: 64 as number,
@@ -168,13 +172,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
   const [createForm, setCreateForm] = useState({
     name: "",
     codePrefix: "",
-    primaryColor: "#102542",
-    secondaryColor: "#ffffff",
-    pageBackgroundColor: "#f8f9fa",
-    surfaceColor: "#ffffff",
-    panelColor: "#f0f0f0",
+    primaryColor: "#39ff14",
+    secondaryColor: "#e9ffe9",
+    pageBackgroundColor: "#000000",
+    surfaceColor: "#0f1113",
+    panelColor: "#15181c",
     logoUrl: "",
-    logoBgColor: "#f4f4f5",
+    logoBgColor: "#15181c",
     logoSize: 64,
     contactEmail: "",
     contactPhone: "",
@@ -200,13 +204,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
       setCreateForm({
         name: "",
         codePrefix: "",
-        primaryColor: "#102542",
-        secondaryColor: "#ffffff",
-        pageBackgroundColor: "#f8f9fa",
-        surfaceColor: "#ffffff",
-        panelColor: "#f0f0f0",
+        primaryColor: "#6366f1",
+        secondaryColor: "#818cf8",
+        pageBackgroundColor: "#030712",
+        surfaceColor: "#111827",
+        panelColor: "#1f2937",
         logoUrl: "",
-        logoBgColor: "#f4f4f5",
+        logoBgColor: "#1f2937",
         logoSize: 64,
         contactEmail: "",
         contactPhone: "",
@@ -223,8 +227,10 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
       primaryColor: branch.primaryColor || "#102542",
       secondaryColor: branch.secondaryColor || "#ffffff",
       pageBackgroundColor: branch.pageBackgroundColor || "#f8f9fa",
-      surfaceColor: branch.surfaceColor || "#ffffff",
-      panelColor: branch.panelColor || "#f0f0f0",
+      surfaceColor: branch.surfaceColor || "#0f1113",
+      panelColor: branch.panelColor || "#15181c",
+      textColor: branch.textColor || "#ffffff",
+      titleColor: branch.titleColor || "#ffffff",
       logoUrl: branch.logoUrl || "",
       logoBgColor: branch.logoBgColor || "#f4f4f5",
       logoSize: branch.logoSize || 64,
@@ -370,6 +376,30 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
               >
                 Staff
               </Link>
+              <button
+                onClick={() => {
+                   if(confirm("¿Estás seguro de que deseas volver al estilo predeterminado?")) {
+                      setSelectedBranch(branch);
+                      updateBranchMutation.mutate({
+                          name: branch.name,
+                          primaryColor: "#39ff14",
+                          secondaryColor: "#e9ffe9",
+                          pageBackgroundColor: "#000000",
+                          surfaceColor: "#0f1113",
+                          panelColor: "#15181c",
+                          textColor: "#ffffff",
+                          titleColor: "#39ff14",
+                          logoUrl: branch.logoUrl || "",
+                          logoBgColor: "#15181c",
+                          logoSize: branch.logoSize || 64,
+                      });
+                   }
+                }}
+                disabled={updateBranchMutation.isPending && selectedBranch?.id === branch.id}
+                className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline ml-auto"
+              >
+                {updateBranchMutation.isPending && selectedBranch?.id === branch.id ? "Cargando..." : "Restaurar Estilo"}
+              </button>
             </div>
           </div>
         ))}
@@ -503,24 +533,112 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">
-                      Color Fondo Página
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={form.pageBackgroundColor}
-                        onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
-                        className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={form.pageBackgroundColor}
-                        onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
-                        className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
-                        maxLength={7}
-                      />
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                        Fondo Degradado 1 (Inicio)
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={form.pageBackgroundColor}
+                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={form.pageBackgroundColor}
+                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                        Color Superficie
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={form.surfaceColor}
+                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={form.surfaceColor}
+                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                        Fondo Degradado 2 (Fin)
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={form.panelColor}
+                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={form.panelColor}
+                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-1 mt-3">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                        Color de Texto
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                        Color de Títulos
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={form.titleColor}
+                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={form.titleColor}
+                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -628,10 +746,38 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       }
                     }}
                     disabled={deleteBranchMutation.isPending}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors mr-auto disabled:opacity-50"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    {deleteBranchMutation.isPending ? "Eliminando..." : "Eliminar Sucursal"}
+                    {deleteBranchMutation.isPending ? "Eliminando..." : "Eliminar"}
                   </button>
+
+                  <div className="flex-1"></div>
+
+                  <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
+                    <Store size={18} className="shrink-0" />
+                    <span>¿Establecer Verne Neon Dark por defecto?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const defaultNeon = {
+                          ...form,
+                          primaryColor: "#39ff14",
+                          secondaryColor: "#e9ffe9",
+                          pageBackgroundColor: "#000000",
+                          surfaceColor: "#0f1113",
+                          panelColor: "#15181c",
+                          textColor: "#ffffff",
+                          titleColor: "#39ff14"
+                        }
+                        setForm(defaultNeon)
+                        updateBranchMutation.mutate(defaultNeon)
+                      }}
+                      className="px-4 py-2 bg-zinc-950 text-[#39ff14] border border-[#39ff14]/30 hover:bg-zinc-900 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                      disabled={updateBranchMutation.isPending}
+                    >
+                      {updateBranchMutation.isPending ? "Aplicando..." : "Restaurar Tema Dark"}
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
@@ -647,7 +793,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     disabled={updateBranchMutation.isPending}
                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    Guardar Configuración
+                    Guardar
                   </button>
                 </div>
               </form>
@@ -954,6 +1100,71 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                         value={createForm.secondaryColor}
                         onChange={(e) => setCreateForm({ ...createForm, secondaryColor: e.target.value })}
                         className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                      Fondo Degradado 1 (Inicio)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={createForm.pageBackgroundColor}
+                        onChange={(e) => setCreateForm({ ...createForm, pageBackgroundColor: e.target.value })}
+                        className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={createForm.pageBackgroundColor}
+                        onChange={(e) => setCreateForm({ ...createForm, pageBackgroundColor: e.target.value })}
+                        className="w-full text-xs px-1.5 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono text-[11px]"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                      Superficie
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={createForm.surfaceColor}
+                        onChange={(e) => setCreateForm({ ...createForm, surfaceColor: e.target.value })}
+                        className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={createForm.surfaceColor}
+                        onChange={(e) => setCreateForm({ ...createForm, surfaceColor: e.target.value })}
+                        className="w-full text-xs px-1.5 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono text-[11px]"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 block mb-1">
+                      Fondo Degradado 2 (Fin)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={createForm.panelColor}
+                        onChange={(e) => setCreateForm({ ...createForm, panelColor: e.target.value })}
+                        className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={createForm.panelColor}
+                        onChange={(e) => setCreateForm({ ...createForm, panelColor: e.target.value })}
+                        className="w-full text-xs px-1.5 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono text-[11px]"
                         maxLength={7}
                       />
                     </div>

@@ -8,14 +8,23 @@ async function main() {
   // 1. Crear Sucursal
   const branch = await prisma.branch.upsert({
     where: { slug: "sucursal-norte" },
-    update: {},
+    update: {
+      primaryColor: "#39ff14",
+      secondaryColor: "#e9ffe9",
+      pageBackgroundColor: "#050505",
+      surfaceColor: "#0f1113",
+      panelColor: "#15181c",
+    },
     create: {
       id: "br_1",
       name: "Sucursal Norte",
       slug: "sucursal-norte",
       codePrefix: "NOR",
-      primaryColor: "#102542",
-      secondaryColor: "#ffffff",
+      primaryColor: "#39ff14",
+      secondaryColor: "#e9ffe9",
+      pageBackgroundColor: "#050505",
+      surfaceColor: "#0f1113",
+      panelColor: "#15181c",
       isActive: true,
     },
   })

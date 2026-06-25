@@ -121,6 +121,7 @@ export default async function EventosPage() {
     emailCardColor: event.emailCardColor,
     emailHeaderBackgroundColor: event.emailHeaderBackgroundColor,
     emailTextColor: event.emailTextColor,
+    emailTitleColor: event.emailTitleColor,
     emailMutedTextColor: event.emailMutedTextColor,
     emailAccentColor: event.emailAccentColor,
     emailBorderColor: event.emailBorderColor,
