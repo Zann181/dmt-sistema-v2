@@ -149,43 +149,11 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               DMT Sistema v2
             </h1>
             <p className="text-zinc-400 text-[10px] uppercase tracking-wider font-semibold">
-              {activeTab === "login"
-                ? "Ingresa tus credenciales de acceso"
-                : "Registra una nueva cuenta administrativa"}
+              Ingresa tus credenciales de acceso
             </p>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex bg-zinc-900/50 p-1 border border-zinc-900 rounded-lg">
-            <button
-              onClick={() => {
-                setActiveTab("login")
-                setErrorMsg(null)
-                setSuccessMsg("")
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-md uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                activeTab === "login"
-                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-                  : "text-zinc-500 hover:text-zinc-350"
-              }`}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("register")
-                setErrorMsg(null)
-                setSuccessMsg("")
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-md uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                activeTab === "register"
-                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-                  : "text-zinc-500 hover:text-zinc-350"
-              }`}
-            >
-              Registrarse
-            </button>
-          </div>
+          {/* Tab Switcher (Hidden) */}
 
           {/* Success message */}
           {successMsg && (
