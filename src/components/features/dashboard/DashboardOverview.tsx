@@ -58,7 +58,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
           sales.forEach(sale => {
             toast.success(`Nueva venta registrada: ${sale.product.name} x${sale.quantity}`, {
               description: `Total: $${Number(sale.total).toLocaleString()} | Por ${sale.soldBy.username}`,
-              icon: <Beer className="text-emerald-500" />
+              icon: <Beer className="text-lime-500" />
             })
           })
           // Invalidate and refetch analytics automatically
@@ -118,7 +118,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                 activeTab === "combined"
                   ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                  : "text-emerald-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  : "text-lime-400 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
               Vista General
@@ -130,7 +130,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                 activeTab === "entrance"
                   ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                  : "text-emerald-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  : "text-lime-400 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
               Entrada & Taquilla
@@ -142,7 +142,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
                 activeTab === "bar"
                   ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                  : "text-emerald-400 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  : "text-lime-400 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
               Barra & POS
@@ -152,10 +152,10 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
 
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-500"></span>
           </span>
-          <span className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-lime-300 uppercase tracking-wider">
             Live Stream Habilitado
           </span>
         </div>
@@ -177,7 +177,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               value={`$${Number(combined?.netOperating).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               description="Ventas brutas - Gastos"
               icon={<Sparkles size={20} />}
-              gradient="bg-emerald-600"
+              gradient="bg-lime-600"
             />
             <MetricCard
               title="Caja Fuerte (Efectivo Total)"
@@ -196,25 +196,25 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Total Asistentes</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Total Asistentes</span>
                   <span className="text-xl font-extrabold text-zinc-800 dark:text-zinc-200 font-mono mt-1 block">
                     {entrance?.attendeeCount}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Check-ins Completados</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Check-ins Completados</span>
                   <span className="text-xl font-extrabold text-zinc-800 dark:text-zinc-200 font-mono mt-1 block">
                     {entrance?.checkedInCount} ({entrance?.attendeeCount > 0 ? ((entrance.checkedInCount / entrance.attendeeCount) * 100).toFixed(0) : 0}%)
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Gastos Entrada</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Gastos Entrada</span>
                   <span className="text-xl font-extrabold text-red-600 dark:text-red-400 font-mono mt-1 block">
                     ${Number(entrance?.totalExpenses).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Retiros Entrada</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Retiros Entrada</span>
                   <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-1 block">
                     ${Number(entrance?.cashDropTotal).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
@@ -224,29 +224,29 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
 
             <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4">
               <h3 className="text-base font-bold flex items-center gap-2">
-                <Beer size={18} className="text-emerald-500" /> Resumen de Barra & Consumo
+                <Beer size={18} className="text-lime-500" /> Resumen de Barra & Consumo
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Ventas Registradas</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Ventas Registradas</span>
                   <span className="text-xl font-extrabold text-zinc-800 dark:text-zinc-200 font-mono mt-1 block">
                     {bar?.salesCount} transacciones
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Ingresos Barra</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Ingresos Barra</span>
                   <span className="text-xl font-extrabold text-green-600 dark:text-green-400 font-mono mt-1 block">
                     ${Number(bar?.totalIncome).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Gastos Barra</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Gastos Barra</span>
                   <span className="text-xl font-extrabold text-red-600 dark:text-red-400 font-mono mt-1 block">
                     ${Number(bar?.totalExpenses).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
-                  <span className="text-xs text-emerald-300 block font-semibold">Vaciados Barra</span>
+                  <span className="text-xs text-lime-300 block font-semibold">Vaciados Barra</span>
                   <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-1 block">
                     ${Number(bar?.cashDropTotal).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </span>
@@ -265,7 +265,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               title="Ventas de Taquilla"
               value={`$${Number(entrance?.totalIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               description="Total cobrado en entrada"
-              icon={<ArrowUpRight size={20} className="text-emerald-500" />}
+              icon={<ArrowUpRight size={20} className="text-lime-500" />}
               gradient="bg-indigo-500"
             />
             <MetricCard
@@ -279,7 +279,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               title="Efectivo en Caja Entrada"
               value={`$${Number(entrance?.cashBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               description="Ingresos taquilla - egresos/drops"
-              icon={<Banknote size={20} className="text-emerald-500" />}
+              icon={<Banknote size={20} className="text-lime-500" />}
               gradient="bg-amber-500"
             />
           </div>
@@ -290,21 +290,21 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
             </h3>
             <div className="flex flex-col md:flex-row items-center gap-8 justify-around py-4">
               <div className="text-center space-y-2">
-                <span className="text-sm font-semibold text-emerald-300 block">Total de Boletas Emitidas</span>
+                <span className="text-sm font-semibold text-lime-300 block">Total de Boletas Emitidas</span>
                 <span className="text-5xl font-black text-zinc-800 dark:text-white font-mono block">
                   {entrance?.attendeeCount}
                 </span>
-                <span className="text-xs text-emerald-400">Asistentes registrados en base de datos</span>
+                <span className="text-xs text-lime-400">Asistentes registrados en base de datos</span>
               </div>
               
               <div className="h-28 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
 
               <div className="text-center space-y-2">
-                <span className="text-sm font-semibold text-emerald-300 block">Porcentaje de Ingreso</span>
-                <span className="text-5xl font-black text-emerald-600 dark:text-emerald-400 font-mono block">
+                <span className="text-sm font-semibold text-lime-300 block">Porcentaje de Ingreso</span>
+                <span className="text-5xl font-black text-lime-600 dark:text-lime-400 font-mono block">
                   {entrance?.attendeeCount > 0 ? ((entrance.checkedInCount / entrance.attendeeCount) * 100).toFixed(0) : 0}%
                 </span>
-                <span className="text-xs text-emerald-400">
+                <span className="text-xs text-lime-400">
                   {entrance?.checkedInCount} de {entrance?.attendeeCount} personas ingresadas
                 </span>
               </div>
@@ -321,7 +321,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               title="Ventas Totales (Barra)"
               value={`$${Number(bar?.totalIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               description="Ingreso total por tickets/bebidas"
-              icon={<ArrowUpRight size={20} className="text-emerald-500" />}
+              icon={<ArrowUpRight size={20} className="text-lime-500" />}
               gradient="bg-indigo-500"
             />
             <MetricCard
@@ -335,7 +335,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               title="Efectivo en Caja Barra"
               value={`$${Number(bar?.cashBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               description="Ventas en efectivo - egresos/drops"
-              icon={<Banknote size={20} className="text-emerald-500" />}
+              icon={<Banknote size={20} className="text-lime-500" />}
               gradient="bg-amber-500"
             />
           </div>
@@ -357,13 +357,13 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
                       <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{prod.name}</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-emerald-300 font-medium">Cant: <span className="text-zinc-700 dark:text-zinc-300 font-extrabold font-mono">{prod.quantity}</span></span>
+                      <span className="text-lime-300 font-medium">Cant: <span className="text-zinc-700 dark:text-zinc-300 font-extrabold font-mono">{prod.quantity}</span></span>
                       <span className="font-extrabold text-zinc-900 dark:text-white font-mono">${Number(prod.total).toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
                 {(!bar?.topProducts || bar.topProducts.length === 0) && (
-                  <div className="text-center py-12 text-emerald-300 text-xs font-semibold">
+                  <div className="text-center py-12 text-lime-300 text-xs font-semibold">
                     Sin datos de consumo para este evento.
                   </div>
                 )}
@@ -373,7 +373,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
             {/* Payment Distribution Chart */}
             <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 lg:col-span-2 space-y-4">
               <h3 className="text-base font-bold flex items-center gap-2">
-                <ShoppingBag size={18} className="text-emerald-500" /> Métodos de Pago (Barra)
+                <ShoppingBag size={18} className="text-lime-500" /> Métodos de Pago (Barra)
               </h3>
               <div className="pt-2">
                 <PieChartSvg data={barPaymentPieData} />
@@ -385,4 +385,5 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
     </div>
   )
 }
+
 

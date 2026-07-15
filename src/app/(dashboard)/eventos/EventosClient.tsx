@@ -678,7 +678,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Eventos</h2>
-          <p className="text-emerald-400">Gestiona los eventos, accesos y configuraciones.</p>
+          <p className="text-lime-400">Gestiona los eventos, accesos y configuraciones.</p>
         </div>
         <button
           onClick={() => {
@@ -718,7 +718,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 </div>
               ) : (
                 <div className="p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg shrink-0">
-                  <Calendar className="text-zinc-600 dark:text-emerald-300 w-6 h-6" />
+                  <Calendar className="text-zinc-600 dark:text-lime-300 w-6 h-6" />
                 </div>
               )}
               <div className="flex flex-col items-end gap-2">
@@ -728,7 +728,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                       : event.status === "DRAFT"
                       ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-emerald-300"
+                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-lime-300"
                   }`}
                 >
                   {event.status}
@@ -737,8 +737,8 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
             </div>
 
             <h3 className="font-semibold text-lg leading-tight">{event.name}</h3>
-            <p className="text-sm text-emerald-400 mt-1">Sucursal: {event.branch?.name}</p>
-            <p className="text-xs text-emerald-300 mt-2">
+            <p className="text-sm text-lime-400 mt-1">Sucursal: {event.branch?.name}</p>
+            <p className="text-xs text-lime-300 mt-2">
               📅 {new Date(event.startsAt).toLocaleString()}
             </p>
 
@@ -751,7 +751,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               </button>
               <Link
                 href={`/entrada?eventId=${event.id}`}
-                className="text-sm text-zinc-600 dark:text-emerald-300 font-medium hover:underline flex items-center gap-1"
+                className="text-sm text-zinc-600 dark:text-lime-300 font-medium hover:underline flex items-center gap-1"
               >
                 <Users size={14} /> Asistentes
               </Link>
@@ -760,7 +760,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
         ))}
 
         {filteredEvents.length === 0 && (
-          <div className="col-span-full py-12 text-center text-emerald-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+          <div className="col-span-full py-12 text-center text-lime-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
             No hay eventos creados.
           </div>
         )}
@@ -776,7 +776,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-emerald-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
+                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
               >
                 ✕
               </button>
@@ -796,7 +796,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-emerald-400 block mb-1">Sucursal</label>
+                <label className="text-xs font-semibold text-lime-400 block mb-1">Sucursal</label>
                 <select
                   value={createForm.branchId}
                   onChange={(e) => setCreateForm({ ...createForm, branchId: e.target.value })}
@@ -809,7 +809,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre del Evento</label>
+                <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre del Evento</label>
                 <input
                   type="text"
                   value={createForm.name}
@@ -820,7 +820,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-400 block mb-1">Descripción</label>
+                <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción</label>
                 <textarea
                   value={createForm.description}
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
@@ -831,7 +831,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Inicia</label>
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">Inicia</label>
                   <input
                     type="datetime-local"
                     value={createForm.startsAt}
@@ -842,7 +842,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Termina</label>
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">Termina</label>
                   <input
                     type="datetime-local"
                     value={createForm.endsAt}
@@ -865,9 +865,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 <div className="space-y-4 pt-2 border-t border-zinc-100 dark:border-zinc-800/80 max-h-[35vh] overflow-y-auto pr-1">
                   {/* Imágenes */}
                   <div className="space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Imágenes del Evento</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Imágenes del Evento</p>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Flyer del Evento (Imagen)</label>
+                      <label className="text-xs text-lime-400 block mb-1">Flyer del Evento (Imagen)</label>
                       <div className="flex gap-2 items-center">
                         <input
                           type="text"
@@ -900,9 +900,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   {/* Lugar y Fecha */}
                   <div className="space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Lugar y Código de Vestimenta</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Lugar y Código de Vestimenta</p>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Nombre del Lugar (Venue)</label>
+                      <label className="text-xs text-lime-400 block mb-1">Nombre del Lugar (Venue)</label>
                       <input
                         type="text"
                         value={createForm.venueName}
@@ -912,7 +912,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Dress Code</label>
+                        <label className="text-xs text-lime-400 block mb-1">Dress Code</label>
                         <input
                           type="text"
                           value={createForm.dressCode}
@@ -921,7 +921,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Etiqueta de Mapa</label>
+                        <label className="text-xs text-lime-400 block mb-1">Etiqueta de Mapa</label>
                         <input
                           type="text"
                           value={createForm.mapsLabel}
@@ -931,7 +931,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Google Maps URL</label>
+                      <label className="text-xs text-lime-400 block mb-1">Google Maps URL</label>
                       <input
                         type="text"
                         value={createForm.mapsUrl}
@@ -944,10 +944,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   {/* Servidor SMTP */}
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Servidor SMTP</label>
+                        <label className="text-xs text-lime-400 block mb-1">Servidor SMTP</label>
                         <input
                           type="text"
                           value={createForm.emailHost}
@@ -956,7 +956,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Puerto</label>
+                        <label className="text-xs text-lime-400 block mb-1">Puerto</label>
                         <input
                           type="number"
                           value={createForm.emailPort}
@@ -967,7 +967,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Usuario SMTP (Correo)</label>
+                        <label className="text-xs text-lime-400 block mb-1">Usuario SMTP (Correo)</label>
                         <input
                           type="text"
                           value={createForm.emailUser}
@@ -976,7 +976,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Contraseña (App Password)</label>
+                        <label className="text-xs text-lime-400 block mb-1">Contraseña (App Password)</label>
                         <input
                           type="password"
                           value={createForm.emailPassword}
@@ -986,7 +986,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Remitente Personalizado (From)</label>
+                      <label className="text-xs text-lime-400 block mb-1">Remitente Personalizado (From)</label>
                       <input
                         type="text"
                         value={createForm.emailFrom}
@@ -1002,7 +1002,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         onChange={(e) => setCreateForm({ ...createForm, emailSecure: e.target.checked })}
                         className="rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <label htmlFor="createEmailSecureCheckbox" className="text-xs text-emerald-400 select-none">
+                      <label htmlFor="createEmailSecureCheckbox" className="text-xs text-lime-400 select-none">
                         Usar Conexión Segura (SSL/TLS nativo)
                       </label>
                     </div>
@@ -1010,9 +1010,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   {/* Contenido Plantilla */}
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Plantilla del Email</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Plantilla del Email</p>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Asunto del Correo</label>
+                      <label className="text-xs text-lime-400 block mb-1">Asunto del Correo</label>
                       <input
                         type="text"
                         value={createForm.emailSubject}
@@ -1022,7 +1022,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Preheader</label>
+                        <label className="text-xs text-lime-400 block mb-1">Preheader</label>
                         <input
                           type="text"
                           value={createForm.emailPreheader}
@@ -1031,7 +1031,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Título Mensaje (Heading)</label>
+                        <label className="text-xs text-lime-400 block mb-1">Título Mensaje (Heading)</label>
                         <input
                           type="text"
                           value={createForm.emailHeading}
@@ -1041,7 +1041,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Mensaje Introductorio</label>
+                      <label className="text-xs text-lime-400 block mb-1">Mensaje Introductorio</label>
                       <textarea
                         value={createForm.emailIntro}
                         onChange={(e) => setCreateForm({ ...createForm, emailIntro: e.target.value })}
@@ -1050,7 +1050,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Cuerpo del Correo</label>
+                      <label className="text-xs text-lime-400 block mb-1">Cuerpo del Correo</label>
                       <textarea
                         value={createForm.emailBody}
                         onChange={(e) => setCreateForm({ ...createForm, emailBody: e.target.value })}
@@ -1060,7 +1060,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Título de Advertencia</label>
+                        <label className="text-xs text-lime-400 block mb-1">Título de Advertencia</label>
                         <input
                           type="text"
                           value={createForm.emailWarningTitle}
@@ -1069,7 +1069,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Firma de Equipo</label>
+                        <label className="text-xs text-lime-400 block mb-1">Firma de Equipo</label>
                         <input
                           type="text"
                           value={createForm.emailTeamSignature}
@@ -1079,7 +1079,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Texto de Advertencia</label>
+                      <label className="text-xs text-lime-400 block mb-1">Texto de Advertencia</label>
                       <textarea
                         value={createForm.emailWarningText}
                         onChange={(e) => setCreateForm({ ...createForm, emailWarningText: e.target.value })}
@@ -1127,7 +1127,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   setShowConfigModal(false)
                   setSelectedEvent(null)
                 }}
-                className="text-emerald-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
+                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
               >
                 ✕
               </button>
@@ -1141,7 +1141,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   activeConfigTab === "general"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 General
@@ -1152,7 +1152,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   activeConfigTab === "qr"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Diseño QR
@@ -1163,7 +1163,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   activeConfigTab === "venue"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Venue/Lugar
@@ -1174,7 +1174,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   activeConfigTab === "email"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Plantilla Email
@@ -1185,7 +1185,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   activeConfigTab === "wpp"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Plantilla Wpp
@@ -1213,7 +1213,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               {activeConfigTab === "general" && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre</label>
                     <input
                       type="text"
                       value={configForm.name}
@@ -1224,7 +1224,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Descripción</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción</label>
                     <textarea
                       value={configForm.description}
                       onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
@@ -1235,7 +1235,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Inicia</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Inicia</label>
                       <input
                         type="datetime-local"
                         value={configForm.startsAt}
@@ -1245,7 +1245,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Termina</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Termina</label>
                       <input
                         type="datetime-local"
                         value={configForm.endsAt}
@@ -1257,7 +1257,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Estado</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Estado</label>
                     <select
                       value={configForm.status}
                       onChange={(e) => setConfigForm({ ...configForm, status: e.target.value })}
@@ -1276,7 +1276,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Prefijo de Código QR</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Prefijo de Código QR</label>
                       <input
                         type="text"
                         value={configForm.qrPrefix}
@@ -1288,7 +1288,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Escala del Logo en QR</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Escala del Logo en QR</label>
                       <select
                         value={effectiveLogoScale}
                         disabled={!effectiveLogoUrl}
@@ -1306,7 +1306,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="grid grid-cols-3 gap-3 border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Color Relleno QR</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Color Relleno QR</label>
                       <div className="flex gap-1.5">
                         <input
                           type="color"
@@ -1324,7 +1324,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Color Fondo QR</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Color Fondo QR</label>
                       <div className="flex gap-1.5">
                         <input
                           type="color"
@@ -1342,7 +1342,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Fondo Logo en QR</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Fondo Logo en QR</label>
                       <div className="flex gap-1.5">
                         <input
                           type="color"
@@ -1370,7 +1370,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre del Lugar / Local</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre del Lugar / Local</label>
                       <input
                         type="text"
                         value={configForm.venueName}
@@ -1381,7 +1381,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Código de Vestimenta (Dress code)</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Código de Vestimenta (Dress code)</label>
                       <input
                         type="text"
                         value={configForm.dressCode}
@@ -1392,7 +1392,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Políticas de Acceso</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Políticas de Acceso</label>
                       <input
                         type="text"
                         value={configForm.accessPolicy}
@@ -1405,7 +1405,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="grid grid-cols-2 gap-3 border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">URL Google Maps</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">URL Google Maps</label>
                       <input
                         type="text"
                         value={configForm.mapsUrl}
@@ -1416,7 +1416,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Etiqueta de Mapa</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Etiqueta de Mapa</label>
                       <input
                         type="text"
                         value={configForm.mapsLabel}
@@ -1432,7 +1432,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               {activeConfigTab === "email" && (
                 <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Asunto del Correo</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Asunto del Correo</label>
                     <input
                       type="text"
                       value={configForm.emailSubject}
@@ -1444,7 +1444,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Pre-encabezado (Preheader)</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Pre-encabezado (Preheader)</label>
                       <input
                         type="text"
                         value={configForm.emailPreheader}
@@ -1454,7 +1454,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Título del Mensaje (Heading)</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Título del Mensaje (Heading)</label>
                       <input
                         type="text"
                         value={configForm.emailHeading}
@@ -1466,7 +1466,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Mensaje Introductorio</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Mensaje Introductorio</label>
                     <textarea
                       value={configForm.emailIntro}
                       onChange={(e) => setConfigForm({ ...configForm, emailIntro: e.target.value })}
@@ -1476,10 +1476,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Imágenes del Evento</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Imágenes del Evento</p>
                     <div className="grid grid-cols-1 gap-3">
                       <div>
-                        <label className="text-xs font-semibold text-emerald-400 block mb-1">Flyer del Evento</label>
+                        <label className="text-xs font-semibold text-lime-400 block mb-1">Flyer del Evento</label>
                         <div className="flex gap-2 items-center">
                           <input
                             type="text"
@@ -1512,7 +1512,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                     <div className="grid grid-cols-2 gap-3 items-end">
                       <div>
-                        <label className="text-xs font-semibold text-emerald-400 block mb-1">Tamaño del Logo en Email</label>
+                        <label className="text-xs font-semibold text-lime-400 block mb-1">Tamaño del Logo en Email</label>
                         <div className="flex items-center gap-2">
                           <input
                             type="range"
@@ -1541,10 +1541,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Diseño y Colores de Plantilla</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Diseño y Colores de Plantilla</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400">Fondo General</label>
+                        <label className="text-xs text-lime-400">Fondo General</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1562,7 +1562,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Fondo Tarjeta (Card)</label>
+                        <label className="text-xs text-lime-400">Fondo Tarjeta (Card)</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1580,7 +1580,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Cabecera de Tarjeta</label>
+                        <label className="text-xs text-lime-400">Cabecera de Tarjeta</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1598,7 +1598,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Color de Acento</label>
+                        <label className="text-xs text-lime-400">Color de Acento</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1616,7 +1616,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Color Texto Principal</label>
+                        <label className="text-xs text-lime-400">Color Texto Principal</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1634,7 +1634,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Color de Títulos</label>
+                        <label className="text-xs text-lime-400">Color de Títulos</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1652,7 +1652,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Color Texto Secundario</label>
+                        <label className="text-xs text-lime-400">Color Texto Secundario</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1670,7 +1670,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Color de Bordes</label>
+                        <label className="text-xs text-lime-400">Color de Bordes</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1688,7 +1688,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Fondo Detalle de Evento</label>
+                        <label className="text-xs text-lime-400">Fondo Detalle de Evento</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1706,7 +1706,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
 
                       <div>
-                        <label className="text-xs text-emerald-400">Fondo de Advertencia</label>
+                        <label className="text-xs text-lime-400">Fondo de Advertencia</label>
                         <div className="flex gap-1.5">
                           <input
                             type="color"
@@ -1726,7 +1726,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Cuerpo del Correo</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Cuerpo del Correo</label>
                     <textarea
                       value={configForm.emailBody}
                       onChange={(e) => setConfigForm({ ...configForm, emailBody: e.target.value })}
@@ -1737,7 +1737,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                   <div className="grid grid-cols-2 gap-3 border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Título de Advertencia</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Título de Advertencia</label>
                       <input
                         type="text"
                         value={configForm.emailWarningTitle}
@@ -1747,7 +1747,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Firma de Equipo</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Firma de Equipo</label>
                       <input
                         type="text"
                         value={configForm.emailTeamSignature}
@@ -1759,7 +1759,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Texto de Advertencia</label>
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">Texto de Advertencia</label>
                     <textarea
                       value={configForm.emailWarningText}
                       onChange={(e) => setConfigForm({ ...configForm, emailWarningText: e.target.value })}
@@ -1769,10 +1769,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                   </div>
 
                   <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
-                    <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
+                    <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Servidor SMTP</label>
+                        <label className="text-xs text-lime-400 block mb-1">Servidor SMTP</label>
                         <input
                           type="text"
                           value={configForm.emailHost || ""}
@@ -1782,7 +1782,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Puerto</label>
+                        <label className="text-xs text-lime-400 block mb-1">Puerto</label>
                         <input
                           type="number"
                           value={configForm.emailPort ?? 587}
@@ -1794,7 +1794,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Usuario SMTP (Correo)</label>
+                        <label className="text-xs text-lime-400 block mb-1">Usuario SMTP (Correo)</label>
                         <input
                           type="text"
                           value={configForm.emailUser || ""}
@@ -1804,7 +1804,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-emerald-400 block mb-1">Contraseña (o App Password)</label>
+                        <label className="text-xs text-lime-400 block mb-1">Contraseña (o App Password)</label>
                         <input
                           type="password"
                           value={configForm.emailPassword || ""}
@@ -1815,7 +1815,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-emerald-400 block mb-1">Remitente Personalizado (From)</label>
+                      <label className="text-xs text-lime-400 block mb-1">Remitente Personalizado (From)</label>
                       <input
                         type="text"
                         value={configForm.emailFrom || ""}
@@ -1832,7 +1832,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         onChange={(e) => setConfigForm({ ...configForm, emailSecure: e.target.checked })}
                         className="rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <label htmlFor="emailSecureCheckbox" className="text-xs text-emerald-400 select-none">
+                      <label htmlFor="emailSecureCheckbox" className="text-xs text-lime-400 select-none">
                         Usar Conexión Segura (SSL/TLS nativo en puerto 465)
                       </label>
                     </div>
@@ -1844,7 +1844,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
                     <h4 className="text-sm font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                      <MessageCircle size={16} className="text-emerald-500" />
+                      <MessageCircle size={16} className="text-lime-500" />
                       Mensaje de WhatsApp
                     </h4>
                     <div className="space-y-4">
@@ -1853,14 +1853,14 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                         <textarea
                           value={configForm.whatsappMessage || ""}
                           onChange={(e) => setConfigForm({ ...configForm, whatsappMessage: e.target.value })}
-                          className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[220px]"
+                          className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-lime-500 min-h-[220px]"
                           placeholder="¡Hola, {nombre_asistente}! 🎟️..."
                         />
-                        <p className="text-[10px] text-emerald-400 mt-1">
+                        <p className="text-[10px] text-lime-400 mt-1">
                           Variables: {"{nombre_asistente}, {nombre_evento}, {fecha_evento}, {lugar_evento}, {nombre_categoria}, {link_qr}, {flyer_evento}"}
                         </p>
                       </div>
-                      <div className="text-xs text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+                      <div className="text-xs text-lime-400 bg-lime-50/50 dark:bg-lime-950/20 p-3 rounded-lg border border-lime-100 dark:border-lime-900/30">
                         El flyer del evento configurado en la pestaña "Diseño QR" se adjuntará automáticamente como una imagen en el mensaje de WhatsApp.
                       </div>
                     </div>
@@ -1875,7 +1875,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                    <div className="flex flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800/80 sticky top-0 min-h-[350px]">
                      {activeConfigTab === "qr" && (
                        <div className="space-y-4 text-center w-full">
-                         <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Vista Previa QR</h4>
+                         <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider">Vista Previa QR</h4>
                          <div className="p-6 rounded-xl flex items-center justify-center shadow-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 w-fit mx-auto relative min-h-[200px] min-w-[200px]">
                            {isGeneratingQr && (
                              <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-zinc-950/50 rounded-xl z-10">
@@ -1885,12 +1885,12 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                            {qrPreviewImage ? (
                              <img src={qrPreviewImage} alt="QR Preview" className="w-48 h-48 rounded-lg shadow-inner object-contain" />
                            ) : (
-                             <div className="w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 rounded-lg text-emerald-300">
+                             <div className="w-48 h-48 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 rounded-lg text-lime-300">
                                <QrCode size={48} />
                              </div>
                            )}
                          </div>
-                         <p className="text-xs text-emerald-400 font-semibold max-w-xs mx-auto">
+                         <p className="text-xs text-lime-400 font-semibold max-w-xs mx-auto">
                            Escaneando este código se decodificará como: <br/>
                            <span className="font-mono text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 dark:text-indigo-400 px-1 rounded">
                              {configForm.qrPrefix || "EVT"}-GRAN-ABC12345
@@ -1901,7 +1901,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
  
                      {activeConfigTab === "email" && (
                        <div className="w-full flex flex-col space-y-3">
-                         <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider text-center">Vista Previa Plantilla Email</h4>
+                         <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider text-center">Vista Previa Plantilla Email</h4>
                          
                          <div 
                            className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 text-xs shadow-md max-h-[480px] overflow-y-auto flex flex-col"
@@ -1911,16 +1911,16 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                            }}
                          >
                            <div className="bg-white dark:bg-zinc-950 p-2.5 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                             <div className="text-zinc-600 dark:text-emerald-300">
-                               <span className="text-emerald-300 font-semibold">De: </span>
+                             <div className="text-zinc-600 dark:text-lime-300">
+                               <span className="text-lime-300 font-semibold">De: </span>
                                <span className="font-bold text-zinc-750 dark:text-zinc-300">notificaciones@dmt.com</span>
                                <br/>
-                               <span className="text-emerald-300 font-semibold">Asunto: </span>
+                               <span className="text-lime-300 font-semibold">Asunto: </span>
                                <span className="font-bold text-zinc-800 dark:text-zinc-200">
                                   {replacePreviewTemplates(configForm.emailSubject || "Tu acceso está listo: {nombre_evento}")}
                                </span>
                              </div>
-                             <span className="text-[10px] text-emerald-300 font-mono shrink-0">10:00 AM</span>
+                             <span className="text-[10px] text-lime-300 font-mono shrink-0">10:00 AM</span>
                            </div>
  
                            <div className="p-4 flex justify-center">
@@ -2122,7 +2122,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
                         {activeConfigTab === "wpp" && (
                           <div className="space-y-4 text-center w-full animate-in fade-in slide-in-from-right-8 duration-500">
-                            <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Vista Previa Mensaje WhatsApp</h4>
+                            <h4 className="text-sm font-bold text-lime-400 uppercase tracking-wider">Vista Previa Mensaje WhatsApp</h4>
                             
                             <div className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-md bg-[#0b141a] p-4 max-w-sm mx-auto">
                               {/* WhatsApp Header */}
@@ -2147,7 +2147,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                   <p className="whitespace-pre-wrap leading-relaxed font-sans text-[12px] px-1">
                                     {getWhatsAppPreviewMessage()}
                                   </p>
-                                  <div className="text-[10px] text-emerald-300 text-right mt-1 font-sans px-1">
+                                  <div className="text-[10px] text-lime-300 text-right mt-1 font-sans px-1">
                                     10:00 AM <span className="text-[#53bdeb] font-bold">✓✓</span>
                                   </div>
                                 </div>
@@ -2197,4 +2197,5 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
     </div>
   )
 }
+
 

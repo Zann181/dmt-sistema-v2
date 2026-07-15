@@ -258,7 +258,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
   const renderSvgLogo = (logoStr: string | null) => {
     if (!logoStr) {
-      return <Building2 className="text-zinc-600 dark:text-emerald-300 w-6 h-6" />
+      return <Building2 className="text-zinc-600 dark:text-lime-300 w-6 h-6" />
     }
     const cleanStr = logoStr.trim()
     if (cleanStr.startsWith("<svg")) {
@@ -278,7 +278,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
         />
       )
     }
-    return <Building2 className="text-zinc-600 dark:text-emerald-300 w-6 h-6" />
+    return <Building2 className="text-zinc-600 dark:text-lime-300 w-6 h-6" />
   }
 
   return (
@@ -286,7 +286,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Sucursales</h2>
-          <p className="text-emerald-400">Gestiona las sucursales y sus configuraciones.</p>
+          <p className="text-lime-400">Gestiona las sucursales y sus configuraciones.</p>
         </div>
         <button
           onClick={() => {
@@ -329,11 +329,11 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
             </div>
 
             <h3 className="font-semibold text-lg">{branch.name}</h3>
-            <p className="text-sm text-emerald-400 font-mono mt-1">Prefix: {branch.codePrefix}</p>
+            <p className="text-sm text-lime-400 font-mono mt-1">Prefix: {branch.codePrefix}</p>
 
             {/* Colors Preview */}
             <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs text-emerald-300">Colores:</span>
+              <span className="text-xs text-lime-300">Colores:</span>
               <div
                 className="w-4 h-4 rounded-full border border-zinc-300 dark:border-zinc-700"
                 style={{ backgroundColor: branch.primaryColor }}
@@ -360,7 +360,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
               </button>
               <Link
                 href={`/sucursales/${branch.slug}/staff`}
-                className="text-sm text-zinc-600 dark:text-emerald-300 font-medium hover:underline"
+                className="text-sm text-zinc-600 dark:text-lime-300 font-medium hover:underline"
               >
                 Staff
               </Link>
@@ -393,7 +393,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
         ))}
 
         {branches.length === 0 && (
-          <div className="col-span-full py-12 text-center text-emerald-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+          <div className="col-span-full py-12 text-center text-lime-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
             No tienes sucursales asignadas.
           </div>
         )}
@@ -412,7 +412,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   setShowEditModal(false)
                   setSelectedBranch(null)
                 }}
-                className="text-emerald-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
+                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
               >
                 ✕
               </button>
@@ -426,7 +426,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   editTab === "branding"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Branding
@@ -437,7 +437,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
                   editTab === "categories"
                     ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
-                    : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+                    : "border-transparent text-lime-400 hover:text-zinc-700 dark:hover:text-zinc-300"
                 }`}
               >
                 Categorías de Ticket
@@ -459,7 +459,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Nombre de la Sucursal
                   </label>
                   <input
@@ -473,13 +473,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 {/* Colors Settings */}
                 <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">
                     Colores de Marca
                   </p>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color Primario
                       </label>
                       <div className="flex gap-2">
@@ -500,7 +500,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color Secundario
                       </label>
                       <div className="flex gap-2">
@@ -523,7 +523,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Fondo Degradado 1 (Inicio)
                       </label>
                       <div className="flex gap-2">
@@ -544,7 +544,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color Superficie
                       </label>
                       <div className="flex gap-2">
@@ -565,7 +565,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Fondo Degradado 2 (Fin)
                       </label>
                       <div className="flex gap-2">
@@ -588,7 +588,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                   <div className="grid grid-cols-2 gap-3 mb-1 mt-3">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color de Texto
                       </label>
                       <div className="flex gap-2">
@@ -609,7 +609,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color de Títulos
                       </label>
                       <div className="flex gap-2">
@@ -633,13 +633,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 {/* Logo SVG Settings */}
                 <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">
                     Logo de la Sucursal
                   </p>
 
                   <div className="grid grid-cols-2 gap-3 mb-1">
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Color de Fondo del Logo
                       </label>
                       <div className="flex gap-2">
@@ -660,7 +660,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Tamaño del Logo: {form.logoSize || 64}px
                       </label>
                       <input
@@ -676,7 +676,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Cargar imagen de logo
                     </label>
                     <label className="flex items-center gap-2 justify-center px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors text-sm font-medium">
@@ -692,7 +692,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Código SVG Inline
                     </label>
                     <textarea
@@ -706,7 +706,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                   {form.logoUrl && (
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">
                         Previsualización Logo:
                       </label>
                       <div className="p-4 border border-dashed rounded-lg bg-zinc-50 dark:bg-zinc-900/50 flex justify-center items-center min-h-[180px]">
@@ -727,7 +727,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                   {/* Banner de restauración de tema */}
                   <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 rounded-lg text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono">
-                    <div className="flex items-center gap-2 text-emerald-300">
+                    <div className="flex items-center gap-2 text-lime-300">
                       <Store size={18} className="shrink-0 text-primary" />
                       <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">¿Establecer Verne Neon Dark por defecto?</span>
                     </div>
@@ -795,7 +795,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 {!showCatForm ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-lime-300 uppercase tracking-wider">
                         Categorías Activas
                       </span>
                       <button
@@ -812,7 +812,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     {loadingCategories ? (
-                      <div className="text-center py-6 text-emerald-400 text-sm">Cargando categorías...</div>
+                      <div className="text-center py-6 text-lime-400 text-sm">Cargando categorías...</div>
                     ) : (
                       <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/10">
                         <div className="max-h-[40vh] overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -820,11 +820,11 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                             <div key={cat.id} className="p-3 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-900/40 transition-colors">
                               <div>
                                 <span className="font-semibold text-sm block text-zinc-800 dark:text-zinc-200">{cat.name}</span>
-                                <span className="text-xs text-emerald-300">
+                                <span className="text-xs text-lime-300">
                                   Precio: ${Number(cat.price).toLocaleString()} | Bebidas: {cat.includedConsumptions}
                                 </span>
                                 {cat.description && (
-                                  <p className="text-[11px] text-emerald-400 max-w-xs truncate mt-0.5">{cat.description}</p>
+                                  <p className="text-[11px] text-lime-400 max-w-xs truncate mt-0.5">{cat.description}</p>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
@@ -840,7 +840,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                                     })
                                     setShowCatForm(true)
                                   }}
-                                  className="p-1 text-emerald-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded"
+                                  className="p-1 text-lime-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded"
                                   title="Editar"
                                 >
                                   <Edit2 size={14} />
@@ -848,7 +848,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCategory(cat)}
-                                  className="p-1 text-emerald-300 hover:text-red-600 dark:hover:text-red-400 rounded"
+                                  className="p-1 text-lime-300 hover:text-red-600 dark:hover:text-red-400 rounded"
                                   title="Desactivar"
                                 >
                                   <Trash2 size={14} />
@@ -857,7 +857,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                             </div>
                           ))}
                           {categories.length === 0 && (
-                            <div className="text-center py-8 text-emerald-300 text-sm">
+                            <div className="text-center py-8 text-lime-300 text-sm">
                               No hay categorías registradas. Crea una para comenzar.
                             </div>
                           )}
@@ -875,7 +875,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
-                        <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre de la Categoría</label>
+                        <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre de la Categoría</label>
                         <input
                           type="text"
                           placeholder="Ej: VIP, General, Cortesía"
@@ -887,7 +887,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-emerald-400 block mb-1">Precio de Entrada</label>
+                        <label className="text-xs font-semibold text-lime-400 block mb-1">Precio de Entrada</label>
                         <input
                           type="text"
                           placeholder="0"
@@ -899,7 +899,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-emerald-400 block mb-1">Bebidas Incluidas (Consumos)</label>
+                        <label className="text-xs font-semibold text-lime-400 block mb-1">Bebidas Incluidas (Consumos)</label>
                         <input
                           type="number"
                           min="0"
@@ -913,7 +913,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-400 block mb-1">Descripción corta (Opcional)</label>
+                      <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción corta (Opcional)</label>
                       <input
                         type="text"
                         placeholder="Ej: Incluye acceso a zona VIP y backstage"
@@ -971,7 +971,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-emerald-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
+                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
               >
                 ✕
               </button>
@@ -992,7 +992,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
             >
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Nombre de la Sucursal
                   </label>
                   <input
@@ -1006,7 +1006,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Prefijo Código (Max 12)
                   </label>
                   <input
@@ -1022,7 +1022,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Email de Contacto
                   </label>
                   <input
@@ -1035,7 +1035,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Teléfono de Contacto
                   </label>
                   <input
@@ -1050,13 +1050,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
               {/* Colors Settings */}
               <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">
                   Colores de Marca
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Color Primario
                     </label>
                     <div className="flex gap-2">
@@ -1077,7 +1077,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Color Secundario
                     </label>
                     <div className="flex gap-2">
@@ -1100,7 +1100,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Fondo Degradado 1 (Inicio)
                     </label>
                     <div className="flex gap-2">
@@ -1121,7 +1121,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Superficie
                     </label>
                     <div className="flex gap-2">
@@ -1142,7 +1142,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Fondo Degradado 2 (Fin)
                     </label>
                     <div className="flex gap-2">
@@ -1166,13 +1166,13 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
               {/* Logo SVG Settings */}
               <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                <p className="text-xs font-bold text-lime-300 uppercase tracking-wider">
                   Logo de la Sucursal
                 </p>
 
                 <div className="grid grid-cols-2 gap-3 mb-1">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Color de Fondo del Logo
                     </label>
                     <div className="flex gap-2">
@@ -1193,7 +1193,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Tamaño del Logo: {createForm.logoSize || 64}px
                     </label>
                     <input
@@ -1209,7 +1209,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Cargar imagen de logo
                   </label>
                   <label className="flex items-center gap-2 justify-center px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors text-sm font-medium">
@@ -1234,7 +1234,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                  <label className="text-xs font-semibold text-lime-400 block mb-1">
                     Código SVG Inline
                   </label>
                   <textarea
@@ -1248,7 +1248,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 {createForm.logoUrl && (
                   <div>
-                    <label className="text-xs font-semibold text-emerald-400 block mb-1">
+                    <label className="text-xs font-semibold text-lime-400 block mb-1">
                       Previsualización Logo:
                     </label>
                     <div className="p-4 border border-dashed rounded-lg bg-zinc-50 dark:bg-zinc-900/50 flex justify-center items-center min-h-[180px]">
@@ -1290,4 +1290,5 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
     </div>
   )
 }
+
 
