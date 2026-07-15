@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
+import { signOut } from "next-auth/react"
 import Link from "next/link"
 import { 
   LayoutDashboard, 
@@ -306,16 +307,14 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
                 <div className="scale-85 origin-left">
                   <BranchLogoHeader />
                 </div>
-                <form action="/api/auth/signout" method="POST">
-                  <button 
-                    type="submit" 
-                    className="flex items-center gap-1 px-2 py-1 bg-red-950/30 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 rounded text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                    title="Cerrar Sesión"
-                  >
-                    <LogOut size={10} />
-                    <span>Salir</span>
-                  </button>
-                </form>
+                <button 
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="flex items-center gap-1 px-2 py-1 bg-red-950/30 hover:bg-red-900/40 border border-red-500/20 hover:border-red-500/40 text-red-400 rounded text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  title="Cerrar Sesión"
+                >
+                  <LogOut size={10} />
+                  <span>Salir</span>
+                </button>
               </div>
             </div>
           ) : (
@@ -324,15 +323,13 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
               <div className="scale-75">
                 <BranchLogoHeader />
               </div>
-              <form action="/api/auth/signout" method="POST">
-                <button 
-                  type="submit" 
-                  className="p-2 bg-red-950/20 border border-red-500/20 hover:bg-red-950/40 text-red-400 rounded-md transition-colors cursor-pointer"
-                  title="Cerrar Sesión"
-                >
-                  <LogOut size={14} />
-                </button>
-              </form>
+              <button 
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="p-2 bg-red-950/20 border border-red-500/20 hover:bg-red-950/40 text-red-400 rounded-md transition-colors cursor-pointer"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={14} />
+              </button>
             </div>
           )}
         </div>
