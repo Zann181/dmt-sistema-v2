@@ -49,7 +49,7 @@ export async function POST(
     // Create User, BranchMembership, and EventAssignment in a transaction
     const branchId = session.user.activeBranchId!
     
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await prisma.$transaction(async (tx: any) => {
       const newUser = await tx.user.create({
         data: {
           username: parsed.username,
