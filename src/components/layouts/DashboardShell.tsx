@@ -60,6 +60,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
 
   // Prevent hydration mismatch for client-persisted state
   const [mounted, setMounted] = useState(false)
+  const [isMobileSubmenuOpen, setIsMobileSubmenuOpen] = useState(false)
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -198,10 +199,10 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           {/* Entrada Dropdown */}
           {p.accessAttendees && (
             <div className="group relative">
-              <Link 
-                href="/entrada?mode=search" 
-                className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  isActive("/entrada?mode=search") 
+              <div 
+                onClick={() => setIsMobileSubmenuOpen(!isMobileSubmenuOpen)}
+                className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer select-none ${
+                  isActive("/entrada") 
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold border-l-2 border-primary" 
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 }`}
@@ -214,13 +215,13 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
                   </span>
                 </div>
                 {!collapsed && (
-                  <span className="text-[10px] text-emerald-500/80 group-hover:rotate-180 transition-transform select-none">▼</span>
+                  <span className={`text-[10px] text-emerald-500/80 transition-transform select-none ${isMobileSubmenuOpen ? "rotate-180" : "md:group-hover:rotate-180"}`}>▼</span>
                 )}
-              </Link>
+              </div>
 
               {/* Submenu for Expanded Sidebar */}
               {!collapsed && (
-                <div className="hidden group-hover:block pl-6 mt-1 space-y-1">
+                <div className={`pl-6 mt-1 space-y-1 ${isMobileSubmenuOpen ? "block" : "hidden md:group-hover:block"}`}>
                   <Link href="/entrada?mode=scan&fullscreen=true" target="_blank" className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
                     <QrCode size={12} /> Escáner QR
                   </Link>
