@@ -283,9 +283,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Sucursales</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">\n        <div className="w-full sm:w-auto">\n          <h2 className="text-2xl font-bold tracking-tight">Sucursales</h2>
           <p className="text-emerald-500">Gestiona las sucursales y sus configuraciones.</p>
         </div>
         <button
@@ -293,7 +291,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
             setErrorMsg("")
             setShowCreateModal(true)
           }}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto justify-center rounded-md font-medium transition-colors"
         >
           <Plus size={18} />
           Nueva Sucursal
@@ -351,7 +349,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
               />
             </div>
 
-            <div className="mt-6 flex gap-3 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 onClick={() => handleOpenEdit(branch)}
                 className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1"
@@ -768,7 +766,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     {deleteBranchMutation.isPending ? "Eliminando..." : "Eliminar"}
                   </button>
 
-                  <div className="flex gap-2 justify-end">
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end w-full">
                     <button
                       type="button"
                       onClick={() => {
@@ -923,7 +921,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       />
                     </div>
 
-                    <div className="flex gap-2 justify-end border-t pt-3 border-zinc-200 dark:border-zinc-800">
+                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end w-full border-t pt-3 border-zinc-200 dark:border-zinc-800">
                       <button
                         type="button"
                         onClick={() => setShowCatForm(false)}
@@ -942,7 +940,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 )}
 
                 {!showCatForm && (
-                  <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                  <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
                     <button
                       type="button"
                       onClick={() => {
@@ -1267,11 +1265,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 )}
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -1290,6 +1285,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
     </div>
   )
 }
+
+
 
 
 

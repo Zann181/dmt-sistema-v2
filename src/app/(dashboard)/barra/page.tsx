@@ -407,11 +407,8 @@ export default function BarraPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end border-t pt-4 border-zinc-200 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setCheckoutType(null)}
-                  className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
+                <button type="button" onClick={() => setCheckoutType(null)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -556,11 +553,8 @@ export default function BarraPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end border-t pt-4 border-zinc-200 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCashModal(false)}
-                  className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
+                <button type="button" onClick={() => setShowCashModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -579,6 +573,8 @@ export default function BarraPage() {
     </div>
   )
 }
+
+
 
 
 

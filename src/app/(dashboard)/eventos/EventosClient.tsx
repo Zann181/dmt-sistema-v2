@@ -675,9 +675,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Eventos</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">\n        <div className="w-full sm:w-auto">\n          <h2 className="text-2xl font-bold tracking-tight">Eventos</h2>
           <p className="text-emerald-500">Gestiona los eventos, accesos y configuraciones.</p>
         </div>
         <button
@@ -690,7 +688,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
             setShowAdvancedCreate(false)
             setShowCreateModal(true)
           }}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto justify-center rounded-md font-medium transition-colors"
         >
           <Plus size={18} />
           Nuevo Evento
@@ -742,7 +740,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               📅 {new Date(event.startsAt).toLocaleString()}
             </p>
 
-            <div className="mt-6 flex gap-3 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">
               <button
                 onClick={() => handleOpenConfig(event)}
                 className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center gap-1"
@@ -868,7 +866,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Imágenes del Evento</p>
                     <div>
                       <label className="text-xs text-emerald-500 block mb-1">Flyer del Evento (Imagen)</label>
-                      <div className="flex gap-2 items-center">
+                      <div className="flex flex-wrap gap-2 items-center">
                         <input
                           type="text"
                           value={createForm.flyerUrl || ""}
@@ -1091,11 +1089,8 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                 >
                   Cancelar
                 </button>
@@ -1480,7 +1475,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     <div className="grid grid-cols-1 gap-3">
                       <div>
                         <label className="text-xs font-semibold text-emerald-500 block mb-1">Flyer del Evento</label>
-                        <div className="flex gap-2 items-center">
+                        <div className="flex flex-wrap gap-2 items-center">
                           <input
                             type="text"
                             value={configForm.flyerUrl}
@@ -2159,7 +2154,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     )}
                   </div>
  
-               <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
+               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
                  <button
                    type="button"
                    onClick={() => {
@@ -2197,6 +2192,8 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
     </div>
   )
 }
+
+
 
 
 
