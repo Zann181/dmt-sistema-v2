@@ -160,6 +160,15 @@ const getInitialCreateForm = (branchId: string) => ({
   emailWarningBackgroundColor: "#1c0d0d",
 })
 
+const getValidImageUrl = (url: string | null | undefined) => {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (trimmed.startsWith("<svg")) {
+    return `data:image/svg+xml;utf8,${encodeURIComponent(trimmed)}`;
+  }
+  return url;
+}
+
 export function EventosClient({ initialEvents, branches }: { initialEvents: Event[]; branches: Branch[] }) {
   const queryClient = useQueryClient()
   const { activeBranchId } = useContextStore()
@@ -698,7 +707,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               {event.flyerUrl ? (
                 <div className="w-12 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm shrink-0">
                   <img
-                    src={event.flyerUrl}
+                    src={getValidImageUrl(event.flyerUrl)}
                     alt="Flyer Preview"
                     className="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer"
                     onClick={(e) => {
@@ -1928,7 +1937,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                 >
                                   {effectiveEmailLogoHref ? (
                                     <img 
-                                      src={effectiveEmailLogoHref} 
+                                      src={getValidImageUrl(effectiveEmailLogoHref)} 
                                       alt="Logo"
                                       style={{ 
                                         height: `${configForm.emailLogoSize || 80}px`, 
@@ -1957,7 +1966,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                  {configForm.flyerUrl && (
                                    <div className="w-full overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 my-2">
                                      <img 
-                                       src={configForm.flyerUrl} 
+                                       src={getValidImageUrl(configForm.flyerUrl)} 
                                        alt="Flyer del Evento" 
                                        className="w-full h-auto object-contain"
                                      />
@@ -2132,7 +2141,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                 <div className="bg-[#202c33] rounded-lg p-2 text-xs text-zinc-100 max-w-[90%] relative border-l-2 border-[#128c7e] self-start text-left shadow-sm">
                                   {configForm.flyerUrl && (
                                     <div className="mb-2 relative rounded-md overflow-hidden bg-black/20" style={{ height: "160px" }}>
-                                      <img src={configForm.flyerUrl} alt="Flyer del evento" className="w-full h-full object-cover" />
+                                      <img src={getValidImageUrl(configForm.flyerUrl)} alt="Flyer del evento" className="w-full h-auto rounded-lg mb-4" />
                                     </div>
                                   )}
                                   <p className="whitespace-pre-wrap leading-relaxed font-sans text-[12px] px-1">
