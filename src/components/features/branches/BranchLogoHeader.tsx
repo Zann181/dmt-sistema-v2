@@ -36,7 +36,7 @@ export function BranchLogoHeader() {
 
   if (logoUrl) {
     const cleanLogo = logoUrl.trim().replace(/^<\?xml[^>]*\?>/i, "").trim()
-    const isSvg = cleanLogo.startsWith("<svg")
+    const isSvg = /<svg/i.test(cleanLogo)
     const isImg = cleanLogo.startsWith("data:") || cleanLogo.startsWith("http") || cleanLogo.startsWith("/")
 
     if (isSvg || isImg) {
@@ -47,7 +47,7 @@ export function BranchLogoHeader() {
         >
           {isSvg ? (
             <div 
-              className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+              className="w-full h-full flex items-center justify-center [&_svg]:!w-full [&_svg]:!h-full [&_svg]:!max-w-full [&_svg]:!max-h-full"
               dangerouslySetInnerHTML={{ __html: cleanLogo }}
             />
           ) : (

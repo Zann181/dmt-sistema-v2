@@ -169,6 +169,8 @@ model Event {
   emailTeamSignature       String @default("{nombre_sucursal}") @db.VarChar(220)
   emailLegalNote           String @default("Correo automático - conserva tu QR hasta el día del evento.") @db.VarChar(220)
   emailLogoSize            Int    @default(80)
+  whatsappMessage          String @default("¡Hola, {nombre_asistente}! 🎟️\n\nTu registro para *{nombre_evento}* ha sido confirmado.\n\n*Detalles del Evento:*\n📅 *Fecha:* {fecha_evento}\n📍 *Lugar:* {lugar_evento}\n🎫 *Categoría:* {nombre_categoria}\n\n📥 *Descarga tu Código QR de Acceso:* \n{link_qr}\n\n¡Te esperamos!")
+
   // Email Colors
   emailBackgroundColor        String @default("#000000") @db.VarChar(7)
   emailCardColor              String @default("#0c0c0e") @db.VarChar(7)

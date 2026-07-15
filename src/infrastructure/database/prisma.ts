@@ -408,6 +408,7 @@ class MockPrisma {
 
 const isNeon = connectionString.includes("neon.tech")
 const isDummy = connectionString.includes("dummy")
+const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
 
 let cleanConnectionString = connectionString
 if (!isNeon && !isDummy && connectionString) {
@@ -426,7 +427,7 @@ export const prisma =
     ? new MockPrisma()
     : isNeon
       ? new PrismaClient({ adapter: new PrismaNeon({ connectionString }) })
-      : new PrismaClient({ adapter: new PrismaPg(new PgPool({ connectionString: cleanConnectionString, ssl: { rejectUnauthorized: false } })) })
+      : new PrismaClient({ adapter: new PrismaPg(new PgPool({ connectionString: cleanConnectionString, ssl: isLocal ? false : { rejectUnauthorized: false } })) })
   )
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma

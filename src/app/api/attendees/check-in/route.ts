@@ -18,6 +18,25 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { qrCodeOrCc, eventId } = checkInSchema.parse(body)
 
+    const attendee = await AttendeeService.findByQrOrCc(qrCodeOrCc, eventId)
+    if (!attendee) {
+      return NextResponse.json({ error: "Asistente no encontrado en este evento" }, { status: 404 })
+    }
+
+    if (attendee.hasCheckedIn) {
+      return NextResponse.json({
+        error: "ALREADY_CHECKED_IN",
+        message: "El asistente ya ha ingresado al evento",
+        attendee: {
+          id: attendee.id,
+          name: attendee.name,
+          cc: attendee.cc,
+          checkedInAt: attendee.checkedInAt,
+          categoryName: attendee.category?.name
+        }
+      }, { status: 409 })
+    }
+
     const updatedAttendee = await AttendeeService.checkIn(
       qrCodeOrCc,
       eventId,

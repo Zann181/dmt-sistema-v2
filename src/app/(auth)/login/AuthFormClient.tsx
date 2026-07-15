@@ -127,46 +127,46 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
   }
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-zinc-950 overflow-hidden font-sans text-zinc-100 px-4 py-8">
+    <div className="relative flex items-center justify-center min-h-screen bg-zinc-950 overflow-hidden font-mono text-zinc-100 px-4 py-8">
       {/* Background Decorative Glowing Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-900/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-950/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-green-950/10 blur-[120px] pointer-events-none" />
 
       <div className="relative w-full max-w-md p-1">
         {/* Glow border effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur-md opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-green-500 to-lime-500 rounded-2xl blur-md opacity-25" />
         
-        <div className="relative bg-zinc-900/90 border border-zinc-800/80 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+        <div className="relative bg-zinc-950 border border-emerald-500/30 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_0_50px_rgba(16,185,129,0.1)] space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-1">
+            <div className="inline-flex p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-1">
               {activeTab === "login" ? (
                 <KeyRound size={24} className="animate-pulse" />
               ) : (
                 <UserPlus size={24} className="animate-pulse" />
               )}
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold tracking-widest text-emerald-400 uppercase drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">
               DMT Sistema v2
             </h1>
-            <p className="text-zinc-400 text-xs md:text-sm">
+            <p className="text-zinc-400 text-[10px] uppercase tracking-wider font-semibold">
               {activeTab === "login"
-                ? "Ingresa tus credenciales para acceder al panel administrativo"
-                : "Crea tu cuenta de acceso rápido y seguro"}
+                ? "Ingresa tus credenciales de acceso"
+                : "Registra una nueva cuenta administrativa"}
             </p>
           </div>
 
           {/* Tab Switcher */}
-          <div className="flex bg-zinc-950/80 p-1 border border-zinc-850 rounded-xl">
+          <div className="flex bg-zinc-900/50 p-1 border border-zinc-900 rounded-lg">
             <button
               onClick={() => {
                 setActiveTab("login")
                 setErrorMsg(null)
                 setSuccessMsg("")
               }}
-              className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 text-xs font-bold rounded-md uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                 activeTab === "login"
-                  ? "bg-zinc-800 text-white shadow"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                  : "text-zinc-500 hover:text-zinc-350"
               }`}
             >
               Iniciar Sesión
@@ -177,10 +177,10 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
                 setErrorMsg(null)
                 setSuccessMsg("")
               }}
-              className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 text-xs font-bold rounded-md uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                 activeTab === "register"
-                  ? "bg-zinc-800 text-white shadow"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                  : "text-zinc-500 hover:text-zinc-350"
               }`}
             >
               Registrarse
@@ -189,21 +189,17 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
           {/* Success message */}
           {successMsg && (
-            <div className="p-3.5 bg-green-500/10 border border-green-500/25 rounded-xl flex items-start gap-2 text-green-400 animate-in fade-in slide-in-from-top-2 duration-300">
-              <CheckCircle className="shrink-0 mt-0.5" size={16} />
-              <div className="text-xs font-semibold leading-relaxed">
-                {successMsg}
-              </div>
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-start gap-2 text-xs font-semibold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+              <CheckCircle className="shrink-0 mt-0.5" size={14} />
+              <div>{successMsg}</div>
             </div>
           )}
 
           {/* Error Message */}
           {errorMsg && (
-            <div className="p-3.5 bg-red-500/10 border border-red-500/25 rounded-xl flex items-start gap-2 text-red-400 animate-in fade-in slide-in-from-top-2 duration-300">
-              <ShieldAlert className="shrink-0 mt-0.5" size={16} />
-              <div className="text-xs font-semibold leading-relaxed">
-                {errorMsg}
-              </div>
+            <div className="p-3 bg-red-950/20 border border-red-500/30 text-red-400 rounded-lg flex items-start gap-2 text-xs font-semibold leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+              <ShieldAlert className="shrink-0 mt-0.5" size={14} />
+              <div>{errorMsg}</div>
             </div>
           )}
 
@@ -211,14 +207,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
           {activeTab === "login" ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <User size={12} className="text-indigo-400" /> Usuario
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                  <User size={12} className="text-emerald-400" /> Usuario
                 </label>
                 <input
                   type="text"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                  className="w-full px-4 py-2 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all font-medium text-sm"
+                  className="w-full px-4 py-2 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
                   placeholder="Nombre de usuario"
                   required
                   disabled={isPending}
@@ -226,14 +222,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Lock size={12} className="text-indigo-400" /> Contraseña
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                  <Lock size={12} className="text-emerald-400" /> Contraseña
                 </label>
                 <input
                   type="password"
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  className="w-full px-4 py-2 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all font-medium text-sm"
+                  className="w-full px-4 py-2 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
                   placeholder="••••••••"
                   required
                   disabled={isPending}
@@ -243,9 +239,9 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-bold text-sm transition-all duration-250 shadow-lg shadow-indigo-900/30 hover:shadow-indigo-900/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="relative w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-lg font-bold text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
-                <span>{isPending ? "Iniciando..." : "Iniciar Sesión"}</span>
+                <span>{isPending ? "Procesando..." : "Iniciar Sesión"}</span>
                 <ArrowRight size={14} />
               </button>
             </form>
@@ -254,27 +250,27 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 animate-in fade-in duration-300">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405">
                     Nombre
                   </label>
                   <input
                     type="text"
                     value={registerForm.firstName}
                     onChange={(e) => setRegisterForm({ ...registerForm, firstName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Tu nombre"
                     disabled={isPending}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405">
                     Apellido
                   </label>
                   <input
                     type="text"
                     value={registerForm.lastName}
                     onChange={(e) => setRegisterForm({ ...registerForm, lastName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-750 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Tu apellido"
                     disabled={isPending}
                   />
@@ -282,29 +278,29 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <User size={12} className="text-indigo-400" /> Usuario
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                  <User size={12} className="text-emerald-400" /> Usuario
                 </label>
                 <input
                   type="text"
                   value={registerForm.username}
                   onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
-                  placeholder="Nombre de usuario único"
+                  className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                  placeholder="Usuario único"
                   required
                   disabled={isPending}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                  <Mail size={12} className="text-indigo-400" /> Correo Electrónico
+                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                  <Mail size={12} className="text-emerald-400" /> Correo Electrónico
                 </label>
                 <input
                   type="email"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                  className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                   placeholder="correo@ejemplo.com"
                   required
                   disabled={isPending}
@@ -313,14 +309,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                    <Lock size={11} className="text-indigo-400" /> Contraseña
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                    <Lock size={11} className="text-emerald-400" /> Contraseña
                   </label>
                   <input
                     type="password"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -328,14 +324,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                    <Lock size={11} className="text-indigo-400" /> Confirmar
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-405 flex items-center gap-1.5">
+                    <Lock size={11} className="text-emerald-400" /> Confirmar
                   </label>
                   <input
                     type="password"
                     value={registerForm.confirmPassword}
                     onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-zinc-950/60 border border-zinc-800 focus:border-indigo-500 rounded-lg text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                    className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-zinc-100 placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -347,7 +343,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-bold text-sm transition-all duration-250 shadow-lg shadow-purple-900/30 hover:shadow-purple-900/50 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                className="relative w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black rounded-lg font-bold text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
                 <span>{isPending ? "Registrando..." : "Crear Cuenta"}</span>
                 <UserPlus size={14} />
@@ -355,43 +351,9 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
             </form>
           )}
 
-          {/* SOCIAL SIGN IN DIVIDER */}
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-zinc-800/80"></div>
-            <span className="flex-shrink mx-4 text-zinc-550 text-[10px] uppercase font-bold tracking-widest">O continúa con</span>
-            <div className="flex-grow border-t border-zinc-800/80"></div>
-          </div>
-
-          {/* GOOGLE SIGN IN BUTTON */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={isPending}
-            className="w-full py-2.5 px-4 bg-zinc-950 hover:bg-zinc-900 border border-zinc-850 hover:border-zinc-750 text-zinc-200 hover:text-white rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2.5 shadow-sm active:scale-[0.98] disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.45 15.01.75 12 .75c-4.64 0-8.62 2.67-10.53 6.55l3.96 3.07C6.35 7.42 8.95 5.04 12 5.04z"
-              />
-              <path
-                fill="#4285F4"
-                d="M23.49 12.27c0-.81-.07-1.59-.2-2.34H12v4.44h6.44c-.28 1.47-1.11 2.71-2.36 3.55l3.67 2.84c2.14-1.97 3.38-4.88 3.38-8.49z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.43 14.73c-.22-.66-.35-1.37-.35-2.1s.13-1.44.35-2.1l-3.96-3.07C.54 9.17 0 10.53 0 12s.54 2.83 1.47 4.57l3.96-3.07z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23.25c3.24 0 5.95-1.08 7.93-2.91l-3.67-2.84c-1.02.68-2.33 1.09-3.93 1.09-3.05 0-5.65-2.38-6.57-5.33l-3.96 3.07c1.91 3.88 5.89 6.55 10.53 6.55z"
-              />
-            </svg>
-            <span>Continuar con Google</span>
-          </button>
-
-          <div className="text-center text-[10px] text-zinc-500 border-t border-zinc-800/60 pt-4 flex justify-center items-center gap-1.5">
-            <Sparkles size={11} className="text-indigo-400" />
-            <span>Autenticación de Alta Seguridad (OAuth 2.0 + PKCE)</span>
+          <div className="text-center text-[9px] text-zinc-600 border-t border-zinc-900 pt-4 flex justify-center items-center gap-1.5 uppercase tracking-widest font-bold">
+            <ShieldAlert size={11} className="text-emerald-500 animate-pulse" />
+            <span>ACCESO EXCLUSIVO PERSONAL AUTORIZADO</span>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { 
@@ -18,7 +19,17 @@ interface DashboardOverviewProps {
 
 export function DashboardOverview({ activeBranchId, activeEventId, activeEventName }: DashboardOverviewProps) {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<"combined" | "entrance" | "bar">("combined")
+  
+  // Check permissions
+  const { data: session } = useSession()
+  const p = session?.user?.permissions
+  const canSeeSales = !!p?.accessSales
+  const canSeeEntrance = !!p?.accessAttendees
+  const canSeeBoth = canSeeSales && canSeeEntrance
+
+  const [activeTab, setActiveTab] = useState<"combined" | "entrance" | "bar">(
+    canSeeBoth ? "combined" : canSeeEntrance ? "entrance" : "bar"
+  )
 
   // Fetch Dashboard Analytics
   const { data: analytics, isLoading, error } = useQuery({
@@ -35,7 +46,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
 
   // SSE subscription for live sales
   useEffect(() => {
-    if (!activeBranchId || !activeEventId) return
+    if (!activeBranchId || !activeEventId || !canSeeSales) return
 
     const sse = new EventSource("/api/realtime/sales")
     
@@ -63,7 +74,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
     return () => {
       sse.close()
     }
-  }, [activeBranchId, activeEventId, queryClient])
+  }, [activeBranchId, activeEventId, queryClient, canSeeSales])
 
   if (isLoading) {
     return (
@@ -101,36 +112,42 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
       {/* Upper Navigation Tabs */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
-          <button
-            onClick={() => setActiveTab("combined")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "combined"
-                ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
-          >
-            Vista General
-          </button>
-          <button
-            onClick={() => setActiveTab("entrance")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "entrance"
-                ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
-          >
-            Entrada & Taquilla
-          </button>
-          <button
-            onClick={() => setActiveTab("bar")}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "bar"
-                ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
-          >
-            Barra & POS
-          </button>
+          {canSeeBoth && (
+            <button
+              onClick={() => setActiveTab("combined")}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "combined"
+                  ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
+            >
+              Vista General
+            </button>
+          )}
+          {canSeeEntrance && (
+            <button
+              onClick={() => setActiveTab("entrance")}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "entrance"
+                  ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
+            >
+              Entrada & Taquilla
+            </button>
+          )}
+          {canSeeSales && (
+            <button
+              onClick={() => setActiveTab("bar")}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "bar"
+                  ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
+            >
+              Barra & POS
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

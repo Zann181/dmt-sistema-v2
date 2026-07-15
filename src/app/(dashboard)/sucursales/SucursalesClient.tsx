@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Building2, Plus, Edit2, ShieldAlert, Store, Upload, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { formatThousands, parseThousands } from "@/shared/utils/price"
+import { processImageToSvg } from "@/shared/utils/image"
 
 interface Branch {
   id: string
@@ -244,27 +245,14 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
     setShowEditModal(true)
   }
 
-  const handleSvgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSvgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
-    const isSvg = file.type === "image/svg+xml" || file.name.endsWith(".svg")
-    
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      let resultStr = event.target?.result as string
-      if (!isSvg) {
-        resultStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-  <image href="${resultStr}" x="0" y="0" width="500" height="500" preserveAspectRatio="xMidYMid meet"/>
-</svg>`
-      }
+    try {
+      const resultStr = await processImageToSvg(file, 150)
       setForm((prev) => ({ ...prev, logoUrl: resultStr }))
-    }
-    
-    if (isSvg) {
-      reader.readAsText(file)
-    } else {
-      reader.readAsDataURL(file)
+    } catch (err: any) {
+      setErrorMsg(err.message)
     }
   }
 
@@ -388,7 +376,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                           surfaceColor: "#0f1113",
                           panelColor: "#15181c",
                           textColor: "#ffffff",
-                          titleColor: "#39ff14",
+                          titleColor: "#ffffff",
                           logoUrl: branch.logoUrl || "",
                           logoBgColor: "#15181c",
                           logoSize: branch.logoSize || 64,
@@ -737,25 +725,12 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   )}
                 </div>
 
-                <div className="flex gap-3 justify-end pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm("¿Estás seguro de que deseas eliminar esta sucursal? Se borrarán todos los eventos asociados.")) {
-                        deleteBranchMutation.mutate(selectedBranch.id)
-                      }
-                    }}
-                    disabled={deleteBranchMutation.isPending}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {deleteBranchMutation.isPending ? "Eliminando..." : "Eliminar"}
-                  </button>
-
-                  <div className="flex-1"></div>
-
-                  <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
-                    <Store size={18} className="shrink-0" />
-                    <span>¿Establecer Verne Neon Dark por defecto?</span>
+                  {/* Banner de restauración de tema */}
+                  <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 rounded-lg text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono">
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <Store size={18} className="shrink-0 text-primary" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">¿Establecer Verne Neon Dark por defecto?</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -767,34 +742,51 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                           surfaceColor: "#0f1113",
                           panelColor: "#15181c",
                           textColor: "#ffffff",
-                          titleColor: "#39ff14"
+                          titleColor: "#ffffff"
                         }
                         setForm(defaultNeon)
                         updateBranchMutation.mutate(defaultNeon)
                       }}
-                      className="px-4 py-2 bg-zinc-950 text-[#39ff14] border border-[#39ff14]/30 hover:bg-zinc-900 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
+                      className="px-3.5 py-2 bg-primary hover:bg-primary/95 text-black rounded-md text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 cursor-pointer shadow-[0_0_10px_rgba(57,255,20,0.15)]"
                       disabled={updateBranchMutation.isPending}
                     >
                       {updateBranchMutation.isPending ? "Aplicando..." : "Restaurar Tema Dark"}
                     </button>
                   </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800 font-mono">
                   <button
                     type="button"
                     onClick={() => {
-                      setShowEditModal(false)
-                      setSelectedBranch(null)
+                      if (confirm("¿Estás seguro de que deseas eliminar esta sucursal? Se borrarán todos los eventos asociados.")) {
+                        deleteBranchMutation.mutate(selectedBranch.id)
+                      }
                     }}
-                    className="px-4 py-2 border rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    disabled={deleteBranchMutation.isPending}
+                    className="px-4 py-2.5 bg-red-950/30 hover:bg-red-900/50 border border-red-500/30 text-red-400 rounded-md text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
                   >
-                    Cancelar
+                    {deleteBranchMutation.isPending ? "Eliminando..." : "Eliminar"}
                   </button>
-                  <button
-                    type="submit"
-                    disabled={updateBranchMutation.isPending}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    Guardar
-                  </button>
+
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEditModal(false)
+                        setSelectedBranch(null)
+                      }}
+                      className="px-4 py-2.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 rounded-md text-xs font-bold uppercase tracking-wider text-white transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updateBranchMutation.isPending}
+                      className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-black border border-primary/20 rounded-md text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(57,255,20,0.2)]"
+                    >
+                      Guardar
+                    </button>
+                  </div>
                 </div>
               </form>
             ) : (
@@ -1226,24 +1218,14 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0]
                         if (!file) return
-                        const isSvg = file.type === "image/svg+xml" || file.name.endsWith(".svg")
-                        const reader = new FileReader()
-                        reader.onload = (event) => {
-                          let resultStr = event.target?.result as string
-                          if (!isSvg) {
-                            resultStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
-  <image href="${resultStr}" x="0" y="0" width="500" height="500" preserveAspectRatio="xMidYMid meet"/>
-</svg>`
-                          }
+                        try {
+                          const resultStr = await processImageToSvg(file, 150)
                           setCreateForm((prev) => ({ ...prev, logoUrl: resultStr }))
-                        }
-                        if (isSvg) {
-                          reader.readAsText(file)
-                        } else {
-                          reader.readAsDataURL(file)
+                        } catch (err: any) {
+                          // Ignore
                         }
                       }}
                       className="hidden"

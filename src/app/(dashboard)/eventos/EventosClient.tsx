@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Calendar, Plus, Edit2, ShieldAlert, Users, QrCode, MapPin, Mail, Settings, Upload } from "lucide-react"
+import { Calendar, Plus, Edit2, ShieldAlert, Users, QrCode, MapPin, Mail, Settings, Upload, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { useContextStore } from "@/stores/contextStore"
+import { processImageToSvg } from "@/shared/utils/image"
 
 interface Branch {
   id: string
@@ -81,6 +82,9 @@ interface Event {
   emailUser?: string | null
   emailPassword?: string | null
   emailFrom?: string | null
+
+  // WhatsApp
+  whatsappMessage?: string
 }
 
 const toDatetimeLocal = (dateStr: string | Date) => {
@@ -164,7 +168,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showAdvancedCreate, setShowAdvancedCreate] = useState(false)
-  const [activeConfigTab, setActiveConfigTab] = useState<"general" | "qr" | "venue" | "email" | "products">("general")
+  const [activeConfigTab, setActiveConfigTab] = useState<"general" | "qr" | "venue" | "email" | "wpp" | "products">("general")
   const [errorMsg, setErrorMsg] = useState("")
 
 
@@ -184,7 +188,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
   const [isGeneratingQr, setIsGeneratingQr] = useState(false)
 
   useEffect(() => {
-    if (activeConfigTab !== "qr" && activeConfigTab !== "email") return
+    if (activeConfigTab !== "qr" && activeConfigTab !== "email" && activeConfigTab !== "wpp") return
     const timeoutId = setTimeout(async () => {
       setIsGeneratingQr(true)
       try {
@@ -328,12 +332,34 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
   const replacePreviewTemplates = (text: string) => {
     if (!text || !selectedEvent) return ""
+    
+    const eventDate = selectedEvent.startsAt 
+      ? new Date(selectedEvent.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : ""
+    const qrLink = `${window.location.origin}/api/attendees/POPA-TF-f19c0vrqef/qr.png`
+    const flyerLink = selectedEvent.id 
+      ? `${window.location.origin}/api/events/${selectedEvent.id}/flyer.png`
+      : ""
+
     return text
       .replace(/{nombre_asistente}/g, "Juan Pérez")
       .replace(/{nombre_evento}/g, selectedEvent.name)
       .replace(/{nombre_sucursal}/g, selectedEvent.branch?.name || "")
-      .replace(/{fecha_evento}/g, new Date(selectedEvent.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
+      .replace(/{fecha_evento}/g, eventDate)
       .replace(/{hora_evento}/g, `${new Date(selectedEvent.startsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(selectedEvent.endsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`)
+      .replace(/{lugar_evento}/g, configForm.venueName || "Venue principal")
+      .replace(/{nombre_categoria}/g, "Cortesia ($1)")
+      .replace(/{link_qr}/g, qrLink)
+      .replace(/{flyer_evento}/g, flyerLink)
+  }
+
+  const getWhatsAppPreviewMessage = () => {
+    if (!selectedEvent) return ""
+    
+    // Default message structure fallback in case it's empty
+    const msg = configForm.whatsappMessage || `¡Hola, {nombre_asistente}! 🎟️\n\nTu registro para *{nombre_evento}* ha sido confirmado.\n\n*Detalles del Evento:*\n📅 *Fecha:* {fecha_evento}\n📍 *Lugar:* {lugar_evento}\n🎫 *Categoría:* {nombre_categoria}\n\n📥 *Descarga tu Código QR de Acceso:* \n{link_qr}\n\n¡Te esperamos!`
+
+    return replacePreviewTemplates(msg)
   }
 
   const handleAnalyzeFlyerColors = () => {
@@ -628,6 +654,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       emailBorderColor: event.emailBorderColor || "#1f1f26",
       emailSectionBackgroundColor: event.emailSectionBackgroundColor || "#070709",
       emailWarningBackgroundColor: event.emailWarningBackgroundColor || "#1c0d0d",
+
+      // WhatsApp
+      whatsappMessage: event.whatsappMessage || "¡Hola, {nombre_asistente}! 🎟️\n\nTu registro para *{nombre_evento}* ha sido confirmado.\n\n*Detalles del Evento:*\n📅 *Fecha:* {fecha_evento}\n📍 *Lugar:* {lugar_evento}\n🎫 *Categoría:* {nombre_categoria}\n\n📥 *Descarga tu Código QR de Acceso:* \n{link_qr}\n\n¡Te esperamos!",
     })
     setActiveConfigTab("general")
     setErrorMsg("")
@@ -843,14 +872,15 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                           <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => {
+                            onChange={async (e) => {
                               const file = e.target.files?.[0]
                               if (!file) return
-                              const reader = new FileReader()
-                              reader.onload = (event) => {
-                                setCreateForm({ ...createForm, flyerUrl: event.target?.result as string })
+                              try {
+                                const resultStr = await processImageToSvg(file, 600)
+                                setCreateForm({ ...createForm, flyerUrl: resultStr })
+                              } catch (err: any) {
+                                // Ignore
                               }
-                              reader.readAsDataURL(file)
                             }}
                             className="hidden"
                           />
@@ -1077,7 +1107,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       {showConfigModal && selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className={`bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full shadow-xl max-h-[95vh] overflow-y-auto space-y-4 transition-all duration-300 ${
-            (activeConfigTab === "qr" || activeConfigTab === "email") ? "max-w-5xl" : "max-w-xl"
+            (activeConfigTab === "qr" || activeConfigTab === "email" || activeConfigTab === "wpp") ? "max-w-5xl" : "max-w-xl"
           }`}>
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
@@ -1140,6 +1170,17 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
               >
                 Plantilla Email
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveConfigTab("wpp")}
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${
+                  activeConfigTab === "wpp"
+                    ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                    : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                }`}
+              >
+                Plantilla Wpp
+              </button>
             </div>
  
              {errorMsg && (
@@ -1156,7 +1197,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                className="space-y-4"
              >
                <div className={`grid gap-6 ${
-                 (activeConfigTab === "qr" || activeConfigTab === "email") ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
+                 (activeConfigTab === "qr" || activeConfigTab === "email" || activeConfigTab === "wpp") ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"
                }`}>
                  <div className="space-y-4">
               {/* TAB CONTENT: GENERAL */}
@@ -1443,14 +1484,15 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0]
                                 if (!file) return
-                                const reader = new FileReader()
-                                reader.onload = (event) => {
-                                  setConfigForm({ ...configForm, flyerUrl: event.target?.result as string })
+                                try {
+                                  const resultStr = await processImageToSvg(file, 600)
+                                  setConfigForm({ ...configForm, flyerUrl: resultStr })
+                                } catch (err: any) {
+                                  // Ignore
                                 }
-                                reader.readAsDataURL(file)
                               }}
                               className="hidden"
                             />
@@ -1789,10 +1831,38 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                 </div>
               )}
 
+              {activeConfigTab === "wpp" && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <h4 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+                      <MessageCircle size={16} className="text-emerald-500" />
+                      Mensaje de WhatsApp
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">Cuerpo del Mensaje</label>
+                        <textarea
+                          value={configForm.whatsappMessage || ""}
+                          onChange={(e) => setConfigForm({ ...configForm, whatsappMessage: e.target.value })}
+                          className="w-full bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-emerald-500 min-h-[220px]"
+                          placeholder="¡Hola, {nombre_asistente}! 🎟️..."
+                        />
+                        <p className="text-[10px] text-zinc-500 mt-1">
+                          Variables: {"{nombre_asistente}, {nombre_evento}, {fecha_evento}, {lugar_evento}, {nombre_categoria}, {link_qr}, {flyer_evento}"}
+                        </p>
+                      </div>
+                      <div className="text-xs text-zinc-500 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+                        El flyer del evento configurado en la pestaña "Diseño QR" se adjuntará automáticamente como una imagen en el mensaje de WhatsApp.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
                  </div>
  
                  {/* Right Column: Previews (Only for QR and Email) */}
-                 {(activeConfigTab === "qr" || activeConfigTab === "email") && (
+                 {(activeConfigTab === "qr" || activeConfigTab === "email" || activeConfigTab === "wpp") && (
                    <div className="flex flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800/80 sticky top-0 min-h-[350px]">
                      {activeConfigTab === "qr" && (
                        <div className="space-y-4 text-center w-full">
@@ -2037,6 +2107,42 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                 </div>
                               </div>
                             </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {activeConfigTab === "wpp" && (
+                          <div className="space-y-4 text-center w-full animate-in fade-in slide-in-from-right-8 duration-500">
+                            <h4 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Vista Previa Mensaje WhatsApp</h4>
+                            
+                            <div className="w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-md bg-[#0b141a] p-4 max-w-sm mx-auto">
+                              {/* WhatsApp Header */}
+                              <div className="flex items-center gap-2 border-b border-[#202c33] pb-2 mb-3">
+                                <div className="w-8 h-8 rounded-full bg-[#128c7e]/20 border border-[#128c7e] flex items-center justify-center font-bold text-[#128c7e] text-xs">
+                                  DMT
+                                </div>
+                                <div className="text-left">
+                                  <p className="text-xs font-bold text-zinc-200">DMT Access</p>
+                                  <p className="text-[9px] text-[#25d366]">En línea</p>
+                                </div>
+                              </div>
+
+                              {/* WhatsApp Chat Area */}
+                              <div className="flex flex-col">
+                                <div className="bg-[#202c33] rounded-lg p-2 text-xs text-zinc-100 max-w-[90%] relative border-l-2 border-[#128c7e] self-start text-left shadow-sm">
+                                  {configForm.flyerUrl && (
+                                    <div className="mb-2 relative rounded-md overflow-hidden bg-black/20" style={{ height: "160px" }}>
+                                      <img src={configForm.flyerUrl} alt="Flyer del evento" className="w-full h-full object-cover" />
+                                    </div>
+                                  )}
+                                  <p className="whitespace-pre-wrap leading-relaxed font-sans text-[12px] px-1">
+                                    {getWhatsAppPreviewMessage()}
+                                  </p>
+                                  <div className="text-[10px] text-zinc-400 text-right mt-1 font-sans px-1">
+                                    10:00 AM <span className="text-[#53bdeb] font-bold">✓✓</span>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}

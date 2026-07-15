@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
-import { RealtimeIndicator } from "@/components/ui/RealtimeIndicator"
 import { useContextStore } from "@/stores/contextStore"
-import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail } from "lucide-react"
+import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus } from "lucide-react"
 
 // Icono personalizado de WhatsApp de alta calidad para el estilo premium
 const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
@@ -16,6 +15,15 @@ const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
 )
 import { toast } from "sonner"
 import { formatThousands, parseThousands } from "@/shared/utils/price"
+
+const toTitleCase = (str: string): string => {
+  if (!str) return ""
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
 
 export default function EntradaPage() {
   const { activeBranchId, activeBranchName, activeEventId, activeEventName } = useContextStore()
@@ -29,7 +37,7 @@ export default function EntradaPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"scan" | "search" | "add">("search")
+  const [activeTab, setActiveTab] = useState<"scan" | "search" | "add" | "dashboard">("search")
 
   // Swipeable floating notification state
   const [notification, setNotification] = useState<{
@@ -89,7 +97,7 @@ export default function EntradaPage() {
   // Sync tab with URL parameter ?mode=
   useEffect(() => {
     const mode = searchParams.get("mode")
-    if (mode === "scan" || mode === "search" || mode === "add") {
+    if (mode === "scan" || mode === "search" || mode === "add" || mode === "dashboard") {
       setActiveTab(mode)
     }
   }, [searchParams])
@@ -103,6 +111,121 @@ export default function EntradaPage() {
       return (await res.json()).data as any[]
     },
     enabled: !!activeBranchId
+  })
+
+  // Get current session for permission checks
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/session")
+      if (!res.ok) return null
+      return await res.json()
+    }
+  })
+
+  // Already Checked In Warning state
+  const [alreadyCheckedInInfo, setAlreadyCheckedInInfo] = useState<any | null>(null)
+
+  // New Category creation states
+  const [showNewCatModal, setShowNewCatModal] = useState(false)
+  const [callingForm, setCallingForm] = useState<"add" | "edit" | null>(null)
+  const [newCatError, setNewCatError] = useState("")
+  const [editingCatId, setEditingCatId] = useState<string | null>(null)
+  const [newCatForm, setNewCatForm] = useState({
+    name: "",
+    price: "",
+    includedConsumptions: 0,
+    description: ""
+  })
+
+  // Add Category mutation
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: typeof newCatForm) => {
+      const res = await fetch("/api/attendees/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchId: activeBranchId,
+          name: data.name,
+          price: Number(parseThousands(data.price)) || 0,
+          includedConsumptions: Number(data.includedConsumptions) || 0,
+          description: data.description || ""
+        })
+      })
+      if (!res.ok) throw new Error((await res.json()).error || "Error al crear la categoría")
+      return (await res.json()).data
+    },
+    onSuccess: (newCat: any) => {
+      toast.success("Categoría creada con éxito")
+      queryClient.invalidateQueries({ queryKey: ["attendee-categories", activeBranchId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
+      
+      if (callingForm === "add") {
+        setAddForm(prev => ({
+          ...prev,
+          categoryId: newCat.id,
+          paidAmount: formatThousands(newCat.price.toString())
+        }))
+        setAddFormErrors(prev => ({ ...prev, categoryId: false }))
+      } else if (callingForm === "edit") {
+        setEditForm(prev => ({
+          ...prev,
+          categoryId: newCat.id,
+          paidAmount: formatThousands(newCat.price.toString())
+        }))
+        setEditFormErrors(prev => ({ ...prev, categoryId: false }))
+      }
+
+      setShowNewCatModal(false)
+      setNewCatForm({ name: "", price: "", includedConsumptions: 0, description: "" })
+      setNewCatError("")
+    },
+    onError: (err: any) => {
+      setNewCatError(err.message)
+    }
+  })
+
+  // Update Category mutation
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof newCatForm }) => {
+      const res = await fetch(`/api/attendees/categories/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          price: Number(parseThousands(data.price)) || 0,
+          includedConsumptions: Number(data.includedConsumptions) || 0,
+          description: data.description || ""
+        })
+      })
+      if (!res.ok) throw new Error((await res.json()).error || "Error al modificar la categoría")
+      return (await res.json()).data
+    },
+    onSuccess: (updatedCat: any) => {
+      toast.success("Categoría modificada con éxito")
+      queryClient.invalidateQueries({ queryKey: ["attendee-categories", activeBranchId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
+      
+      if (callingForm === "add") {
+        setAddForm(prev => ({
+          ...prev,
+          paidAmount: formatThousands(updatedCat.price.toString())
+        }))
+      } else if (callingForm === "edit") {
+        setEditForm(prev => ({
+          ...prev,
+          paidAmount: formatThousands(updatedCat.price.toString())
+        }))
+      }
+
+      setShowNewCatModal(false)
+      setEditingCatId(null)
+      setNewCatForm({ name: "", price: "", includedConsumptions: 0, description: "" })
+      setNewCatError("")
+    },
+    onError: (err: any) => {
+      setNewCatError(err.message)
+    }
   })
 
   // Get active event details (startsAt, venueName, etc.)
@@ -131,6 +254,9 @@ export default function EntradaPage() {
   // Share ticket by WhatsApp
   const handleWhatsAppShare = (a: any) => {
     const qrLink = `${window.location.origin}/api/attendees/${a.qrCode}/qr.png`
+    const flyerLink = activeEvent?.id 
+      ? `${window.location.origin}/api/events/${activeEvent.id}/flyer.png`
+      : ""
     const eventDate = activeEvent?.startsAt 
       ? new Date(activeEvent.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : ""
@@ -140,10 +266,10 @@ export default function EntradaPage() {
       `*Detalles del Evento:*\n` +
       `📅 *Fecha:* ${eventDate}\n` +
       `📍 *Lugar:* ${activeEvent?.venueName || "Venue principal"}\n` +
-      `🎫 *Categoría:* ${a.category?.name || ""}\n` +
-      `🔑 *Código QR:* ${a.qrCode}\n\n` +
-      `Presenta tu código QR para el ingreso. Puedes descargarlo aquí:\n` +
+      `🎫 *Categoría:* ${a.category?.name || ""}\n\n` +
+      `📥 *Descarga tu Código QR de Acceso:* \n` +
       `${qrLink}\n\n` +
+      (flyerLink ? `🖼️ *Descarga el Flyer del Evento (.png):* \n${flyerLink}\n\n` : "") +
       `¡Te esperamos!`
 
     const phone = cleanPhone(a.phone || "")
@@ -182,6 +308,17 @@ export default function EntradaPage() {
     enabled: !!activeBranchId && !!activeEventId
   })
 
+  // Stats Query for the entries dashboard
+  const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useQuery({
+    queryKey: ["attendees-stats", activeBranchId, activeEventId],
+    queryFn: async () => {
+      const res = await fetch(`/api/attendees?branchId=${activeBranchId}&eventId=${activeEventId}&stats=true`)
+      if (!res.ok) throw new Error("Error fetching stats")
+      return (await res.json()).data
+    },
+    enabled: !!activeBranchId && !!activeEventId
+  })
+
   // Add attendee mutation
   const addAttendeeMutation = useMutation({
     mutationFn: async (data: typeof addForm) => {
@@ -189,7 +326,7 @@ export default function EntradaPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: data.name,
+          name: toTitleCase(data.name.trim()),
           cc: data.cc,
           phone: data.phone || null,
           email: data.email || null,
@@ -217,6 +354,7 @@ export default function EntradaPage() {
         toast.success("Asistente registrado con éxito (sin correo)")
       }
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
     },
     onError: (err: any) => {
       setAddError(err.message)
@@ -262,7 +400,7 @@ export default function EntradaPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: data.name,
+          name: toTitleCase(data.name.trim()),
           cc: data.cc,
           phone: data.phone || null,
           email: data.email || null,
@@ -277,6 +415,7 @@ export default function EntradaPage() {
       setEditingAttendee(null)
       toast.success("Asistente actualizado con éxito")
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
     },
     onError: (err: any) => {
       setEditError(err.message)
@@ -295,6 +434,7 @@ export default function EntradaPage() {
     onSuccess: () => {
       toast.success("Asistente eliminado con éxito")
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
     },
     onError: (err: any) => {
       toast.error(err.message)
@@ -318,12 +458,21 @@ export default function EntradaPage() {
           eventId: activeEventId
         })
       })
-      if (!res.ok) throw new Error((await res.json()).error || "Error al registrar check-in")
-      return res.json()
+      const json = await res.json()
+      if (!res.ok) {
+        if (res.status === 409 && json.error === "ALREADY_CHECKED_IN") {
+          const customErr = new Error("ALREADY_CHECKED_IN")
+          ;(customErr as any).attendee = json.attendee
+          throw customErr
+        }
+        throw new Error(json.error || "Error al registrar check-in")
+      }
+      return json
     },
     onSuccess: (resJson) => {
       // Invalidate attendees list queries to refresh UI status
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
       setNotification({
         type: "success",
         message: `Check-in Exitoso: ${resJson.data.name}`,
@@ -331,11 +480,15 @@ export default function EntradaPage() {
       })
     },
     onError: (err: any) => {
-      setNotification({
-        type: "error",
-        message: "Error de Check-in",
-        subMessage: err.message
-      })
+      if (err.message === "ALREADY_CHECKED_IN") {
+        setAlreadyCheckedInInfo(err.attendee)
+      } else {
+        setNotification({
+          type: "error",
+          message: "Error de Check-in",
+          subMessage: err.message
+        })
+      }
     }
   })
 
@@ -405,13 +558,15 @@ export default function EntradaPage() {
               }
             }, 2000)
           } catch (err: any) {
-            setTimeout(() => {
-              if (html5QrCodeRef.current) {
-                try {
-                  html5QrCodeRef.current.resume()
-                } catch (_) {}
-              }
-            }, 2000)
+            if (err.message !== "ALREADY_CHECKED_IN") {
+              setTimeout(() => {
+                if (html5QrCodeRef.current) {
+                  try {
+                    html5QrCodeRef.current.resume()
+                  } catch (_) {}
+                }
+              }, 2000)
+            }
           }
         },
         () => {} // silent frame mismatch
@@ -554,8 +709,7 @@ export default function EntradaPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between w-full px-2 text-zinc-400 text-xs">
-            <RealtimeIndicator isConnected={isConnected} />
+          <div className="flex items-center justify-end w-full px-2 text-zinc-400 text-xs">
             <div className="bg-indigo-950/40 text-indigo-400 px-3 py-1.5 rounded-lg font-bold">
               {checkInCount} check-ins
             </div>
@@ -585,6 +739,73 @@ export default function EntradaPage() {
             Cerrar Escáner
           </button>
         </div>
+
+        {/* ALREADY CHECKED IN WARNING MODAL (LOCKED) */}
+        {alreadyCheckedInInfo && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+            <div className="bg-zinc-950 border-2 border-red-500 rounded-xl p-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.3)] space-y-4 font-mono text-center text-white relative">
+              <div className="w-16 h-16 rounded-full bg-red-950/50 border border-red-500 flex items-center justify-center mx-auto text-red-500 animate-bounce">
+                <ShieldAlert size={36} />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-black tracking-widest text-red-500 uppercase">
+                  ¡Advertencia!
+                </h3>
+                <p className="text-sm font-bold text-zinc-100">
+                  El asistente ya ingresó al evento
+                </p>
+              </div>
+
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
+                <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                  <span className="text-zinc-500">Asistente:</span>
+                  <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.name}</span>
+                </div>
+                <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                  <span className="text-zinc-500">Documento:</span>
+                  <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.cc}</span>
+                </div>
+                {alreadyCheckedInInfo.categoryName && (
+                  <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                    <span className="text-zinc-500">Categoría:</span>
+                    <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.categoryName}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-0.5">
+                  <span className="text-zinc-500">Hora de Ingreso:</span>
+                  <span className="font-bold text-red-400">
+                    {alreadyCheckedInInfo.checkedInAt 
+                      ? new Date(alreadyCheckedInInfo.checkedInAt).toLocaleString('es-ES', { 
+                          hour: '2-digit', 
+                          minute: '2-digit', 
+                          second: '2-digit',
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }) 
+                      : "Fecha no disponible"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAlreadyCheckedInInfo(null)
+                    if (html5QrCodeRef.current && isScanning) {
+                      html5QrCodeRef.current.resume().catch(() => {})
+                    }
+                  }}
+                  className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)] active:scale-95"
+                >
+                  Aceptar y Continuar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -706,7 +927,6 @@ export default function EntradaPage() {
           >
             <Banknote size={14} /> Movimiento Caja
           </button>
-          <RealtimeIndicator isConnected={isConnected} />
           <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2.5 rounded-md font-bold text-xs">
             {checkInCount} check-ins hoy
           </div>
@@ -714,7 +934,7 @@ export default function EntradaPage() {
       </div>
 
       {/* Tabs Headers */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20 p-1 rounded-xl max-w-sm">
+      <div className="flex border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20 p-1 rounded-xl max-w-md mb-2">
         <button
           onClick={() => {
             setActiveTab("search")
@@ -741,6 +961,22 @@ export default function EntradaPage() {
         >
           <UserPlus size={14} /> Agregar Asistente
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("dashboard")
+            router.replace("/entrada?mode=dashboard")
+          }}
+          className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+            activeTab === "dashboard"
+              ? "bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-sm"
+              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          }`}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Dashboard
+        </button>
       </div>
 
       {activeTab === "search" && (
@@ -766,7 +1002,7 @@ export default function EntradaPage() {
 
           <div className="flex-1 overflow-y-auto p-0">
             <table className="w-full text-sm text-left">
-              <thead className="bg-zinc-50 dark:bg-zinc-955/50 sticky top-0 border-b border-zinc-200 dark:border-zinc-800">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/50 sticky top-0 border-b border-zinc-200 dark:border-zinc-800">
                 <tr>
                   <th className="px-6 py-3 font-medium text-zinc-500">Asistente</th>
                   <th className="px-6 py-3 font-medium text-zinc-500">Cédula</th>
@@ -905,6 +1141,9 @@ export default function EntradaPage() {
                     setAddForm({ ...addForm, name: e.target.value })
                     setAddFormErrors(prev => ({ ...prev, name: false }))
                   }}
+                  onBlur={(e) => {
+                    setAddForm(prev => ({ ...prev, name: toTitleCase(e.target.value) }))
+                  }}
                   className={`w-full px-3 py-2 border rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                     addFormErrors.name 
                       ? "border-red-500 dark:border-red-500/50 focus:ring-red-500" 
@@ -958,7 +1197,48 @@ export default function EntradaPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Categoría *</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
+                  {session?.user?.permissions?.manageBranchConfig && (
+                    <div className="flex items-center gap-2">
+                      {addForm.categoryId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const selectedCat = categories?.find(c => c.id === addForm.categoryId)
+                            if (selectedCat) {
+                              setEditingCatId(selectedCat.id)
+                              setNewCatForm({
+                                name: selectedCat.name,
+                                price: selectedCat.price.toString(),
+                                includedConsumptions: selectedCat.includedConsumptions || 0,
+                                description: selectedCat.description || ""
+                              })
+                              setNewCatError("")
+                              setCallingForm("add")
+                              setShowNewCatModal(true)
+                            }
+                          }}
+                          className="text-[10px] text-zinc-400 hover:text-white font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                        >
+                          ✏️ Modificar
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewCatForm({ name: "", price: "", includedConsumptions: 0, description: "" })
+                          setNewCatError("")
+                          setCallingForm("add")
+                          setShowNewCatModal(true)
+                        }}
+                        className="text-[10px] text-primary font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                      >
+                        + Nueva Categoría
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <select
                   value={addForm.categoryId}
                   onChange={(e) => {
@@ -1025,10 +1305,157 @@ export default function EntradaPage() {
         </div>
       )}
 
+      {activeTab === "dashboard" && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {isStatsLoading ? (
+            <div className="flex flex-col items-center justify-center h-64 space-y-4">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-zinc-550 text-xs font-mono">Cargando estadísticas de entradas...</p>
+            </div>
+          ) : !stats ? (
+            <div className="text-center py-12 text-zinc-500 text-sm">
+              No se pudieron cargar las estadísticas.
+            </div>
+          ) : (
+            <>
+              {/* Metric Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 font-mono">
+                {/* Total Recaudado */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-emerald-400">
+                    <Banknote size={48} />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingreso Total</p>
+                  <p className="text-2xl font-black text-emerald-400 mt-1">
+                    ${formatThousands(stats.totalIncome.toString())}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 mt-2 font-sans">
+                    Recaudado acumulado en taquilla
+                  </p>
+                </div>
+
+                {/* Recaudado Hoy */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
+                    <Banknote size={48} />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingreso de Hoy</p>
+                  <p className="text-2xl font-black text-indigo-400 mt-1">
+                    ${formatThousands(stats.todayIncome.toString())}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 mt-2 font-sans flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                    Dinero registrado en el día
+                  </p>
+                </div>
+
+                {/* Total Registrados */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
+                    <Users size={48} />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Total Registrados</p>
+                  <p className="text-2xl font-black text-white mt-1">
+                    {stats.totalCount}
+                  </p>
+                  <p className="text-[9px] text-zinc-500 mt-2 font-sans">
+                    Total de asistentes registrados
+                  </p>
+                </div>
+
+                {/* Check-ins vs Faltantes */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-primary">
+                    <QrCode size={48} />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingresados / Faltan</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-2xl font-black text-primary">{stats.checkedInCount}</span>
+                    <span className="text-zinc-500 text-xs">/</span>
+                    <span className="text-zinc-400 text-sm font-bold">{stats.pendingCount} pendientes</span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-3 overflow-hidden">
+                    <div 
+                      className="bg-primary h-1.5 rounded-full shadow-[0_0_10px_rgba(57,255,20,0.5)] transition-all duration-500"
+                      style={{ width: `${stats.totalCount > 0 ? (stats.checkedInCount / stats.totalCount) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Category stats section */}
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg overflow-hidden flex flex-col font-mono">
+                <div className="p-4 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">
+                    Desglose por Categoría de Entrada
+                  </h3>
+                  <span className="text-[10px] text-zinc-500">Actualizado en tiempo real</span>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-xs text-left">
+                    <thead>
+                      <tr className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800">
+                        <th className="p-4 font-bold uppercase tracking-wider">Categoría</th>
+                        <th className="p-4 font-bold uppercase tracking-wider text-right">Precio Unitario</th>
+                        <th className="p-4 font-bold uppercase tracking-wider text-center">Registrados</th>
+                        <th className="p-4 font-bold uppercase tracking-wider text-center">Ingresados</th>
+                        <th className="p-4 font-bold uppercase tracking-wider text-center">Faltantes</th>
+                        <th className="p-4 font-bold uppercase tracking-wider">Porcentaje Asistencia</th>
+                        <th className="p-4 font-bold uppercase tracking-wider text-right">Recaudado</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/60">
+                      {stats.categoryStats?.map((cat: any) => {
+                        const pct = cat.total > 0 ? Math.round((cat.checkedIn / cat.total) * 100) : 0
+                        return (
+                          <tr key={cat.id} className="hover:bg-zinc-800/30 transition-colors border-b border-zinc-800/40">
+                            <td className="p-4 font-bold text-white text-sm">{cat.name}</td>
+                            <td className="p-4 text-right text-zinc-300 font-bold">
+                              {cat.price > 0 ? `$${formatThousands(cat.price.toString())}` : "Gratis"}
+                            </td>
+                            <td className="p-4 text-center text-white font-bold">{cat.total}</td>
+                            <td className="p-4 text-center text-primary font-bold">{cat.checkedIn}</td>
+                            <td className="p-4 text-center text-zinc-400 font-bold">{cat.pending}</td>
+                            <td className="p-4 min-w-[160px]">
+                              <div className="flex items-center gap-3">
+                                <span className="w-8 text-right font-bold text-zinc-300">{pct}%</span>
+                                <div className="flex-1 bg-zinc-800 rounded-full h-2 overflow-hidden max-w-[100px]">
+                                  <div 
+                                    className="bg-primary h-2 rounded-full shadow-[0_0_5px_rgba(57,255,20,0.3)] transition-all duration-300"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4 text-right font-black text-emerald-400 text-sm">
+                              ${formatThousands(cat.income.toString())}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                      {stats.categoryStats?.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-zinc-500 italic">
+                            No hay categorías creadas para esta sucursal.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* CASH MOVEMENT MODAL */}
       {showCashModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-955 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Banknote className="text-indigo-650 dark:text-indigo-400" /> Movimiento de Caja (Entrada)
@@ -1170,7 +1597,10 @@ export default function EntradaPage() {
                     setEditForm({ ...editForm, name: e.target.value })
                     setEditFormErrors(prev => ({ ...prev, name: false }))
                   }}
-                  className={`w-full px-3 py-2 border rounded-md bg-zinc-50 dark:bg-zinc-955 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                  onBlur={(e) => {
+                    setEditForm(prev => ({ ...prev, name: toTitleCase(e.target.value) }))
+                  }}
+                  className={`w-full px-3 py-2 border rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                     editFormErrors.name ? "border-red-500 dark:border-red-500/50" : "border-zinc-200 dark:border-zinc-800"
                   }`}
                   required
@@ -1200,7 +1630,7 @@ export default function EntradaPage() {
                     type="text"
                     value={editForm.phone}
                     onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-955 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
@@ -1217,7 +1647,48 @@ export default function EntradaPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Categoría *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
+                    {session?.user?.permissions?.manageBranchConfig && (
+                      <div className="flex items-center gap-2">
+                        {editForm.categoryId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const selectedCat = categories?.find(c => c.id === editForm.categoryId)
+                              if (selectedCat) {
+                                setEditingCatId(selectedCat.id)
+                                setNewCatForm({
+                                  name: selectedCat.name,
+                                  price: selectedCat.price.toString(),
+                                  includedConsumptions: selectedCat.includedConsumptions || 0,
+                                  description: selectedCat.description || ""
+                                })
+                                setNewCatError("")
+                                setCallingForm("edit")
+                                setShowNewCatModal(true)
+                              }
+                            }}
+                            className="text-[10px] text-zinc-400 hover:text-white font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                          >
+                            ✏️ Modificar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewCatForm({ name: "", price: "", includedConsumptions: 0, description: "" })
+                            setNewCatError("")
+                            setCallingForm("edit")
+                            setShowNewCatModal(true)
+                          }}
+                          className="text-[10px] text-primary font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                        >
+                          + Nueva Categoría
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <select
                     value={editForm.categoryId}
                     onChange={(e) => {
@@ -1271,6 +1742,192 @@ export default function EntradaPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* NEW CATEGORY MODAL */}
+      {showNewCatModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[70] animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4 font-mono">
+            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Plus className="text-primary" /> {editingCatId ? "Modificar Categoría" : "Nueva Categoría"}
+              </h3>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowNewCatModal(false)
+                  setEditingCatId(null)
+                }} 
+                className="text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {newCatError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-650 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
+                <ShieldAlert size={16} /> {newCatError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!newCatForm.name.trim()) {
+                  setNewCatError("El nombre de la categoría es obligatorio.")
+                  return
+                }
+                if (!newCatForm.price.trim()) {
+                  setNewCatError("El precio de la categoría es obligatorio.")
+                  return
+                }
+                if (editingCatId) {
+                  updateCategoryMutation.mutate({ id: editingCatId, data: newCatForm })
+                } else {
+                  createCategoryMutation.mutate(newCatForm)
+                }
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre de la Categoría *</label>
+                <input
+                  type="text"
+                  placeholder="Ej: VIP, General, Invitado"
+                  value={newCatForm.name}
+                  onChange={(e) => setNewCatForm({ ...newCatForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Precio ($) *</label>
+                  <input
+                    type="text"
+                    placeholder="0"
+                    value={newCatForm.price}
+                    onChange={(e) => setNewCatForm({ ...newCatForm, price: formatThousands(e.target.value) })}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Consumos Incluidos</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newCatForm.includedConsumptions}
+                    onChange={(e) => setNewCatForm({ ...newCatForm, includedConsumptions: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-zinc-500 block mb-1">Descripción (Opcional)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Ej: Incluye acceso a zona VIP y 2 bebidas"
+                  value={newCatForm.description}
+                  onChange={(e) => setNewCatForm({ ...newCatForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end border-t pt-4 border-zinc-200 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewCatModal(false)
+                    setEditingCatId(null)
+                  }}
+                  className="px-4 py-2 border border-zinc-800 rounded-md text-xs font-bold uppercase tracking-wider text-zinc-400 hover:bg-zinc-900 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-black border border-primary/20 rounded-md text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer shadow-[0_0_15px_rgba(57,255,20,0.2)]"
+                >
+                  {editingCatId 
+                    ? (updateCategoryMutation.isPending ? "Guardando..." : "Guardar Cambios") 
+                    : (createCategoryMutation.isPending ? "Creando..." : "Crear Categoría")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ALREADY CHECKED IN WARNING MODAL (LOCKED) */}
+      {alreadyCheckedInInfo && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+          <div className="bg-zinc-950 border-2 border-red-500 rounded-xl p-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.3)] space-y-4 font-mono text-center text-white relative">
+            <div className="w-16 h-16 rounded-full bg-red-950/50 border border-red-500 flex items-center justify-center mx-auto text-red-500 animate-bounce">
+              <ShieldAlert size={36} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-black tracking-widest text-red-500 uppercase">
+                ¡Advertencia!
+              </h3>
+              <p className="text-sm font-bold text-zinc-100">
+                El asistente ya ingresó al evento
+              </p>
+            </div>
+
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
+              <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                <span className="text-zinc-500">Asistente:</span>
+                <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.name}</span>
+              </div>
+              <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                <span className="text-zinc-500">Documento:</span>
+                <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.cc}</span>
+              </div>
+              {alreadyCheckedInInfo.categoryName && (
+                <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                  <span className="text-zinc-500">Categoría:</span>
+                  <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.categoryName}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-0.5">
+                <span className="text-zinc-500">Hora de Ingreso:</span>
+                <span className="font-bold text-red-400">
+                  {alreadyCheckedInInfo.checkedInAt 
+                    ? new Date(alreadyCheckedInInfo.checkedInAt).toLocaleString('es-ES', { 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        second: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      }) 
+                    : "Fecha no disponible"}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setAlreadyCheckedInInfo(null)
+                  if (html5QrCodeRef.current && isScanning) {
+                    html5QrCodeRef.current.resume().catch(() => {})
+                  }
+                }}
+                className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)] active:scale-95"
+              >
+                Aceptar y Continuar
+              </button>
+            </div>
           </div>
         </div>
       )}

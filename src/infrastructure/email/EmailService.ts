@@ -1,5 +1,6 @@
 import { Resend } from "resend"
 import nodemailer from "nodemailer"
+import sharp from "sharp"
 
 export class EmailService {
   private static getClient() {
@@ -156,12 +157,12 @@ export class EmailService {
     return { buffer, contentType, extension }
   }
 
-  static compileTemplate(
+  static async compileTemplate(
     event: any,
     attendeeName: string,
     qrCode?: string,
     categoryName?: string
-  ): {
+  ): Promise<{
     html: string
     attachments: Array<{
       content: Buffer
@@ -170,7 +171,7 @@ export class EmailService {
       contentId: string
       contentType: string
     }>
-  } {
+  }> {
     const emailBg = event.emailBackgroundColor || "#0a0a0c"
     const cardBg = event.emailCardColor || "#111114"
     const headerBg = event.emailHeaderBackgroundColor || "#000000"
@@ -218,21 +219,36 @@ export class EmailService {
           if (!cleanSvg.includes("xmlns=")) {
             cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
           }
-          const base64 = Buffer.from(cleanSvg).toString("base64")
-          const dataUri = `data:image/svg+xml;base64,${base64}`
-          const parsed = this.parseDataUri(dataUri)
-          if (parsed) {
+          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+          if (match && match[3]) {
+            const contentType = match[2]
+            const base64 = match[3]
+            const buffer = Buffer.from(base64, "base64")
+            const ext = contentType.split("/")[1] || "webp"
             const cid = "logo_image"
             attachments.push({
-              content: parsed.buffer,
-              filename: "logo.svg",
+              content: buffer,
+              filename: `logo.${ext}`,
               cid,
               contentId: cid,
-              contentType: "image/svg+xml",
+              contentType,
             })
             logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
           } else {
-            logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
+            const pngBuffer = await sharp(Buffer.from(cleanSvg))
+              .resize({ height: size * 2 })
+              .png()
+              .toBuffer()
+            const cid = "logo_image"
+            attachments.push({
+              content: pngBuffer,
+              filename: "logo.png",
+              cid,
+              contentId: cid,
+              contentType: "image/png",
+            })
+            logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
           }
         } catch (e) {
           logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
@@ -271,17 +287,34 @@ export class EmailService {
           if (!cleanSvg.includes("xmlns=")) {
             cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
           }
-          const base64 = Buffer.from(cleanSvg).toString("base64")
-          const dataUri = `data:image/svg+xml;base64,${base64}`
-          const parsed = this.parseDataUri(dataUri)
-          if (parsed) {
+          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+          if (match && match[3]) {
+            const contentType = match[2]
+            const base64 = match[3]
+            const buffer = Buffer.from(base64, "base64")
+            const ext = contentType.split("/")[1] || "webp"
             const cid = "watermark_image"
             attachments.push({
-              content: parsed.buffer,
-              filename: "watermark.svg",
+              content: buffer,
+              filename: `watermark.${ext}`,
               cid,
               contentId: cid,
-              contentType: "image/svg+xml",
+              contentType,
+            })
+            branchLogoWatermarkUrl = `cid:${cid}`
+          } else {
+            const pngBuffer = await sharp(Buffer.from(cleanSvg))
+              .resize({ width: 400 })
+              .png()
+              .toBuffer()
+            const cid = "watermark_image"
+            attachments.push({
+              content: pngBuffer,
+              filename: "watermark.png",
+              cid,
+              contentId: cid,
+              contentType: "image/png",
             })
             branchLogoWatermarkUrl = `cid:${cid}`
           }
@@ -312,6 +345,54 @@ export class EmailService {
               <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
             </div>
           `
+        }
+      } else if (trimmedFlyer.startsWith("<svg") || trimmedFlyer.startsWith("<?xml")) {
+        try {
+          let cleanSvg = trimmedFlyer.replace(/^<\?xml[^>]*\?>/i, "").trim()
+          if (!cleanSvg.includes("xmlns=")) {
+            cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+          }
+          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+          if (match && match[3]) {
+            const contentType = match[2]
+            const base64 = match[3]
+            const buffer = Buffer.from(base64, "base64")
+            const ext = contentType.split("/")[1] || "webp"
+            const cid = "flyer_image"
+            attachments.push({
+              content: buffer,
+              filename: `flyer.${ext}`,
+              cid,
+              contentId: cid,
+              contentType,
+            })
+            flyerHtml = `
+              <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
+                <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+              </div>
+            `
+          } else {
+            const pngBuffer = await sharp(Buffer.from(cleanSvg))
+              .resize({ width: 600 })
+              .png()
+              .toBuffer()
+            const cid = "flyer_image"
+            attachments.push({
+              content: pngBuffer,
+              filename: "flyer.png",
+              cid,
+              contentId: cid,
+              contentType: "image/png",
+            })
+            flyerHtml = `
+              <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
+                <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+              </div>
+            `
+          }
+        } catch (e) {
+          flyerHtml = ""
         }
       } else {
         const absoluteFlyerUrl = this.getAbsoluteUrl(trimmedFlyer)
@@ -443,7 +524,7 @@ export class EmailService {
                     <td align="center">
                       <p style="font-weight: bold; font-size: 12px; margin-top: 0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: ${textColor};">${qrTitle}</p>
                       <div style="display: inline-block; padding: 14px; background-color: #ffffff; border: 1px solid ${borderColor}; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                        <img src="cid:acceso_qr.png" alt="Código QR" width="160" height="160" style="display: block;" />
+                        <img src="cid:acceso_qr.png" alt="Código QR" width="260" height="260" style="display: block;" />
                       </div>
                       <p style="font-size: 10px; color: ${mutedColor}; margin-top: 12px; margin-bottom: 0; max-width: 280px; line-height: 1.4;">${qrNote}</p>
                     </td>

@@ -69,6 +69,9 @@ const updateEventSchema = z.object({
   emailBorderColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailSectionBackgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   emailWarningBackgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+
+  // WhatsApp
+  whatsappMessage: z.string().optional(),
 })
 
 export async function PATCH(

@@ -3,11 +3,19 @@ import { NextResponse } from "next/server"
 import { PermissionFlags } from "@/types/next-auth"
 
 export async function requireAuth() {
-  const session = await auth()
-  if (!session?.user) {
-    return { session: null, response: NextResponse.json({ error: "No autorizado" }, { status: 401 }) }
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { session: null, response: NextResponse.json({ error: "No autorizado" }, { status: 401 }) }
+    }
+    return { session, response: null }
+  } catch (err) {
+    if (err instanceof Error && (err.message.includes("Dynamic server usage") || (err as any).digest === "DYNAMIC_SERVER_USAGE")) {
+      throw err;
+    }
+    console.error("[AUTH GUARD ERROR] requireAuth failed:", err)
+    return { session: null, response: NextResponse.json({ error: "Sesión inválida o expirada" }, { status: 401 }) }
   }
-  return { session, response: null }
 }
 
 export async function requirePermission(flag: keyof PermissionFlags) {

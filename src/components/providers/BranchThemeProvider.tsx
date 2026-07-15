@@ -70,7 +70,7 @@ export function BranchThemeProvider({ children }: { children: React.ReactNode })
   const surfaceColorRaw = activeBranch.surfaceColor || "#050505"
   const panelColorRaw = activeBranch.panelColor || "#000000"
   const textColorRaw = activeBranch.textColor || "#ffffff"
-  const titleColorRaw = activeBranch.titleColor || "#39ff14"
+  const titleColorRaw = activeBranch.titleColor || "#ffffff"
 
   const primary = primaryColorRaw === "#102542" ? "#39ff14" : primaryColorRaw
   const secondary = secondaryColorRaw === "#ffffff" ? "#39ff14" : secondaryColorRaw

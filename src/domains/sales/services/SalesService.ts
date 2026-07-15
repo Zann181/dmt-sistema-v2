@@ -5,8 +5,10 @@ import crypto from "crypto"
 
 export class SalesService {
   static async ensureEventProductDefaults(branchId: string, eventId: string) {
-    const products = await prisma.product.findMany({ where: { branchId, isActive: true } })
-    const existing = await prisma.eventProduct.findMany({ where: { eventId } })
+    const [products, existing] = await Promise.all([
+      prisma.product.findMany({ where: { branchId, isActive: true } }),
+      prisma.eventProduct.findMany({ where: { eventId } })
+    ])
     const existingProductIds = new Set(existing.map((ep: any) => ep.productId))
 
     const toCreate = products.filter((p: any) => !existingProductIds.has(p.id))

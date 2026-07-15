@@ -3,62 +3,62 @@ import { prisma } from "../src/infrastructure/database/prisma"
 import bcrypt from "bcryptjs"
 
 async function main() {
-  const passwordHash = await bcrypt.hash("CambiarEstaContraseña123!", 12)
-
-  // 1. Crear Sucursal
-  const branch = await prisma.branch.upsert({
-    where: { slug: "sucursal-norte" },
-    update: {
-      primaryColor: "#39ff14",
-      secondaryColor: "#e9ffe9",
-      pageBackgroundColor: "#050505",
-      surfaceColor: "#0f1113",
-      panelColor: "#15181c",
-    },
-    create: {
-      id: "br_1",
-      name: "Sucursal Norte",
-      slug: "sucursal-norte",
-      codePrefix: "NOR",
-      primaryColor: "#39ff14",
-      secondaryColor: "#e9ffe9",
-      pageBackgroundColor: "#050505",
-      surfaceColor: "#0f1113",
-      panelColor: "#15181c",
-      isActive: true,
-    },
-  })
+  const [passwordHash, branch] = await Promise.all([
+    bcrypt.hash("CambiarEstaContraseña123!", 12),
+    prisma.branch.upsert({
+      where: { slug: "sucursal-norte" },
+      update: {
+        primaryColor: "#39ff14",
+        secondaryColor: "#e9ffe9",
+        pageBackgroundColor: "#050505",
+        surfaceColor: "#0f1113",
+        panelColor: "#15181c",
+      },
+      create: {
+        id: "br_1",
+        name: "Sucursal Norte",
+        slug: "sucursal-norte",
+        codePrefix: "NOR",
+        primaryColor: "#39ff14",
+        secondaryColor: "#e9ffe9",
+        pageBackgroundColor: "#050505",
+        surfaceColor: "#0f1113",
+        panelColor: "#15181c",
+        isActive: true,
+      },
+    })
+  ])
 
   // 2. Crear Evento
-  const event = await prisma.event.upsert({
-    where: { branchId_slug: { branchId: "br_1", slug: "gran-apertura" } },
-    update: {},
-    create: {
-      id: "ev_1",
-      branchId: "br_1",
-      name: "Gran Apertura",
-      slug: "gran-apertura",
-      description: "Inauguración de la sucursal Norte",
-      startsAt: new Date(),
-      endsAt: new Date(Date.now() + 86400000 * 2),
-      status: "ACTIVE",
-    },
-  })
-
-  // 3. Crear Categoría de Asistente
-  const category = await prisma.attendeeCategory.upsert({
-    where: { branchId_name: { branchId: "br_1", name: "VIP" } },
-    update: {},
-    create: {
-      id: "cat_1",
-      branchId: "br_1",
-      name: "VIP",
-      includedConsumptions: 2,
-      price: 15000,
-      description: "Acceso preferencial",
-      isActive: true,
-    },
-  })
+  const [event, category] = await Promise.all([
+    prisma.event.upsert({
+      where: { branchId_slug: { branchId: "br_1", slug: "gran-apertura" } },
+      update: {},
+      create: {
+        id: "ev_1",
+        branchId: "br_1",
+        name: "Gran Apertura",
+        slug: "gran-apertura",
+        description: "Inauguración de la sucursal Norte",
+        startsAt: new Date(),
+        endsAt: new Date(Date.now() + 86400000 * 2),
+        status: "ACTIVE",
+      },
+    }),
+    prisma.attendeeCategory.upsert({
+      where: { branchId_name: { branchId: "br_1", name: "VIP" } },
+      update: {},
+      create: {
+        id: "cat_1",
+        branchId: "br_1",
+        name: "VIP",
+        includedConsumptions: 2,
+        price: 15000,
+        description: "Acceso preferencial",
+        isActive: true,
+      },
+    })
+  ])
 
   // 4. Crear Asistente de Prueba
   await prisma.attendee.upsert({

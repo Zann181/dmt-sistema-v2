@@ -28,6 +28,67 @@ export async function GET(req: Request) {
 
     const q = url.searchParams.get("q") || ""
     
+    const statsOnly = url.searchParams.get("stats") === "true"
+    if (statsOnly) {
+      if (!branchId || !eventId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
+
+      const cats = await prisma.attendeeCategory.findMany({
+        where: { branchId }
+      })
+
+      const attendees = await prisma.attendee.findMany({
+        where: { branchId, eventId },
+        select: {
+          id: true,
+          categoryId: true,
+          paidAmount: true,
+          hasCheckedIn: true,
+          createdAt: true,
+          checkedInAt: true
+        }
+      })
+
+      const totalCount = attendees.length
+      const checkedInCount = attendees.filter((a: any) => a.hasCheckedIn).length
+      const pendingCount = totalCount - checkedInCount
+      const totalIncome = attendees.reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const todayIncome = attendees
+        .filter((a: any) => new Date(a.createdAt) >= today)
+        .reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
+
+      const categoryStats = cats.map((c: any) => {
+        const catAttendees = attendees.filter((a: any) => a.categoryId === c.id)
+        const total = catAttendees.length
+        const checkedIn = catAttendees.filter((a: any) => a.hasCheckedIn).length
+        const pending = total - checkedIn
+        const income = catAttendees.reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
+
+        return {
+          id: c.id,
+          name: c.name,
+          price: Number(c.price),
+          total,
+          checkedIn,
+          pending,
+          income
+        }
+      })
+
+      return NextResponse.json({
+        data: {
+          totalCount,
+          checkedInCount,
+          pendingCount,
+          totalIncome,
+          todayIncome,
+          categoryStats
+        }
+      })
+    }
+    
     const attendees = await prisma.attendee.findMany({
       where: {
         branchId,
@@ -168,7 +229,7 @@ export async function POST(req: Request) {
   qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
 }
 
-        const { html: htmlContent, attachments: extraAttachments } = EmailService.compileTemplate(event, parsed.name, qrCode, category.name)
+        const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, parsed.name, qrCode, category.name)
         const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
           .replace(/{nombre_evento}/g, event.name)
           .replace(/{nombre_sucursal}/g, event.branch?.name || "")

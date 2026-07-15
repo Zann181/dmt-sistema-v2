@@ -69,13 +69,11 @@ export default async function RootLayout({
   const configuredTextColor = branch?.textColor || "#ffffff";
   const configuredTitleColor = branch?.titleColor || "#ffffff";
   
-  // If the background is dark and text color is the default white, restore the neon primary color 
-  const defaultForeground = isBgDark ? primary : "#09090b";
-  const foreground = configuredTextColor === "#ffffff" ? defaultForeground : configuredTextColor;
-  const titleForeground = configuredTitleColor === "#ffffff" ? foreground : configuredTitleColor;
+  const foreground = isBgDark ? configuredTextColor : "#09090b";
+  const titleForeground = isBgDark ? configuredTitleColor : "#09090b";
 
   const cardForeground = foreground;
-  const mutedForeground = isBgDark ? `${primary}aa` : "#71717a";
+  const mutedForeground = isBgDark ? "#a1a1aa" : "#71717a";
   const border = isBgDark ? `${primary}33` : "rgba(0, 0, 0, 0.08)";
   const input = isBgDark ? `${primary}1a` : "rgba(0, 0, 0, 0.04)";
 
@@ -128,9 +126,9 @@ export default async function RootLayout({
       --color-indigo-900: ${primary} !important;
       --color-indigo-950: ${isBgDark ? `#0a0d0a` : `#f2fcf2`} !important;
 
-      --color-zinc-400: ${isBgDark ? `${primary}cc` : `#52525b`} !important;
-      --color-zinc-500: ${isBgDark ? `${primary}aa` : `#71717a`} !important;
-      --color-zinc-600: ${isBgDark ? `${primary}88` : `#4b5563`} !important;
+      --color-zinc-400: ${isBgDark ? `#a1a1aa` : `#a1a1aa`} !important;
+      --color-zinc-500: ${isBgDark ? `#71717a` : `#71717a`} !important;
+      --color-zinc-600: ${isBgDark ? `#52525b` : `#52525b`} !important;
 
       --title-color: ${titleForeground} !important;
     }

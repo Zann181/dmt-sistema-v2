@@ -7,7 +7,16 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>
 }) {
-  const session = await auth()
+  let session = null
+  try {
+    session = await auth()
+  } catch (err) {
+    if (err instanceof Error && (err.message.includes("Dynamic server usage") || (err as any).digest === "DYNAMIC_SERVER_USAGE")) {
+      throw err;
+    }
+    console.warn("[AUTH SESSION ERROR] Unable to retrieve session on login page:", err)
+  }
+
   if (session?.user) {
     redirect("/dashboard")
   }

@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
     }
 
-    const { html: htmlContent, attachments: extraAttachments } = EmailService.compileTemplate(event, name, qrCode, category.name)
+    const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, name, qrCode, category.name)
     const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
       .replace(/{nombre_evento}/g, event.name)
       .replace(/{nombre_sucursal}/g, event.branch?.name || "")
