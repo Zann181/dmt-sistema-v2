@@ -24,6 +24,11 @@ export async function POST(req: Request) {
     }
 
     if (attendee.hasCheckedIn) {
+      const checkedInBy = (attendee as any).checkedInBy
+      const checkedInByName = checkedInBy 
+        ? `${checkedInBy.firstName} ${checkedInBy.lastName}`.trim() || checkedInBy.username
+        : "Desconocido"
+
       return NextResponse.json({
         error: "ALREADY_CHECKED_IN",
         message: "El asistente ya ha ingresado al evento",
@@ -32,7 +37,8 @@ export async function POST(req: Request) {
           name: attendee.name,
           cc: attendee.cc,
           checkedInAt: attendee.checkedInAt,
-          categoryName: attendee.category?.name
+          categoryName: attendee.category?.name,
+          checkedInByName
         }
       }, { status: 409 })
     }

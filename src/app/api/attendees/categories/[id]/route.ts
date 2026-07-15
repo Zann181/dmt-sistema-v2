@@ -17,7 +17,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user?.permissions.manageCategories) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -51,7 +51,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user?.permissions.manageCategories) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 

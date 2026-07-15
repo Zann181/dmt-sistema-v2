@@ -8,7 +8,8 @@ export class AttendeeService {
         OR: [{ cc: value }, { qrCode: value }]
       },
       include: {
-        category: true
+        category: true,
+        checkedInBy: true
       }
     })
   }

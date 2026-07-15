@@ -5,7 +5,7 @@ import { EventosClient } from "./EventosClient"
 
 export default async function EventosPage() {
   const { session } = await requireAuth()
-  if (!session?.user.permissions.manageEventsConfig) {
+  if (!session?.user.permissions.manageEventsConfig && !session?.user.permissions.accessAttendees) {
     redirect("/dashboard")
   }
 

@@ -74,16 +74,41 @@ const updateEventSchema = z.object({
   whatsappMessage: z.string().optional(),
 })
 
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
+
+  const { id } = await params
+  try {
+    const event = await prisma.event.findUnique({ where: { id } })
+    if (!event) {
+      return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 })
+    }
+    return NextResponse.json({ data: event })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageEventsConfig) {
+  const { id } = await params
+
+  const isAuthorized = session?.user?.permissions.manageEventsConfig || 
+    (session?.user?.activeEventId === id && session?.user?.permissions.accessAttendees);
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
-  const { id } = await params
   try {
     const body = await req.json()
     const parsed = updateEventSchema.parse(body)

@@ -33,7 +33,7 @@ export class IdentityService {
       case "EVENT_ADMIN":
         return { manageBranchConfig: false, manageEventsConfig: true, manageCategories: true, accessAttendees: true, accessSales: true, accessCatalog: false, switchContext: true }
       case "ENTRANCE":
-        return { manageBranchConfig: false, manageEventsConfig: false, manageCategories: false, accessAttendees: true, accessSales: false, accessCatalog: false, switchContext: true }
+        return { manageBranchConfig: false, manageEventsConfig: false, manageCategories: true, accessAttendees: true, accessSales: false, accessCatalog: false, switchContext: true }
       case "BAR":
         return { manageBranchConfig: false, manageEventsConfig: false, manageCategories: false, accessAttendees: false, accessSales: true, accessCatalog: false, switchContext: true }
       default:

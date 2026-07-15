@@ -118,16 +118,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         const t = token as any
-        session.user.id = t.userId as string
-        session.user.username = t.username as string
-        session.user.isSuperuser = t.isSuperuser as boolean
-        session.user.isGlobalAdmin = t.isGlobalAdmin as boolean
-        session.user.activeBranchId = t.activeBranchId as string | null
-        session.user.activeBranchRole = t.activeBranchRole as any
-        session.user.activeEventId = t.activeEventId as string | null
+        
+        // Fetch fresh user data from DB to prevent stale JWT permissions
+        const dbUser = await prisma.user.findUnique({
+          where: { id: t.userId as string },
+          include: { 
+            branchMemberships: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
+            eventAssignments: { where: { isActive: true }, orderBy: { createdAt: "asc" } }
+          }
+        })
+
+        if (!dbUser || !dbUser.isActive) {
+          // Si el usuario fue eliminado o desactivado
+          session.user.permissions = IdentityService.buildPermissionFlags(null, false)
+          return session
+        }
+
+        const firstBranch = dbUser.branchMemberships[0]
+        const firstEvent = dbUser.eventAssignments[0]
+        
+        session.user.id = dbUser.id
+        session.user.username = dbUser.username
+        session.user.isSuperuser = dbUser.isSuperuser
+        session.user.isGlobalAdmin = dbUser.isGlobalAdmin
+        session.user.activeBranchId = firstBranch?.branchId ?? firstEvent?.branchId ?? null
+        session.user.activeBranchRole = firstBranch?.role ?? firstEvent?.role ?? null
+        session.user.activeEventId = null
+        
         session.user.permissions = IdentityService.buildPermissionFlags(
-          t.activeBranchRole,
-          t.isSuperuser || t.isGlobalAdmin
+          session.user.activeBranchRole,
+          dbUser.isSuperuser || dbUser.isGlobalAdmin
         )
       }
       return session

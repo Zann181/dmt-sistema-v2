@@ -37,7 +37,7 @@ export default function EntradaPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"scan" | "search" | "add" | "dashboard">("search")
+  const [activeTab, setActiveTab] = useState<"scan" | "search" | "add" | "dashboard">("dashboard")
 
   // Swipeable floating notification state
   const [notification, setNotification] = useState<{
@@ -98,7 +98,7 @@ export default function EntradaPage() {
   useEffect(() => {
     const mode = searchParams.get("mode")
     if (mode === "scan" || mode === "search" || mode === "add" || mode === "dashboard") {
-      setActiveTab(mode)
+      setActiveTab(mode as any)
     }
   }, [searchParams])
 
@@ -787,6 +787,14 @@ export default function EntradaPage() {
                       : "Fecha no disponible"}
                   </span>
                 </div>
+                {alreadyCheckedInInfo.checkedInByName && (
+                  <div className="flex justify-between border-t border-zinc-800/60 pt-1.5 mt-1.5">
+                    <span className="text-zinc-500">Escaneado por:</span>
+                    <span className="font-bold text-zinc-300 truncate max-w-[150px] text-right" title={alreadyCheckedInInfo.checkedInByName}>
+                      {alreadyCheckedInInfo.checkedInByName}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2">
@@ -900,30 +908,30 @@ export default function EntradaPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Entrada & Check-in</h2>
-          <p className="text-zinc-500">Escanea códigos QR automáticamente o realiza búsquedas manuales.</p>
+          <p className="text-zinc-500 text-sm hidden sm:block">Control de acceso y escáner QR.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <a
             href="/entrada?mode=scan&fullscreen=true"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white px-3 py-2.5 rounded-md font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+            className="flex-1 md:flex-none justify-center text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white px-3 py-2.5 rounded-md font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
           >
             <QrCode size={14} /> Abrir Escáner QR
           </a>
           <a
             href={`/api/attendees/export/excel?branchId=${activeBranchId}&eventId=${activeEventId}`}
             download
-            className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
           >
             <Download size={14} /> Exportar CSV
           </a>
           <button
             onClick={() => setShowCashModal(true)}
-            className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm"
+            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
           >
             <Banknote size={14} /> Movimiento Caja
           </button>
@@ -1199,7 +1207,7 @@ export default function EntradaPage() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
-                  {session?.user?.permissions?.manageBranchConfig && (
+                  {session?.user?.permissions?.manageCategories && (
                     <div className="flex items-center gap-2">
                       {addForm.categoryId && (
                         <button
@@ -1219,9 +1227,10 @@ export default function EntradaPage() {
                               setShowNewCatModal(true)
                             }
                           }}
-                          className="text-[10px] text-zinc-400 hover:text-white font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                          className="text-zinc-400 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                          title="Modificar Categoría"
                         >
-                          ✏️ Modificar
+                          <Edit size={14} />
                         </button>
                       )}
                       <button
@@ -1232,9 +1241,10 @@ export default function EntradaPage() {
                           setCallingForm("add")
                           setShowNewCatModal(true)
                         }}
-                        className="text-[10px] text-primary font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                        className="text-primary hover:text-[#39FF14] p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer"
+                        title="Nueva Categoría"
                       >
-                        + Nueva Categoría
+                        <Plus size={14} />
                       </button>
                     </div>
                   )}
@@ -1649,7 +1659,7 @@ export default function EntradaPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
-                    {session?.user?.permissions?.manageBranchConfig && (
+                    {session?.user?.permissions?.manageCategories && (
                       <div className="flex items-center gap-2">
                         {editForm.categoryId && (
                           <button
@@ -1669,9 +1679,10 @@ export default function EntradaPage() {
                                 setShowNewCatModal(true)
                               }
                             }}
-                            className="text-[10px] text-zinc-400 hover:text-white font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                            className="text-zinc-400 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                            title="Modificar Categoría"
                           >
-                            ✏️ Modificar
+                            <Edit size={14} />
                           </button>
                         )}
                         <button
@@ -1682,9 +1693,10 @@ export default function EntradaPage() {
                             setCallingForm("edit")
                             setShowNewCatModal(true)
                           }}
-                          className="text-[10px] text-primary font-bold hover:underline cursor-pointer flex items-center gap-0.5"
+                          className="text-primary hover:text-[#39FF14] p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer"
+                          title="Nueva Categoría"
                         >
-                          + Nueva Categoría
+                          <Plus size={14} />
                         </button>
                       </div>
                     )}
@@ -1912,6 +1924,14 @@ export default function EntradaPage() {
                     : "Fecha no disponible"}
                 </span>
               </div>
+              {alreadyCheckedInInfo.checkedInByName && (
+                <div className="flex justify-between border-t border-zinc-800/60 pt-1.5 mt-1.5">
+                  <span className="text-zinc-500">Escaneado por:</span>
+                  <span className="font-bold text-zinc-300 truncate max-w-[150px] text-right" title={alreadyCheckedInInfo.checkedInByName}>
+                    {alreadyCheckedInInfo.checkedInByName}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="pt-2">

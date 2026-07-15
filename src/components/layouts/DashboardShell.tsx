@@ -14,6 +14,7 @@ import {
   QrCode, 
   Search, 
   UserPlus, 
+  UserCog, 
   Menu, 
   X, 
   ChevronLeft, 
@@ -156,14 +157,13 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
 
         {/* Sidebar Main Navigation Links */}
         <nav className="p-3 flex-1 space-y-1 overflow-y-auto">
-          {/* Inicio */}
-          <Link href="/dashboard" className={linkClass("/dashboard")} title={collapsed ? "Inicio" : undefined}>
+          {/* Dashboard */}
+          <Link href="/entrada" className={linkClass("/entrada")} title={collapsed ? "Dashboard" : undefined}>
             <LayoutDashboard size={18} className="shrink-0" />
             <span className={`transition-opacity duration-200 ${collapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
-              Inicio
+              Dashboard
             </span>
           </Link>
-          
           {/* Sucursales */}
           {p.manageBranchConfig && (
             <Link href="/sucursales" className={linkClass("/sucursales")} title={collapsed ? "Sucursales" : undefined}>
@@ -175,7 +175,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           )}
 
           {/* Usuarios */}
-          {(session.user.isSuperuser || session.user.isGlobalAdmin) && (
+          {(session.user.isSuperuser || session.user.isGlobalAdmin || p.accessAttendees) && (
             <Link href="/usuarios" className={linkClass("/usuarios")} title={collapsed ? "Usuarios" : undefined}>
               <Users size={18} className="shrink-0" />
               <span className={`transition-opacity duration-200 ${collapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
@@ -185,7 +185,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           )}
           
           {/* Eventos */}
-          {p.manageEventsConfig && (
+          {(p.manageEventsConfig || p.accessAttendees) && (
             <Link href="/eventos" className={linkClass("/eventos")} title={collapsed ? "Eventos" : undefined}>
               <Calendar size={18} className="shrink-0" />
               <span className={`transition-opacity duration-200 ${collapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
@@ -200,7 +200,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
               <Link 
                 href="/entrada?mode=search" 
                 className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer ${
-                  isActive("/entrada") 
+                  isActive("/entrada?mode=search") 
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold border-l-2 border-primary" 
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 }`}

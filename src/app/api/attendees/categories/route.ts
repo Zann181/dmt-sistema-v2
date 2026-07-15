@@ -46,7 +46,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user?.permissions.manageCategories) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 

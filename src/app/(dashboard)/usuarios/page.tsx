@@ -11,6 +11,17 @@ export default function UsuariosPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/session")
+      if (!res.ok) return null
+      return await res.json()
+    }
+  })
+  
+  const isSuper = session?.user?.isSuperuser || session?.user?.isGlobalAdmin;
+
   const [createForm, setCreateForm] = useState({
     username: "",
     email: "",
@@ -299,8 +310,8 @@ export default function UsuariosPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1.5 max-w-xs">
-                        {u.branchMemberships?.map((m: any) => (
-                          <span key={m.id} className="px-2 py-0.5 rounded text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                        {u.branchMemberships?.map((m: any, idx: number) => (
+                          <span key={`${m.id}-${idx}`} className="px-2 py-0.5 rounded text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
                             {m.branch.name} ({m.role})
                           </span>
                         ))}
@@ -311,8 +322,8 @@ export default function UsuariosPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1.5 max-w-xs">
-                        {u.eventAssignments?.map((a: any) => (
-                          <span key={a.id} className="px-2 py-0.5 rounded text-xs bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
+                        {u.eventAssignments?.map((a: any, idx: number) => (
+                          <span key={`${a.id}-${idx}`} className="px-2 py-0.5 rounded text-xs bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900">
                             {a.event?.name || "Evento"} ({a.role})
                           </span>
                         ))}
@@ -422,37 +433,39 @@ export default function UsuariosPage() {
                 />
               </div>
 
-              <div className="border-t pt-4 space-y-3">
-                <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Permisos y Roles Globales</p>
-                
-                <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold">Superusuario</p>
-                    <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setCreateForm({ ...createForm, isSuperuser: !createForm.isSuperuser })}
-                    className="text-zinc-500 hover:text-indigo-600 transition-colors"
-                  >
-                    {createForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
-                  </button>
-                </label>
+              {isSuper && (
+                <div className="border-t pt-4 space-y-3">
+                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Permisos y Roles Globales</p>
+                  
+                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div>
+                      <p className="text-sm font-semibold">Superusuario</p>
+                      <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setCreateForm({ ...createForm, isSuperuser: !createForm.isSuperuser })}
+                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                    >
+                      {createForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
+                    </button>
+                  </label>
 
-                <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold">Administrador Global</p>
-                    <p className="text-xs text-zinc-500">Permisos de gestión sin límite de sucursal</p>
-                  </div>
-                  <button 
-                    type="button"
-                    onClick={() => setCreateForm({ ...createForm, isGlobalAdmin: !createForm.isGlobalAdmin })}
-                    className="text-zinc-500 hover:text-indigo-600 transition-colors"
-                  >
-                    {createForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
-                  </button>
-                </label>
-              </div>
+                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div>
+                      <p className="text-sm font-semibold">Administrador Global</p>
+                      <p className="text-xs text-zinc-500">Permisos de gestión sin límite de sucursal</p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setCreateForm({ ...createForm, isGlobalAdmin: !createForm.isGlobalAdmin })}
+                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                    >
+                      {createForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
+                    </button>
+                  </label>
+                </div>
+              )}
 
               <div className="flex gap-3 justify-end pt-4">
                 <button 
@@ -579,33 +592,37 @@ export default function UsuariosPage() {
                     </button>
                   </label>
                   
-                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">Superusuario</p>
-                      <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, isSuperuser: !editForm.isSuperuser })}
-                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
-                    >
-                      {editForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
-                    </button>
-                  </label>
+                  {isSuper && (
+                    <>
+                      <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                        <div>
+                          <p className="text-sm font-semibold">Superusuario</p>
+                          <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => setEditForm({ ...editForm, isSuperuser: !editForm.isSuperuser })}
+                          className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                        >
+                          {editForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
+                        </button>
+                      </label>
 
-                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">Administrador Global</p>
-                      <p className="text-xs text-zinc-500">Permisos globales de gestión</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, isGlobalAdmin: !editForm.isGlobalAdmin })}
-                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
-                    >
-                      {editForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
-                    </button>
-                  </label>
+                      <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                        <div>
+                          <p className="text-sm font-semibold">Administrador Global</p>
+                          <p className="text-xs text-zinc-500">Permisos globales de gestión</p>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => setEditForm({ ...editForm, isGlobalAdmin: !editForm.isGlobalAdmin })}
+                          className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                        >
+                          {editForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
+                        </button>
+                      </label>
+                    </>
+                  )}
                 </div>
 
                 <div className="flex gap-3 justify-end pt-4">
@@ -678,8 +695,8 @@ export default function UsuariosPage() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Sucursales Activas</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {selectedUser.branchMemberships?.map((m: any) => (
-                      <div key={m.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    {selectedUser.branchMemberships?.map((m: any, idx: number) => (
+                      <div key={`${m.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{m.branch.name}</p>
                           <p className="text-xs text-zinc-500">{m.role}</p>
@@ -769,8 +786,8 @@ export default function UsuariosPage() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Eventos Activos</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {selectedUser.eventAssignments?.map((a: any) => (
-                      <div key={a.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    {selectedUser.eventAssignments?.map((a: any, idx: number) => (
+                      <div key={`${a.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{a.event?.name || "Evento"}</p>
                           <p className="text-xs text-zinc-500">{a.role}</p>
