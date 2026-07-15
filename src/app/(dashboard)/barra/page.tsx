@@ -178,7 +178,7 @@ export default function BarraPage() {
       <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center max-w-md mx-auto space-y-4">
         <ShieldAlert size={48} className="text-amber-500 animate-bounce" />
         <h2 className="text-xl font-bold">Contexto Incompleto</h2>
-        <p className="text-lime-400 text-sm">
+        <p className="text-emerald-500 text-sm">
           Por favor selecciona una sucursal y un evento activo en la barra superior antes de vender.
         </p>
       </div>
@@ -205,7 +205,7 @@ export default function BarraPage() {
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
-            <div className="text-center text-lime-400 py-12 text-sm">Cargando menú del evento...</div>
+            <div className="text-center text-emerald-500 py-12 text-sm">Cargando menú del evento...</div>
           ) : error ? (
             <div className="p-4 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
               <ShieldAlert size={16} /> {(error as any).message}
@@ -220,13 +220,13 @@ export default function BarraPage() {
                 >
                   <span className="font-semibold text-sm leading-tight text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{p.name}</span>
                   <div className="flex flex-col">
-                    {p.description && <span className="text-[10px] text-lime-300 truncate mb-1">{p.description}</span>}
+                    {p.description && <span className="text-[10px] text-emerald-500 truncate mb-1">{p.description}</span>}
                     <span className="text-zinc-900 dark:text-white font-extrabold text-base">${Number(p.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </button>
               ))}
               {products?.length === 0 && (
-                <div className="col-span-full py-12 text-center text-lime-400 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+                <div className="col-span-full py-12 text-center text-emerald-500 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
                   No hay productos habilitados para este evento.
                 </div>
               )}
@@ -239,14 +239,14 @@ export default function BarraPage() {
       <div className="w-96 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden shrink-0">
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-950/20">
           <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingCart size={20}/> Pedido Actual</h2>
-          <button onClick={clear} className="text-lime-300 hover:text-red-500 transition-colors">
+          <button onClick={clear} className="text-emerald-500 hover:text-red-500 transition-colors">
             <Trash2 size={18} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-lime-300 space-y-2">
+            <div className="h-full flex flex-col items-center justify-center text-emerald-500 space-y-2">
               <ShoppingCart size={40} className="opacity-15 animate-pulse" />
               <p className="text-sm">El pedido está vacío</p>
             </div>
@@ -260,14 +260,14 @@ export default function BarraPage() {
                 <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 shadow-sm">
                   <button 
                     onClick={() => item.quantity > 1 ? updateQty(item.eventProductId, item.quantity - 1) : removeItem(item.eventProductId)}
-                    className="p-1 text-lime-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                    className="p-1 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                   >
                     <Minus size={12} />
                   </button>
                   <span className="w-4 text-center text-sm font-semibold text-zinc-800 dark:text-zinc-200">{item.quantity}</span>
                   <button 
                     onClick={() => updateQty(item.eventProductId, item.quantity + 1)}
-                    className="p-1 text-lime-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                    className="p-1 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                   >
                     <Plus size={12} />
                   </button>
@@ -279,7 +279,7 @@ export default function BarraPage() {
 
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/30">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-lime-400">Total</span>
+            <span className="text-sm font-semibold text-emerald-500">Total</span>
             <span className="text-2xl font-black text-zinc-900 dark:text-white">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
           </div>
 
@@ -289,7 +289,7 @@ export default function BarraPage() {
               onClick={() => handleOpenCheckout("CASH")}
               className="flex flex-col items-center justify-center py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl disabled:opacity-50 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-sm disabled:cursor-not-allowed"
             >
-              <Banknote size={20} className="mb-1 text-lime-600 dark:text-lime-400" />
+              <Banknote size={20} className="mb-1 text-emerald-600 dark:text-emerald-500" />
               <span className="text-xs font-semibold">Efectivo</span>
             </button>
             <button 
@@ -318,10 +318,10 @@ export default function BarraPage() {
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                {checkoutType === "CASH" ? <Banknote className="text-lime-500" /> : checkoutType === "CARD" ? <CreditCard className="text-blue-500" /> : <QrCode className="text-indigo-500 animate-spin" />}
+                {checkoutType === "CASH" ? <Banknote className="text-emerald-500" /> : checkoutType === "CARD" ? <CreditCard className="text-blue-500" /> : <QrCode className="text-indigo-500 animate-spin" />}
                 Registrar Pago {checkoutType === "CASH" ? "Efectivo" : checkoutType === "CARD" ? "Tarjeta" : "Mixto"}
               </h3>
-              <button onClick={() => setCheckoutType(null)} className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200">
+              <button onClick={() => setCheckoutType(null)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
@@ -334,13 +334,13 @@ export default function BarraPage() {
 
             <form onSubmit={handleConfirmCheckout} className="space-y-4">
               <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg flex items-center justify-between">
-                <span className="font-semibold text-lime-400 text-sm">Total del Pedido:</span>
+                <span className="font-semibold text-emerald-500 text-sm">Total del Pedido:</span>
                 <span className="text-xl font-black">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
 
               {checkoutType === "CASH" && (
                 <div>
-                  <label className="text-xs font-semibold text-lime-400 block mb-1">Monto Recibido</label>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto Recibido</label>
                   <input
                     type="text"
                     placeholder="0"
@@ -350,7 +350,7 @@ export default function BarraPage() {
                     required
                   />
                   {parseThousands(cashReceived) > total && (
-                    <div className="mt-3 flex items-center justify-between text-sm text-lime-600 dark:text-lime-400 font-bold">
+                    <div className="mt-3 flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-500 font-bold">
                       <span>Cambio a entregar:</span>
                       <span>${(parseThousands(cashReceived) - total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                     </div>
@@ -360,7 +360,7 @@ export default function BarraPage() {
 
               {checkoutType === "CARD" && (
                 <div>
-                  <label className="text-xs font-semibold text-lime-400 block mb-1">Referencia del Voucher (Opcional)</label>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Referencia del Voucher (Opcional)</label>
                   <input
                     type="text"
                     placeholder="Ej: 948271"
@@ -375,7 +375,7 @@ export default function BarraPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-lime-400 block mb-1">Monto en Efectivo</label>
+                      <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Efectivo</label>
                       <input
                         type="text"
                         placeholder="0"
@@ -386,7 +386,7 @@ export default function BarraPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-lime-400 block mb-1">Monto en Tarjeta</label>
+                      <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Tarjeta</label>
                       <input
                         type="text"
                         placeholder="0"
@@ -399,7 +399,7 @@ export default function BarraPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-xs font-semibold border-t pt-3 border-zinc-100 dark:border-zinc-800">
-                    <span className="text-lime-400">Restante por pagar:</span>
+                    <span className="text-emerald-500">Restante por pagar:</span>
                     <span className={`text-sm font-black ${remainingMixed === 0 ? "text-green-600" : remainingMixed < 0 ? "text-amber-600" : "text-red-500"}`}>
                       {remainingMixed === 0 ? "Completado" : `$${remainingMixed.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                     </span>
@@ -432,20 +432,20 @@ export default function BarraPage() {
       {showSuccessModal && successDetails && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in zoom-in-95 duration-150">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5 text-center">
-            <div className="w-16 h-16 bg-lime-50 dark:bg-lime-950/30 text-lime-600 dark:text-lime-400 rounded-full flex items-center justify-center mx-auto border-4 border-lime-100 dark:border-lime-900/40">
+            <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-500 rounded-full flex items-center justify-center mx-auto border-4 border-emerald-100 dark:border-emerald-900/40">
               <Check size={32} />
             </div>
 
             <div>
               <h3 className="text-xl font-bold">Venta Exitosa</h3>
-              <p className="text-xs text-lime-300 font-mono mt-1">Ref: {successDetails.saleGroupId}</p>
+              <p className="text-xs text-emerald-500 font-mono mt-1">Ref: {successDetails.saleGroupId}</p>
             </div>
 
             <div className="border-t border-b border-zinc-100 dark:border-zinc-800/80 py-4 text-left space-y-2">
-              <span className="text-xs font-semibold text-lime-300 uppercase tracking-wider block mb-2">Detalles del Pedido</span>
+              <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wider block mb-2">Detalles del Pedido</span>
               {successDetails.cart.map((item: any) => (
                 <div key={item.eventProductId} className="flex justify-between text-sm">
-                  <span className="text-zinc-600 dark:text-lime-300">{item.name} <span className="text-lime-300">x{item.quantity}</span></span>
+                  <span className="text-zinc-600 dark:text-emerald-500">{item.name} <span className="text-emerald-500">x{item.quantity}</span></span>
                   <span className="font-semibold">${(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
               ))}
@@ -455,7 +455,7 @@ export default function BarraPage() {
               </div>
             </div>
 
-            <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl text-left space-y-1.5 text-xs text-lime-400">
+            <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl text-left space-y-1.5 text-xs text-emerald-500">
               {successDetails.payments.map((p: any, idx: number) => (
                 <div key={idx} className="flex justify-between">
                   <span>Pago con {p.method}:</span>
@@ -486,7 +486,7 @@ export default function BarraPage() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Banknote className="text-indigo-600" /> Movimiento de Caja (Barra)
               </h3>
-              <button onClick={() => setShowCashModal(false)} className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200">
+              <button onClick={() => setShowCashModal(false)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
@@ -505,7 +505,7 @@ export default function BarraPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Tipo de Movimiento</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Tipo de Movimiento</label>
                 <select
                   value={cashForm.movementType}
                   onChange={(e) => setCashForm({ ...cashForm, movementType: e.target.value as any })}
@@ -517,7 +517,7 @@ export default function BarraPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
                 <input
                   type="text"
                   placeholder={cashForm.movementType === "EXPENSE" ? "Ej: Compra de hielos" : "Ej: Retiro parcial caja fuerte"}
@@ -530,7 +530,7 @@ export default function BarraPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-lime-400 block mb-1">Monto ($)</label>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto ($)</label>
                   <input
                     type="text"
                     placeholder="0"
@@ -542,7 +542,7 @@ export default function BarraPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-lime-400 block mb-1">Método de Pago</label>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
                   <select
                     value={cashForm.method}
                     onChange={(e) => setCashForm({ ...cashForm, method: e.target.value as any })}
@@ -579,5 +579,6 @@ export default function BarraPage() {
     </div>
   )
 }
+
 
 

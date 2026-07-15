@@ -128,7 +128,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Catálogo Base</h2>
-          <p className="text-lime-400">Administra los productos globales de esta sucursal.</p>
+          <p className="text-emerald-500">Administra los productos globales de esta sucursal.</p>
         </div>
         <button
           onClick={() => {
@@ -144,13 +144,13 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
       </div>
 
       <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 w-full max-w-md shadow-sm">
-        <Search className="text-lime-300" size={18} />
+        <Search className="text-emerald-500" size={18} />
         <input
           type="text"
           placeholder="Buscar productos..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-transparent border-0 outline-none w-full text-sm placeholder:text-lime-300"
+          className="bg-transparent border-0 outline-none w-full text-sm placeholder:text-emerald-500"
         />
       </div>
 
@@ -158,7 +158,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 text-lime-400 text-xs font-bold uppercase tracking-wider">
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 text-emerald-500 text-xs font-bold uppercase tracking-wider">
                 <th className="px-6 py-4">Producto</th>
                 <th className="px-6 py-4">Descripción</th>
                 <th className="px-6 py-4">Precio Base</th>
@@ -176,7 +176,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
                       {product.name}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-lime-400 max-w-xs truncate">{product.description || "—"}</td>
+                  <td className="px-6 py-4 text-emerald-500 max-w-xs truncate">{product.description || "—"}</td>
                   <td className="px-6 py-4 font-bold text-zinc-800 dark:text-zinc-200">
                     ${product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
@@ -184,14 +184,14 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleOpenEdit(product)}
-                        className="p-1.5 text-lime-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                        className="p-1.5 text-emerald-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                         title="Editar"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(product)}
-                        className="p-1.5 text-lime-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                        className="p-1.5 text-emerald-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                         title="Retirar del catálogo"
                       >
                         <Trash2 size={16} />
@@ -203,7 +203,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
 
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-lime-400">
+                  <td colSpan={4} className="px-6 py-12 text-center text-emerald-500">
                     No se encontraron productos.
                   </td>
                 </tr>
@@ -223,7 +223,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200"
               >
                 <X size={18} />
               </button>
@@ -243,7 +243,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
                 <input
                   type="text"
                   value={form.name}
@@ -254,7 +254,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -264,7 +264,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Precio Base</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
                 <input
                   type="text"
                   placeholder="0"
@@ -309,7 +309,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
                   setShowEditModal(false)
                   setSelectedProduct(null)
                 }}
-                className="text-lime-300 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200"
               >
                 <X size={18} />
               </button>
@@ -329,7 +329,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Nombre</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
                 <input
                   type="text"
                   value={form.name}
@@ -340,7 +340,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Descripción</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -350,7 +350,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-lime-400 block mb-1">Precio Base</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
                 <input
                   type="text"
                   placeholder="0"
@@ -387,5 +387,6 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
     </div>
   )
 }
+
 
 

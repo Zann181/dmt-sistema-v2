@@ -39,12 +39,12 @@ export function BranchSwitcher() {
   }
 
   const renderLogo = (logoStr: string | null | undefined, logoBg: string | null | undefined, sizeClass: string) => {
-    if (!logoStr) return <Store className="text-lime-400" size={sizeClass === "w-5 h-5" ? 16 : 14} />
+    if (!logoStr) return <Store className="text-emerald-500" size={sizeClass === "w-5 h-5" ? 16 : 14} />
     const cleanLogo = getCleanSvg(logoStr)
     const isSvg = cleanLogo.startsWith("<svg")
     const isImg = cleanLogo.startsWith("data:") || cleanLogo.startsWith("http") || cleanLogo.startsWith("/")
 
-    if (!isSvg && !isImg) return <Store className="text-lime-400" size={sizeClass === "w-5 h-5" ? 16 : 14} />
+    if (!isSvg && !isImg) return <Store className="text-emerald-500" size={sizeClass === "w-5 h-5" ? 16 : 14} />
 
     return (
       <div 
@@ -68,7 +68,7 @@ export function BranchSwitcher() {
       <button className="flex items-center gap-2 px-3 py-2 border rounded-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
         {renderLogo(activeBranch?.logoUrl, activeBranch?.logoBgColor, "w-5 h-5")}
         <span className="text-sm font-medium">{activeBranchName || "Seleccionar Sucursal"}</span>
-        <ChevronDown size={14} className="text-lime-400 ml-2" />
+        <ChevronDown size={14} className="text-emerald-500 ml-2" />
       </button>
 
       <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
@@ -84,13 +84,14 @@ export function BranchSwitcher() {
             </button>
           ))}
           {(!branches || branches.length === 0) && (
-            <div className="px-4 py-2 text-sm text-lime-400">No hay sucursales</div>
+            <div className="px-4 py-2 text-sm text-emerald-500">No hay sucursales</div>
           )}
         </div>
       </div>
     </div>
   )
 }
+
 
 
 

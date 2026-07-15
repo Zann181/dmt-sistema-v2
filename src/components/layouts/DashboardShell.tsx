@@ -130,7 +130,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
         {/* Sidebar Header with Toggle/Collapse Button */}
         <div className="p-3.5 border-b border-border flex items-center justify-between font-mono shrink-0">
           {!collapsed ? (
-            <span className="text-[10px] font-bold uppercase tracking-widest text-lime-400">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
               Menú Principal
             </span>
           ) : (
@@ -140,7 +140,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           {/* Desktop toggle (hidden on mobile) */}
           <button 
             onClick={toggleSidebarCollapsed} 
-            className="hidden md:flex p-1.5 rounded-md hover:bg-muted text-lime-400/80 hover:text-foreground transition-colors cursor-pointer"
+            className="hidden md:flex p-1.5 rounded-md hover:bg-muted text-emerald-500/80 hover:text-foreground transition-colors cursor-pointer"
             title={collapsed ? "Expandir menú" : "Colapsar menú"}
           >
             {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
@@ -149,7 +149,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           {/* Mobile close button (only visible on mobile) */}
           <button 
             onClick={() => setSidebarMobile(false)} 
-            className="md:hidden p-1.5 rounded-md hover:bg-muted text-lime-400/80 hover:text-foreground transition-colors cursor-pointer"
+            className="md:hidden p-1.5 rounded-md hover:bg-muted text-emerald-500/80 hover:text-foreground transition-colors cursor-pointer"
             title="Cerrar menú"
           >
             <X size={16} />
@@ -214,7 +214,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
                   </span>
                 </div>
                 {!collapsed && (
-                  <span className="text-[10px] text-lime-400/80 group-hover:rotate-180 transition-transform select-none">▼</span>
+                  <span className="text-[10px] text-emerald-500/80 group-hover:rotate-180 transition-transform select-none">▼</span>
                 )}
               </Link>
 
@@ -236,7 +236,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
               {/* Floating Popover Submenu for Collapsed Sidebar */}
               {collapsed && (
                 <div className="absolute left-14 top-0 ml-1 hidden group-hover:flex flex-col bg-sidebar border border-border rounded-md shadow-lg py-1.5 min-w-[160px] z-50 animate-in fade-in slide-in-from-left-2 duration-150">
-                  <div className="px-3 py-1 text-xs font-bold text-lime-400/80 border-b border-border mb-1">
+                  <div className="px-3 py-1 text-xs font-bold text-emerald-500/80 border-b border-border mb-1">
                     Entrada
                   </div>
                   <Link href="/entrada?mode=scan&fullscreen=true" target="_blank" className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
@@ -280,7 +280,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
             <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-200">
               {/* User row */}
               <div className="flex items-center justify-between text-[11px] border-b border-zinc-900 pb-1.5 mb-1">
-                <span className="text-lime-400 font-bold uppercase tracking-wider">Usuario:</span>
+                <span className="text-emerald-500 font-bold uppercase tracking-wider">Usuario:</span>
                 <span className="font-bold text-white bg-zinc-900 border border-zinc-800/80 px-2 py-0.5 rounded text-[10px] shadow-sm">
                   {userName}
                 </span>
@@ -288,7 +288,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
               
               {/* Branch switcher row */}
               <div className="space-y-1">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-lime-400">Sucursal Activa</div>
+                <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-500">Sucursal Activa</div>
                 <div className="scale-95 origin-left">
                   <BranchSwitcher />
                 </div>
@@ -296,7 +296,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
               
               {/* Event switcher row */}
               <div className="space-y-1">
-                <div className="text-[9px] font-bold uppercase tracking-wider text-lime-400">Evento Activo</div>
+                <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-500">Evento Activo</div>
                 <div className="scale-95 origin-left">
                   <EventSwitcher />
                 </div>
@@ -344,5 +344,6 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
     </div>
   )
 }
+
 
 

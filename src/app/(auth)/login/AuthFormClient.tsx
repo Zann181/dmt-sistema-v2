@@ -129,26 +129,26 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-black overflow-hidden font-mono text-white px-4 py-8">
       {/* Background Decorative Glowing Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-lime-500/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-lime-400/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-500/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-400/20 blur-[120px] pointer-events-none" />
 
       <div className="relative w-full max-w-md p-1">
         {/* Glow border effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-lime-600 via-green-500 to-lime-500 rounded-2xl blur-md opacity-25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-500 rounded-2xl blur-md opacity-25" />
         
-        <div className="relative bg-black border border-lime-500/30 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_0_40px_rgba(16,185,129,0.4)] space-y-6">
+        <div className="relative bg-black border border-emerald-500/30 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_0_40px_rgba(16,185,129,0.4)] space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 rounded-full bg-lime-500/10 border border-lime-500/20 text-lime-400 mb-1">
+            <div className="inline-flex p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 mb-1">
               {activeTab === "login" ? (
                 <KeyRound size={24} className="animate-pulse" />
               ) : (
                 <UserPlus size={24} className="animate-pulse" />
               )}
             </div>
-            <h1 className="text-2xl font-bold tracking-widest text-lime-400 uppercase drop-shadow-[0_0_15px_rgba(52,211,153,0.8)] text-lime-300">
+            <h1 className="text-2xl font-bold tracking-widest text-emerald-500 uppercase drop-shadow-[0_0_15px_rgba(52,211,153,0.8)] text-emerald-500">
               DMT Sistema v2
             </h1>
-            <p className="text-lime-400 text-[10px] uppercase tracking-wider font-semibold">
+            <p className="text-emerald-500 text-[10px] uppercase tracking-wider font-semibold">
               Ingresa tus credenciales de acceso
             </p>
           </div>
@@ -157,7 +157,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
           {/* Success message */}
           {successMsg && (
-            <div className="p-3 bg-lime-500/10 border border-lime-500/20 text-lime-400 rounded-lg flex items-start gap-2 text-xs font-black text-black  leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg flex items-start gap-2 text-xs font-black text-black  leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300">
               <CheckCircle className="shrink-0 mt-0.5" size={14} />
               <div>{successMsg}</div>
             </div>
@@ -175,14 +175,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
           {activeTab === "login" ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                  <User size={12} className="text-lime-400" /> Usuario
+                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <User size={12} className="text-emerald-500" /> Usuario
                 </label>
                 <input
                   type="text"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
+                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
                   placeholder="Nombre de usuario"
                   required
                   disabled={isPending}
@@ -190,14 +190,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                  <Lock size={12} className="text-lime-400" /> Contraseña
+                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <Lock size={12} className="text-emerald-500" /> Contraseña
                 </label>
                 <input
                   type="password"
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
+                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
                   placeholder="••••••••"
                   required
                   disabled={isPending}
@@ -207,7 +207,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-lime-500 text-black font-black hover:bg-lime-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-lime-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
+                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
                 <span>{isPending ? "Procesando..." : "Iniciar Sesión"}</span>
                 <ArrowRight size={14} />
@@ -218,27 +218,27 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 animate-in fade-in duration-300">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Nombre
                   </label>
                   <input
                     type="text"
                     value={registerForm.firstName}
                     onChange={(e) => setRegisterForm({ ...registerForm, firstName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Tu nombre"
                     disabled={isPending}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Apellido
                   </label>
                   <input
                     type="text"
                     value={registerForm.lastName}
                     onChange={(e) => setRegisterForm({ ...registerForm, lastName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Tu apellido"
                     disabled={isPending}
                   />
@@ -246,14 +246,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                  <User size={12} className="text-lime-400" /> Usuario
+                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <User size={12} className="text-emerald-500" /> Usuario
                 </label>
                 <input
                   type="text"
                   value={registerForm.username}
                   onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                   placeholder="Usuario único"
                   required
                   disabled={isPending}
@@ -261,14 +261,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                  <Mail size={12} className="text-lime-400" /> Correo Electrónico
+                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <Mail size={12} className="text-emerald-500" /> Correo Electrónico
                 </label>
                 <input
                   type="email"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                   placeholder="correo@ejemplo.com"
                   required
                   disabled={isPending}
@@ -277,14 +277,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                    <Lock size={11} className="text-lime-400" /> Contraseña
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                    <Lock size={11} className="text-emerald-500" /> Contraseña
                   </label>
                   <input
                     type="password"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -292,14 +292,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-lime-400 flex items-center gap-1.5">
-                    <Lock size={11} className="text-lime-400" /> Confirmar
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                    <Lock size={11} className="text-emerald-500" /> Confirmar
                   </label>
                   <input
                     type="password"
                     value={registerForm.confirmPassword}
                     onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-lime-500/70 focus:ring-1 focus:ring-lime-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -311,7 +311,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-lime-500 text-black font-black hover:bg-lime-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-lime-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
+                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
                 <span>{isPending ? "Registrando..." : "Crear Cuenta"}</span>
                 <UserPlus size={14} />
@@ -320,7 +320,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
           )}
 
           <div className="text-center text-[9px] text-zinc-600 border-t border-zinc-900 pt-4 flex justify-center items-center gap-1.5 uppercase tracking-widest font-bold">
-            <ShieldAlert size={11} className="text-lime-500 animate-pulse" />
+            <ShieldAlert size={11} className="text-emerald-500 animate-pulse" />
             <span>ACCESO EXCLUSIVO PERSONAL AUTORIZADO</span>
           </div>
         </div>
@@ -328,6 +328,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
     </div>
   )
 }
+
 
 
 
