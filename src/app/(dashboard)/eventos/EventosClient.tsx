@@ -376,7 +376,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
     const img = new Image()
     img.crossOrigin = "anonymous"
-    img.src = configForm.flyerUrl
+    img.src = getValidImageUrl(configForm.flyerUrl)
 
     img.onload = () => {
       try {
