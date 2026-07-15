@@ -637,7 +637,7 @@ export default function EntradaPage() {
       <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center max-w-md mx-auto space-y-4">
         <ShieldAlert size={48} className="text-amber-500 animate-bounce" />
         <h2 className="text-xl font-bold">Contexto Incompleto</h2>
-        <p className="text-zinc-500 text-sm">
+        <p className="text-emerald-400 text-sm">
           Por favor selecciona una sucursal y un evento activo en la barra superior antes de gestionar las entradas.
         </p>
       </div>
@@ -669,12 +669,12 @@ export default function EntradaPage() {
               <div className="flex-1 min-w-0 text-white">
                 <p className="font-bold text-sm truncate">{notification.message}</p>
                 {notification.subMessage && (
-                  <p className="text-xs text-zinc-400 mt-0.5 whitespace-pre-wrap">{notification.subMessage}</p>
+                  <p className="text-xs text-emerald-300 mt-0.5 whitespace-pre-wrap">{notification.subMessage}</p>
                 )}
               </div>
               <button 
                 onClick={() => setNotification(null)}
-                className="text-zinc-500 hover:text-zinc-350 transition-colors"
+                className="text-emerald-400 hover:text-zinc-350 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -688,7 +688,7 @@ export default function EntradaPage() {
               <QrCode size={20} className="text-indigo-400 animate-pulse" />
               Escáner de Entradas
             </h2>
-            <p className="text-xs text-zinc-400">{activeEventName}</p>
+            <p className="text-xs text-emerald-300">{activeEventName}</p>
           </div>
 
           <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 flex flex-col items-center justify-center shadow-2xl">
@@ -709,14 +709,14 @@ export default function EntradaPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end w-full px-2 text-zinc-400 text-xs">
+          <div className="flex items-center justify-end w-full px-2 text-emerald-300 text-xs">
             <div className="bg-indigo-950/40 text-indigo-400 px-3 py-1.5 rounded-lg font-bold">
               {checkInCount} check-ins
             </div>
           </div>
 
           {isScanning ? (
-            <p className="text-xs text-zinc-500 flex items-center justify-center gap-1.5">
+            <p className="text-xs text-emerald-400 flex items-center justify-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
               Apunta al código QR para registrar la entrada
             </p>
@@ -734,7 +734,7 @@ export default function EntradaPage() {
               stopScanning()
               window.close()
             }}
-            className="text-xs text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-900 px-4 py-2 rounded-lg transition-colors mt-4"
+            className="text-xs text-emerald-300 hover:text-white border border-zinc-800 hover:bg-zinc-900 px-4 py-2 rounded-lg transition-colors mt-4"
           >
             Cerrar Escáner
           </button>
@@ -752,28 +752,28 @@ export default function EntradaPage() {
                 <h3 className="text-lg font-black tracking-widest text-red-500 uppercase">
                   ¡Advertencia!
                 </h3>
-                <p className="text-sm font-bold text-zinc-100">
+                <p className="text-sm font-bold text-white">
                   El asistente ya ingresó al evento
                 </p>
               </div>
 
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
                 <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                  <span className="text-zinc-500">Asistente:</span>
+                  <span className="text-emerald-400">Asistente:</span>
                   <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.name}</span>
                 </div>
                 <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                  <span className="text-zinc-500">Documento:</span>
+                  <span className="text-emerald-400">Documento:</span>
                   <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.cc}</span>
                 </div>
                 {alreadyCheckedInInfo.categoryName && (
                   <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                    <span className="text-zinc-500">Categoría:</span>
+                    <span className="text-emerald-400">Categoría:</span>
                     <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.categoryName}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-0.5">
-                  <span className="text-zinc-500">Hora de Ingreso:</span>
+                  <span className="text-emerald-400">Hora de Ingreso:</span>
                   <span className="font-bold text-red-400">
                     {alreadyCheckedInInfo.checkedInAt 
                       ? new Date(alreadyCheckedInInfo.checkedInAt).toLocaleString('es-ES', { 
@@ -789,7 +789,7 @@ export default function EntradaPage() {
                 </div>
                 {alreadyCheckedInInfo.checkedInByName && (
                   <div className="flex justify-between border-t border-zinc-800/60 pt-1.5 mt-1.5">
-                    <span className="text-zinc-500">Escaneado por:</span>
+                    <span className="text-emerald-400">Escaneado por:</span>
                     <span className="font-bold text-zinc-300 truncate max-w-[150px] text-right" title={alreadyCheckedInInfo.checkedInByName}>
                       {alreadyCheckedInInfo.checkedInByName}
                     </span>
@@ -892,14 +892,14 @@ export default function EntradaPage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">{notification.message}</p>
+              <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">{notification.message}</p>
               {notification.subMessage && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 whitespace-pre-wrap">{notification.subMessage}</p>
+                <p className="text-xs text-emerald-400 dark:text-emerald-300 mt-0.5 whitespace-pre-wrap">{notification.subMessage}</p>
               )}
             </div>
             <button 
               onClick={() => setNotification(null)}
-              className="text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 transition-colors"
+              className="text-emerald-300 hover:text-zinc-650 dark:hover:text-zinc-200 transition-colors"
             >
               <X size={16} />
             </button>
@@ -911,7 +911,7 @@ export default function EntradaPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Entrada & Check-in</h2>
-          <p className="text-zinc-500 text-sm hidden sm:block">Control de acceso y escáner QR.</p>
+          <p className="text-emerald-400 text-sm hidden sm:block">Control de acceso y escáner QR.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <a
@@ -951,7 +951,7 @@ export default function EntradaPage() {
           className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
             activeTab === "search"
               ? "bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              : "text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
           }`}
         >
           <Users size={14} /> Búsqueda Manual
@@ -964,7 +964,7 @@ export default function EntradaPage() {
           className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
             activeTab === "add"
               ? "bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              : "text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
           }`}
         >
           <UserPlus size={14} /> Agregar Asistente
@@ -977,7 +977,7 @@ export default function EntradaPage() {
           className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
             activeTab === "dashboard"
               ? "bg-white dark:bg-zinc-800 text-indigo-650 dark:text-indigo-400 shadow-sm"
-              : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              : "text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"
           }`}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -991,7 +991,7 @@ export default function EntradaPage() {
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px] animate-in fade-in duration-200">
           <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300" size={18} />
               <input 
                 type="text" 
                 placeholder="Buscar por nombre o cédula..." 
@@ -1012,27 +1012,27 @@ export default function EntradaPage() {
             <table className="w-full text-sm text-left">
               <thead className="bg-zinc-50 dark:bg-zinc-900/50 sticky top-0 border-b border-zinc-200 dark:border-zinc-800">
                 <tr>
-                  <th className="px-6 py-3 font-medium text-zinc-500">Asistente</th>
-                  <th className="px-6 py-3 font-medium text-zinc-500">Cédula</th>
-                  <th className="px-6 py-3 font-medium text-zinc-500">Categoría</th>
-                  <th className="px-6 py-3 font-medium text-zinc-500 text-right">Estado / Acciones</th>
+                  <th className="px-6 py-3 font-medium text-emerald-400">Asistente</th>
+                  <th className="px-6 py-3 font-medium text-emerald-400">Cédula</th>
+                  <th className="px-6 py-3 font-medium text-emerald-400">Categoría</th>
+                  <th className="px-6 py-3 font-medium text-emerald-400 text-right">Estado / Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">Cargando asistentes...</td>
+                    <td colSpan={4} className="px-6 py-8 text-center text-emerald-400">Cargando asistentes...</td>
                   </tr>
                 ) : attendees?.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-500">No hay asistentes registrados para este evento.</td>
+                    <td colSpan={4} className="px-6 py-8 text-center text-emerald-400">No hay asistentes registrados para este evento.</td>
                   </tr>
                 ) : (
                   attendees?.map((a) => (
                     <tr key={a.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                       <td className="px-6 py-3 font-medium">{a.name}</td>
-                      <td className="px-6 py-3 text-zinc-500">{a.cc}</td>
-                      <td className="px-6 py-3 text-zinc-500">
+                      <td className="px-6 py-3 text-emerald-400">{a.cc}</td>
+                      <td className="px-6 py-3 text-emerald-400">
                         <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">{a.category.name}</span>
                       </td>
                       <td className="px-6 py-3 text-right">
@@ -1052,7 +1052,7 @@ export default function EntradaPage() {
                             {a.phone && (
                               <button
                                 onClick={() => handleWhatsAppShare(a)}
-                                className="p-1 text-zinc-400 hover:text-green-500 dark:hover:text-green-400 transition-colors"
+                                className="p-1 text-emerald-300 hover:text-green-500 dark:hover:text-green-400 transition-colors"
                                 title="Enviar por WhatsApp"
                               >
                                 <WhatsAppIcon size={14} />
@@ -1062,7 +1062,7 @@ export default function EntradaPage() {
                               <button
                                 onClick={() => resendEmailMutation.mutate(a.id)}
                                 disabled={resendEmailMutation.isPending}
-                                className="p-1 text-zinc-400 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
+                                className="p-1 text-emerald-300 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
                                 title={resendEmailMutation.isPending ? "Reenviando..." : "Reenviar Correo"}
                               >
                                 <Mail size={14} />
@@ -1070,14 +1070,14 @@ export default function EntradaPage() {
                             )}
                             <button
                               onClick={() => startEditing(a)}
-                              className="p-1 text-zinc-400 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors"
+                              className="p-1 text-emerald-300 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors"
                               title="Editar"
                             >
                               <Edit size={14} />
                             </button>
                             <button
                               onClick={() => handleDeleteAttendee(a)}
-                              className="p-1 text-zinc-400 hover:text-red-650 dark:hover:text-red-400 transition-colors"
+                              className="p-1 text-emerald-300 hover:text-red-650 dark:hover:text-red-400 transition-colors"
                               title="Eliminar"
                             >
                               <Trash2 size={14} />
@@ -1100,7 +1100,7 @@ export default function EntradaPage() {
             <h3 className="text-lg font-bold flex items-center gap-2">
               <UserPlus className="text-indigo-650 dark:text-indigo-400" /> Registrar Nuevo Asistente
             </h3>
-            <p className="text-xs text-zinc-500 mt-1">Registra de forma manual un asistente al evento actual.</p>
+            <p className="text-xs text-emerald-400 mt-1">Registra de forma manual un asistente al evento actual.</p>
           </div>
 
           {addError && (
@@ -1140,7 +1140,7 @@ export default function EntradaPage() {
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre Completo *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre Completo *</label>
                 <input
                   type="text"
                   placeholder="Ej: Juan Pérez"
@@ -1161,7 +1161,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Cédula / Documento *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Cédula / Documento *</label>
                 <input
                   type="text"
                   placeholder="Ej: 1234567"
@@ -1181,7 +1181,7 @@ export default function EntradaPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Celular (Opcional)</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Celular (Opcional)</label>
                 <input
                   type="tel"
                   placeholder="Ej: 098123456"
@@ -1192,7 +1192,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Correo (Opcional)</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Correo (Opcional)</label>
                 <input
                   type="email"
                   placeholder="Ej: juan@gmail.com"
@@ -1206,7 +1206,7 @@ export default function EntradaPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
+                  <label className="text-xs font-semibold text-emerald-400 block">Categoría *</label>
                   {session?.user?.permissions?.manageCategories && (
                     <div className="flex items-center gap-2">
                       {addForm.categoryId && (
@@ -1227,7 +1227,7 @@ export default function EntradaPage() {
                               setShowNewCatModal(true)
                             }
                           }}
-                          className="text-zinc-400 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                          className="text-emerald-300 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
                           title="Modificar Categoría"
                         >
                           <Edit size={14} />
@@ -1271,7 +1271,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Monto Pagado ($) *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Monto Pagado ($) *</label>
                 <input
                   type="text"
                   placeholder="0"
@@ -1323,7 +1323,7 @@ export default function EntradaPage() {
               <p className="text-zinc-550 text-xs font-mono">Cargando estadísticas de entradas...</p>
             </div>
           ) : !stats ? (
-            <div className="text-center py-12 text-zinc-500 text-sm">
+            <div className="text-center py-12 text-emerald-400 text-sm">
               No se pudieron cargar las estadísticas.
             </div>
           ) : (
@@ -1335,11 +1335,11 @@ export default function EntradaPage() {
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-emerald-400">
                     <Banknote size={48} />
                   </div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingreso Total</p>
+                  <p className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Ingreso Total</p>
                   <p className="text-2xl font-black text-emerald-400 mt-1">
                     ${formatThousands(stats.totalIncome.toString())}
                   </p>
-                  <p className="text-[9px] text-zinc-500 mt-2 font-sans">
+                  <p className="text-[9px] text-emerald-400 mt-2 font-sans">
                     Recaudado acumulado en taquilla
                   </p>
                 </div>
@@ -1349,11 +1349,11 @@ export default function EntradaPage() {
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
                     <Banknote size={48} />
                   </div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingreso de Hoy</p>
+                  <p className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Ingreso de Hoy</p>
                   <p className="text-2xl font-black text-indigo-400 mt-1">
                     ${formatThousands(stats.todayIncome.toString())}
                   </p>
-                  <p className="text-[9px] text-zinc-500 mt-2 font-sans flex items-center gap-1.5">
+                  <p className="text-[9px] text-emerald-400 mt-2 font-sans flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
                     Dinero registrado en el día
                   </p>
@@ -1364,11 +1364,11 @@ export default function EntradaPage() {
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
                     <Users size={48} />
                   </div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Total Registrados</p>
+                  <p className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Total Registrados</p>
                   <p className="text-2xl font-black text-white mt-1">
                     {stats.totalCount}
                   </p>
-                  <p className="text-[9px] text-zinc-500 mt-2 font-sans">
+                  <p className="text-[9px] text-emerald-400 mt-2 font-sans">
                     Total de asistentes registrados
                   </p>
                 </div>
@@ -1378,11 +1378,11 @@ export default function EntradaPage() {
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-primary">
                     <QrCode size={48} />
                   </div>
-                  <p className="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ingresados / Faltan</p>
+                  <p className="text-[10px] text-emerald-300 uppercase font-bold tracking-wider">Ingresados / Faltan</p>
                   <div className="flex items-baseline gap-2 mt-1">
                     <span className="text-2xl font-black text-primary">{stats.checkedInCount}</span>
-                    <span className="text-zinc-500 text-xs">/</span>
-                    <span className="text-zinc-400 text-sm font-bold">{stats.pendingCount} pendientes</span>
+                    <span className="text-emerald-400 text-xs">/</span>
+                    <span className="text-emerald-300 text-sm font-bold">{stats.pendingCount} pendientes</span>
                   </div>
                   
                   {/* Progress Bar */}
@@ -1401,13 +1401,13 @@ export default function EntradaPage() {
                   <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">
                     Desglose por Categoría de Entrada
                   </h3>
-                  <span className="text-[10px] text-zinc-500">Actualizado en tiempo real</span>
+                  <span className="text-[10px] text-emerald-400">Actualizado en tiempo real</span>
                 </div>
                 
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-xs text-left">
                     <thead>
-                      <tr className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800">
+                      <tr className="bg-zinc-950/50 text-emerald-300 border-b border-zinc-800">
                         <th className="p-4 font-bold uppercase tracking-wider">Categoría</th>
                         <th className="p-4 font-bold uppercase tracking-wider text-right">Precio Unitario</th>
                         <th className="p-4 font-bold uppercase tracking-wider text-center">Registrados</th>
@@ -1428,7 +1428,7 @@ export default function EntradaPage() {
                             </td>
                             <td className="p-4 text-center text-white font-bold">{cat.total}</td>
                             <td className="p-4 text-center text-primary font-bold">{cat.checkedIn}</td>
-                            <td className="p-4 text-center text-zinc-400 font-bold">{cat.pending}</td>
+                            <td className="p-4 text-center text-emerald-300 font-bold">{cat.pending}</td>
                             <td className="p-4 min-w-[160px]">
                               <div className="flex items-center gap-3">
                                 <span className="w-8 text-right font-bold text-zinc-300">{pct}%</span>
@@ -1448,7 +1448,7 @@ export default function EntradaPage() {
                       })}
                       {stats.categoryStats?.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="p-8 text-center text-zinc-500 italic">
+                          <td colSpan={7} className="p-8 text-center text-emerald-400 italic">
                             No hay categorías creadas para esta sucursal.
                           </td>
                         </tr>
@@ -1470,7 +1470,7 @@ export default function EntradaPage() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Banknote className="text-indigo-650 dark:text-indigo-400" /> Movimiento de Caja (Entrada)
               </h3>
-              <button onClick={() => setShowCashModal(false)} className="text-zinc-400 hover:text-zinc-655 dark:hover:text-zinc-200">
+              <button onClick={() => setShowCashModal(false)} className="text-emerald-300 hover:text-zinc-655 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
@@ -1489,7 +1489,7 @@ export default function EntradaPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Tipo de Movimiento</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Tipo de Movimiento</label>
                 <select
                   value={cashForm.movementType}
                   onChange={(e) => setCashForm({ ...cashForm, movementType: e.target.value as any })}
@@ -1501,7 +1501,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Descripción</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Descripción</label>
                 <input
                   type="text"
                   placeholder={cashForm.movementType === "EXPENSE" ? "Ej: Compra de hielos" : "Ej: Retiro parcial caja fuerte"}
@@ -1514,7 +1514,7 @@ export default function EntradaPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Monto ($)</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Monto ($)</label>
                   <input
                     type="text"
                     placeholder="0"
@@ -1526,7 +1526,7 @@ export default function EntradaPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Método de Pago</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Método de Pago</label>
                   <select
                     value={cashForm.method}
                     onChange={(e) => setCashForm({ ...cashForm, method: e.target.value as any })}
@@ -1569,7 +1569,7 @@ export default function EntradaPage() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Edit className="text-indigo-650 dark:text-indigo-400" /> Editar Asistente
               </h3>
-              <button onClick={() => setEditingAttendee(null)} className="text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200">
+              <button onClick={() => setEditingAttendee(null)} className="text-emerald-300 hover:text-zinc-650 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
@@ -1599,7 +1599,7 @@ export default function EntradaPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre Completo *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre Completo *</label>
                 <input
                   type="text"
                   value={editForm.name}
@@ -1618,7 +1618,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Cédula / Documento *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Cédula / Documento *</label>
                 <input
                   type="text"
                   value={editForm.cc}
@@ -1635,7 +1635,7 @@ export default function EntradaPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Celular</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Celular</label>
                   <input
                     type="text"
                     value={editForm.phone}
@@ -1645,7 +1645,7 @@ export default function EntradaPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Correo</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Correo</label>
                   <input
                     type="email"
                     value={editForm.email}
@@ -1658,7 +1658,7 @@ export default function EntradaPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-semibold text-zinc-500 block">Categoría *</label>
+                    <label className="text-xs font-semibold text-emerald-400 block">Categoría *</label>
                     {session?.user?.permissions?.manageCategories && (
                       <div className="flex items-center gap-2">
                         {editForm.categoryId && (
@@ -1679,7 +1679,7 @@ export default function EntradaPage() {
                                 setShowNewCatModal(true)
                               }
                             }}
-                            className="text-zinc-400 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                            className="text-emerald-300 hover:text-white p-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
                             title="Modificar Categoría"
                           >
                             <Edit size={14} />
@@ -1721,7 +1721,7 @@ export default function EntradaPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Monto Pagado ($) *</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Monto Pagado ($) *</label>
                   <input
                     type="text"
                     value={editForm.paidAmount}
@@ -1772,7 +1772,7 @@ export default function EntradaPage() {
                   setShowNewCatModal(false)
                   setEditingCatId(null)
                 }} 
-                className="text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 cursor-pointer"
+                className="text-emerald-300 hover:text-zinc-650 dark:hover:text-zinc-200 cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1804,7 +1804,7 @@ export default function EntradaPage() {
               className="space-y-4 text-xs"
             >
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre de la Categoría *</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre de la Categoría *</label>
                 <input
                   type="text"
                   placeholder="Ej: VIP, General, Invitado"
@@ -1817,7 +1817,7 @@ export default function EntradaPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Precio ($) *</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Precio ($) *</label>
                   <input
                     type="text"
                     placeholder="0"
@@ -1829,7 +1829,7 @@ export default function EntradaPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Consumos Incluidos</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Consumos Incluidos</label>
                   <input
                     type="number"
                     min="0"
@@ -1841,7 +1841,7 @@ export default function EntradaPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Descripción (Opcional)</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Descripción (Opcional)</label>
                 <textarea
                   rows={2}
                   placeholder="Ej: Incluye acceso a zona VIP y 2 bebidas"
@@ -1858,7 +1858,7 @@ export default function EntradaPage() {
                     setShowNewCatModal(false)
                     setEditingCatId(null)
                   }}
-                  className="px-4 py-2 border border-zinc-800 rounded-md text-xs font-bold uppercase tracking-wider text-zinc-400 hover:bg-zinc-900 transition-colors cursor-pointer"
+                  className="px-4 py-2 border border-zinc-800 rounded-md text-xs font-bold uppercase tracking-wider text-emerald-300 hover:bg-zinc-900 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -1889,28 +1889,28 @@ export default function EntradaPage() {
               <h3 className="text-lg font-black tracking-widest text-red-500 uppercase">
                 ¡Advertencia!
               </h3>
-              <p className="text-sm font-bold text-zinc-100">
+              <p className="text-sm font-bold text-white">
                 El asistente ya ingresó al evento
               </p>
             </div>
 
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
               <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                <span className="text-zinc-500">Asistente:</span>
+                <span className="text-emerald-400">Asistente:</span>
                 <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.name}</span>
               </div>
               <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                <span className="text-zinc-500">Documento:</span>
+                <span className="text-emerald-400">Documento:</span>
                 <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.cc}</span>
               </div>
               {alreadyCheckedInInfo.categoryName && (
                 <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                  <span className="text-zinc-500">Categoría:</span>
+                  <span className="text-emerald-400">Categoría:</span>
                   <span className="font-bold text-zinc-200">{alreadyCheckedInInfo.categoryName}</span>
                 </div>
               )}
               <div className="flex justify-between pt-0.5">
-                <span className="text-zinc-500">Hora de Ingreso:</span>
+                <span className="text-emerald-400">Hora de Ingreso:</span>
                 <span className="font-bold text-red-400">
                   {alreadyCheckedInInfo.checkedInAt 
                     ? new Date(alreadyCheckedInInfo.checkedInAt).toLocaleString('es-ES', { 
@@ -1926,7 +1926,7 @@ export default function EntradaPage() {
               </div>
               {alreadyCheckedInInfo.checkedInByName && (
                 <div className="flex justify-between border-t border-zinc-800/60 pt-1.5 mt-1.5">
-                  <span className="text-zinc-500">Escaneado por:</span>
+                  <span className="text-emerald-400">Escaneado por:</span>
                   <span className="font-bold text-zinc-300 truncate max-w-[150px] text-right" title={alreadyCheckedInInfo.checkedInByName}>
                     {alreadyCheckedInInfo.checkedInByName}
                   </span>
@@ -1954,3 +1954,4 @@ export default function EntradaPage() {
     </div>
   )
 }
+

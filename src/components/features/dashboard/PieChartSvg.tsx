@@ -16,7 +16,7 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
   
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center text-zinc-400 text-xs font-semibold py-8 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+      <div className="flex items-center justify-center text-emerald-300 text-xs font-semibold py-8 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
         Sin transacciones registradas
       </div>
     )
@@ -72,10 +72,10 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
             <div key={idx} className="flex items-center justify-between text-xs border-b border-zinc-50 dark:border-zinc-900/50 pb-1.5 last:border-0 last:pb-0">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: segment.color }} />
-                <span className="font-bold text-zinc-600 dark:text-zinc-400">{segment.name}</span>
+                <span className="font-bold text-zinc-600 dark:text-emerald-300">{segment.name}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-zinc-400 font-mono">${segment.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                <span className="text-[10px] text-emerald-300 font-mono">${segment.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                 <span className="font-extrabold text-zinc-900 dark:text-white font-mono">
                   {percent.toFixed(0)}%
                 </span>
@@ -87,3 +87,4 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
     </div>
   )
 }
+

@@ -27,6 +27,14 @@ El sistema requiere una base de datos PostgreSQL en la nube. **Supabase** es ide
    - Reemplaza la contraseña igual que arriba.
    - *Ejemplo:* `postgresql://postgres.[tu-ref]:[tu-password]@aws-0-us-east-1.pooler.supabase.com:5432/postgres`
 
+> [!NOTE]
+> **¡Tranquilo!** Es súper normal confundirse porque Supabase te muestra un ejemplo de código en pantalla, pero **no tienes que pegar eso en ningún lado dentro de Supabase**.
+> Ese "pedazo de código" (las dos URLs con tu contraseña) por ahora solo debes **guardarlo en un Bloc de Notas (Notepad)** o cualquier archivo de texto temporal en tu computadora.
+> ¿Dónde van a ir a parar realmente esas URLs?
+> * En el **Paso 4**: Las vas a pegar en la plataforma de **Vercel** dentro de la sección "Environment Variables" para que tu página web en internet sepa cómo conectarse a esta base de datos.
+> * En el **Paso 5**: Las vas a pegar en tu propia computadora, dentro del archivo `.env` local de tu proyecto, para poder empujar y crear las tablas usando la terminal.
+> Así que por ahora, cópialas, pon tu contraseña real en lugar de `[YOUR-PASSWORD]`, guárdalas en un Bloc de Notas, y cierra la pestaña de Supabase.
+
 ---
 
 ## 🗄️ 2. Configurar Almacenamiento de Imágenes (Vercel Blob)

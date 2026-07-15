@@ -36,9 +36,9 @@ export function EventSwitcher() {
   return (
     <div className="relative group">
       <button className="flex items-center gap-2 px-3 py-2 border rounded-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-        <Calendar size={16} className="text-zinc-500" />
+        <Calendar size={16} className="text-emerald-400" />
         <span className="text-sm font-medium">{activeEventName || "Seleccionar Evento"}</span>
-        <ChevronDown size={14} className="text-zinc-500 ml-2" />
+        <ChevronDown size={14} className="text-emerald-400 ml-2" />
       </button>
 
       <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
@@ -53,11 +53,12 @@ export function EventSwitcher() {
             </button>
           ))}
           {(!events || events.length === 0) && (
-            <div className="px-4 py-2 text-sm text-zinc-500">No hay eventos</div>
+            <div className="px-4 py-2 text-sm text-emerald-400">No hay eventos</div>
           )}
         </div>
       </div>
     </div>
   )
 }
+
 

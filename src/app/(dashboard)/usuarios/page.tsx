@@ -253,7 +253,7 @@ export default function UsuariosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Administración de Usuarios</h2>
-          <p className="text-zinc-500">Administra accesos globales, asignaciones a sucursales y roles.</p>
+          <p className="text-emerald-400">Administra accesos globales, asignaciones a sucursales y roles.</p>
         </div>
         <button 
           onClick={() => { setErrorMsg(""); setShowCreateModal(true) }}
@@ -269,29 +269,29 @@ export default function UsuariosPage() {
           <table className="w-full text-sm text-left">
             <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800">
               <tr>
-                <th className="px-6 py-3 font-medium text-zinc-500">Nombre / Usuario</th>
-                <th className="px-6 py-3 font-medium text-zinc-500">Roles Globales</th>
-                <th className="px-6 py-3 font-medium text-zinc-500">Sucursales</th>
-                <th className="px-6 py-3 font-medium text-zinc-500">Eventos</th>
-                <th className="px-6 py-3 font-medium text-zinc-500">Estado</th>
-                <th className="px-6 py-3 font-medium text-zinc-500 text-right">Acciones</th>
+                <th className="px-6 py-3 font-medium text-emerald-400">Nombre / Usuario</th>
+                <th className="px-6 py-3 font-medium text-emerald-400">Roles Globales</th>
+                <th className="px-6 py-3 font-medium text-emerald-400">Sucursales</th>
+                <th className="px-6 py-3 font-medium text-emerald-400">Eventos</th>
+                <th className="px-6 py-3 font-medium text-emerald-400">Estado</th>
+                <th className="px-6 py-3 font-medium text-emerald-400 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {usersLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">Cargando usuarios...</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-emerald-400">Cargando usuarios...</td>
                 </tr>
               ) : users?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">No hay usuarios en el sistema.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-emerald-400">No hay usuarios en el sistema.</td>
                 </tr>
               ) : (
                 users?.map((u) => (
                   <tr key={u.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-zinc-900 dark:text-zinc-100">{u.firstName} {u.lastName}</p>
-                      <p className="text-xs text-zinc-500">@{u.username} &bull; {u.email}</p>
+                      <p className="font-semibold text-zinc-900 dark:text-white">{u.firstName} {u.lastName}</p>
+                      <p className="text-xs text-emerald-400">@{u.username} &bull; {u.email}</p>
                     </td>
                     <td className="px-6 py-4 space-y-1">
                       {u.isSuperuser && (
@@ -305,18 +305,18 @@ export default function UsuariosPage() {
                         </span>
                       )}
                       {!u.isSuperuser && !u.isGlobalAdmin && (
-                        <span className="text-zinc-400 text-xs">Personal Estándar</span>
+                        <span className="text-emerald-300 text-xs">Personal Estándar</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1.5 max-w-xs">
                         {u.branchMemberships?.map((m: any, idx: number) => (
-                          <span key={`${m.id}-${idx}`} className="px-2 py-0.5 rounded text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                          <span key={`${m.id}-${idx}`} className="px-2 py-0.5 rounded text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-emerald-300 border border-zinc-200 dark:border-zinc-700">
                             {m.branch.name} ({m.role})
                           </span>
                         ))}
                         {(!u.branchMemberships || u.branchMemberships.length === 0) && (
-                          <span className="text-zinc-400 text-xs">Sin sucursales</span>
+                          <span className="text-emerald-300 text-xs">Sin sucursales</span>
                         )}
                       </div>
                     </td>
@@ -328,25 +328,25 @@ export default function UsuariosPage() {
                           </span>
                         ))}
                         {(!u.eventAssignments || u.eventAssignments.length === 0) && (
-                          <span className="text-zinc-400 text-xs">Sin eventos</span>
+                          <span className="text-emerald-300 text-xs">Sin eventos</span>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${u.isActive ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-emerald-300"}`}>
                         {u.isActive ? "Activo" : "Inactivo"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       <button 
                         onClick={() => handleOpenEdit(u)}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-emerald-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                       >
                         <Edit2 size={14} />
                       </button>
                       <button 
                         onClick={() => { if(confirm("¿Eliminar usuario?")) deleteUserMutation.mutate(u.id) }}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-900 rounded transition-colors"
+                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-emerald-300 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-900 rounded transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -375,7 +375,7 @@ export default function UsuariosPage() {
 
             <form onSubmit={(e) => { e.preventDefault(); createUserMutation.mutate(createForm) }} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre de Usuario</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre de Usuario</label>
                 <input 
                   type="text" 
                   value={createForm.username}
@@ -387,7 +387,7 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Correo Electrónico</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Correo Electrónico</label>
                 <input 
                   type="email" 
                   value={createForm.email}
@@ -400,7 +400,7 @@ export default function UsuariosPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre</label>
                   <input 
                     type="text" 
                     value={createForm.firstName}
@@ -410,7 +410,7 @@ export default function UsuariosPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Apellido</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Apellido</label>
                   <input 
                     type="text" 
                     value={createForm.lastName}
@@ -422,7 +422,7 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Contraseña</label>
+                <label className="text-xs font-semibold text-emerald-400 block mb-1">Contraseña</label>
                 <input 
                   type="password" 
                   value={createForm.password}
@@ -435,17 +435,17 @@ export default function UsuariosPage() {
 
               {isSuper && (
                 <div className="border-t pt-4 space-y-3">
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Permisos y Roles Globales</p>
+                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Permisos y Roles Globales</p>
                   
                   <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                     <div>
                       <p className="text-sm font-semibold">Superusuario</p>
-                      <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
+                      <p className="text-xs text-emerald-400">Acceso total absoluto al sistema</p>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setCreateForm({ ...createForm, isSuperuser: !createForm.isSuperuser })}
-                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                      className="text-emerald-400 hover:text-indigo-600 transition-colors"
                     >
                       {createForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
                     </button>
@@ -454,12 +454,12 @@ export default function UsuariosPage() {
                   <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                     <div>
                       <p className="text-sm font-semibold">Administrador Global</p>
-                      <p className="text-xs text-zinc-500">Permisos de gestión sin límite de sucursal</p>
+                      <p className="text-xs text-emerald-400">Permisos de gestión sin límite de sucursal</p>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setCreateForm({ ...createForm, isGlobalAdmin: !createForm.isGlobalAdmin })}
-                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                      className="text-emerald-400 hover:text-indigo-600 transition-colors"
                     >
                       {createForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
                     </button>
@@ -496,7 +496,7 @@ export default function UsuariosPage() {
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <UserCog className="text-indigo-600" /> @{selectedUser.username}
               </h3>
-              <button onClick={() => { setShowEditModal(false); setSelectedUser(null) }} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold">✕</button>
+              <button onClick={() => { setShowEditModal(false); setSelectedUser(null) }} className="text-emerald-300 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold">✕</button>
             </div>
 
             {/* Tab navigation */}
@@ -504,21 +504,21 @@ export default function UsuariosPage() {
               <button
                 type="button"
                 onClick={() => setActiveEditTab("profile")}
-                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "profile" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "profile" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
               >
                 Perfil
               </button>
               <button
                 type="button"
                 onClick={() => setActiveEditTab("branches")}
-                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "branches" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "branches" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
               >
                 Sucursales
               </button>
               <button
                 type="button"
                 onClick={() => setActiveEditTab("events")}
-                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "events" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
+                className={`flex-1 pb-2 text-sm font-semibold border-b-2 text-center transition-colors ${activeEditTab === "events" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400" : "border-transparent text-emerald-400 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
               >
                 Eventos
               </button>
@@ -533,7 +533,7 @@ export default function UsuariosPage() {
                   </div>
                 )}
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Correo Electrónico</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Correo Electrónico</label>
                   <input 
                     type="email" 
                     value={editForm.email}
@@ -545,7 +545,7 @@ export default function UsuariosPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Nombre</label>
                     <input 
                       type="text" 
                       value={editForm.firstName}
@@ -554,7 +554,7 @@ export default function UsuariosPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Apellido</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Apellido</label>
                     <input 
                       type="text" 
                       value={editForm.lastName}
@@ -565,7 +565,7 @@ export default function UsuariosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Cambiar Contraseña</label>
+                  <label className="text-xs font-semibold text-emerald-400 block mb-1">Cambiar Contraseña</label>
                   <input 
                     type="password" 
                     value={editForm.password}
@@ -576,17 +576,17 @@ export default function UsuariosPage() {
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-zinc-200 dark:border-zinc-800">
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Estado y Roles Globales</p>
+                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Estado y Roles Globales</p>
 
                   <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                     <div>
                       <p className="text-sm font-semibold">Usuario Activo</p>
-                      <p className="text-xs text-zinc-500">Permite o niega el login</p>
+                      <p className="text-xs text-emerald-400">Permite o niega el login</p>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setEditForm({ ...editForm, isActive: !editForm.isActive })}
-                      className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                      className="text-emerald-400 hover:text-indigo-600 transition-colors"
                     >
                       {editForm.isActive ? <ToggleRight size={28} className="text-green-600" /> : <ToggleLeft size={28} />}
                     </button>
@@ -597,12 +597,12 @@ export default function UsuariosPage() {
                       <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                         <div>
                           <p className="text-sm font-semibold">Superusuario</p>
-                          <p className="text-xs text-zinc-500">Acceso total absoluto al sistema</p>
+                          <p className="text-xs text-emerald-400">Acceso total absoluto al sistema</p>
                         </div>
                         <button 
                           type="button"
                           onClick={() => setEditForm({ ...editForm, isSuperuser: !editForm.isSuperuser })}
-                          className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                          className="text-emerald-400 hover:text-indigo-600 transition-colors"
                         >
                           {editForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
                         </button>
@@ -611,12 +611,12 @@ export default function UsuariosPage() {
                       <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                         <div>
                           <p className="text-sm font-semibold">Administrador Global</p>
-                          <p className="text-xs text-zinc-500">Permisos globales de gestión</p>
+                          <p className="text-xs text-emerald-400">Permisos globales de gestión</p>
                         </div>
                         <button 
                           type="button"
                           onClick={() => setEditForm({ ...editForm, isGlobalAdmin: !editForm.isGlobalAdmin })}
-                          className="text-zinc-500 hover:text-indigo-600 transition-colors"
+                          className="text-emerald-400 hover:text-indigo-600 transition-colors"
                         >
                           {editForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
                         </button>
@@ -648,12 +648,12 @@ export default function UsuariosPage() {
             {activeEditTab === "branches" && (
               <div className="space-y-4 pt-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2">
-                  <Store size={18} className="text-zinc-500" /> Asignar a Sucursales
+                  <Store size={18} className="text-emerald-400" /> Asignar a Sucursales
                 </h4>
 
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Sucursal</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Sucursal</label>
                     <select 
                       value={membershipForm.branchId}
                       onChange={(e) => setMembershipForm({ ...membershipForm, branchId: e.target.value })}
@@ -667,7 +667,7 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Rol en Sucursal</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Rol en Sucursal</label>
                     <select 
                       value={membershipForm.role}
                       onChange={(e) => setMembershipForm({ ...membershipForm, role: e.target.value as any })}
@@ -693,24 +693,24 @@ export default function UsuariosPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Sucursales Activas</p>
+                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Sucursales Activas</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                     {selectedUser.branchMemberships?.map((m: any, idx: number) => (
                       <div key={`${m.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{m.branch.name}</p>
-                          <p className="text-xs text-zinc-500">{m.role}</p>
+                          <p className="text-xs text-emerald-400">{m.role}</p>
                         </div>
                         <button 
                           onClick={() => removeMembershipMutation.mutate(m.id)}
-                          className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          className="p-1 text-emerald-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                     {(!selectedUser.branchMemberships || selectedUser.branchMemberships.length === 0) && (
-                      <p className="text-sm text-zinc-500 text-center py-4">No tiene asignaciones activas</p>
+                      <p className="text-sm text-emerald-400 text-center py-4">No tiene asignaciones activas</p>
                     )}
                   </div>
                 </div>
@@ -721,12 +721,12 @@ export default function UsuariosPage() {
             {activeEditTab === "events" && (
               <div className="space-y-4 pt-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2">
-                  <Calendar size={18} className="text-zinc-500" /> Asignar a Eventos
+                  <Calendar size={18} className="text-emerald-400" /> Asignar a Eventos
                 </h4>
 
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Sucursal</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Sucursal</label>
                     <select 
                       value={eventForm.branchId}
                       onChange={(e) => setEventForm({ ...eventForm, branchId: e.target.value, eventId: "" })}
@@ -740,7 +740,7 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Evento</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Evento</label>
                     <select 
                       value={eventForm.eventId}
                       onChange={(e) => setEventForm({ ...eventForm, eventId: e.target.value })}
@@ -757,7 +757,7 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-zinc-500 block mb-1">Rol en Evento</label>
+                    <label className="text-xs font-semibold text-emerald-400 block mb-1">Rol en Evento</label>
                     <select 
                       value={eventForm.role}
                       onChange={(e) => setEventForm({ ...eventForm, role: e.target.value as any })}
@@ -784,24 +784,24 @@ export default function UsuariosPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Eventos Activos</p>
+                  <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Eventos Activos</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                     {selectedUser.eventAssignments?.map((a: any, idx: number) => (
                       <div key={`${a.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{a.event?.name || "Evento"}</p>
-                          <p className="text-xs text-zinc-500">{a.role}</p>
+                          <p className="text-xs text-emerald-400">{a.role}</p>
                         </div>
                         <button 
                           onClick={() => removeEventAssignmentMutation.mutate(a.id)}
-                          className="p-1 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          className="p-1 text-emerald-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                     {(!selectedUser.eventAssignments || selectedUser.eventAssignments.length === 0) && (
-                      <p className="text-sm text-zinc-500 text-center py-4">No tiene asignaciones activas de evento</p>
+                      <p className="text-sm text-emerald-400 text-center py-4">No tiene asignaciones activas de evento</p>
                     )}
                   </div>
                 </div>
@@ -814,3 +814,4 @@ export default function UsuariosPage() {
     </div>
   )
 }
+
