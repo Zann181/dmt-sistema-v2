@@ -50,7 +50,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
         setErrorMsg(ERROR_MESSAGES[result.error] || "Usuario o contraseña incorrectos.")
         setIsPending(false)
       } else if (result?.ok) {
-        window.location.href = "/dashboard"
+        window.location.href = "/"
       }
     } catch (err: any) {
       setErrorMsg("Ocurrió un error durante el inicio de sesión.")

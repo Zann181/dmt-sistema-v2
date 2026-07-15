@@ -18,7 +18,7 @@ export default async function LoginPage({
   }
 
   if (session?.user) {
-    redirect("/dashboard")
+    redirect("/")
   }
 
   const { error } = await searchParams
