@@ -541,6 +541,7 @@ export default function EntradaPage() {
         { facingMode: "environment" },
         {
           fps: 10,
+          aspectRatio: 1.0,
           qrbox: (width, height) => {
             const size = Math.min(width, height) * 0.7
             return { width: size, height: size }
