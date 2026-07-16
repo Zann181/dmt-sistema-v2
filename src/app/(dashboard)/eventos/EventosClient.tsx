@@ -342,8 +342,10 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
   const replacePreviewTemplates = (text: string) => {
     if (!text || !selectedEvent) return ""
     
+    const tzOptions = { timeZone: process.env.NEXT_PUBLIC_TIMEZONE || 'America/Bogota' }
+    
     const eventDate = selectedEvent.startsAt 
-      ? new Date(selectedEvent.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      ? new Date(selectedEvent.startsAt).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', ...tzOptions })
       : ""
     const qrLink = `${window.location.origin}/api/attendees/POPA-TF-f19c0vrqef/qr.png`
     const flyerLink = selectedEvent.id 
@@ -355,7 +357,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       .replace(/{nombre_evento}/g, selectedEvent.name)
       .replace(/{nombre_sucursal}/g, selectedEvent.branch?.name || "")
       .replace(/{fecha_evento}/g, eventDate)
-      .replace(/{hora_evento}/g, `${new Date(selectedEvent.startsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(selectedEvent.endsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`)
+      .replace(/{hora_evento}/g, `${new Date(selectedEvent.startsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', ...tzOptions })} - ${new Date(selectedEvent.endsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', ...tzOptions })}`)
       .replace(/{lugar_evento}/g, configForm.venueName || "Venue principal")
       .replace(/{nombre_categoria}/g, "Cortesia ($1)")
       .replace(/{link_qr}/g, qrLink)

@@ -406,11 +406,14 @@ export class EmailService {
 
     const replaceTemplates = (text: string) => {
       if (!text) return ""
+      
+      const tzOptions = { timeZone: process.env.NEXT_PUBLIC_TIMEZONE || 'America/Bogota' }
+      
       let result = text
         .replace(/{nombre_evento}/g, event.name)
         .replace(/{nombre_sucursal}/g, event.branch?.name || "")
-        .replace(/{fecha_evento}/g, new Date(event.startsAt).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
-        .replace(/{hora_evento}/g, `${new Date(event.startsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(event.endsAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`)
+        .replace(/{fecha_evento}/g, new Date(event.startsAt).toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', ...tzOptions }))
+        .replace(/{hora_evento}/g, `${new Date(event.startsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', ...tzOptions })} - ${new Date(event.endsAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', ...tzOptions })}`)
         .replace(/{nombre_asistente}/g, attendeeName)
 
       if (qrCode) {
