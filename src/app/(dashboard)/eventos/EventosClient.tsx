@@ -675,7 +675,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">\n        <div className="w-full sm:w-auto">\n          <h2 className="text-2xl font-bold tracking-tight">Eventos</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="w-full sm:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight">Eventos</h2>
           <p className="text-emerald-500">Gestiona los eventos, accesos y configuraciones.</p>
         </div>
         <button

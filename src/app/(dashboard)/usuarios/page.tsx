@@ -250,7 +250,9 @@ export default function UsuariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">\n        <div className="w-full sm:w-auto">\n          <h2 className="text-2xl font-bold tracking-tight">Administración de Usuarios</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="w-full sm:w-auto">
+          <h2 className="text-2xl font-bold tracking-tight">Administración de Usuarios</h2>
           <p className="text-emerald-500">Administra accesos globales, asignaciones a sucursales y roles.</p>
         </div>
         <button 
