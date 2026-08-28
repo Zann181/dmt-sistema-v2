@@ -258,12 +258,12 @@ class MockPrisma {
         return result
       },
       findUnique: async (args: any) => {
-        const item = table.find(i => this.matchWhere(i, args.where))
-        return item ? this.applyIncludes(item, args.include) : null
+        const item = table.find(i => this.matchWhere(i, args?.where))
+        return item ? this.applyIncludes(item, args?.include) : null
       },
       findFirst: async (args: any) => {
-        const item = table.find(i => this.matchWhere(i, args.where))
-        return item ? this.applyIncludes(item, args.include) : null
+        const item = table.find(i => this.matchWhere(i, args?.where))
+        return item ? this.applyIncludes(item, args?.include) : null
       },
       create: async (args: any) => {
         const newItem = {
@@ -284,28 +284,28 @@ class MockPrisma {
         return { count: items.length }
       },
       update: async (args: any) => {
-        const index = table.findIndex(i => this.matchWhere(i, args.where))
+        const index = table.findIndex(i => this.matchWhere(i, args?.where))
         if (index === -1) throw new Error("Not found")
-        table[index] = { ...table[index], ...args.data }
+        table[index] = { ...table[index], ...args?.data }
         return table[index]
       },
       upsert: async (args: any) => {
-        const item = table.find(i => this.matchWhere(i, args.where))
+        const item = table.find(i => this.matchWhere(i, args?.where))
         if (item) {
-          Object.assign(item, args.update)
+          Object.assign(item, args?.update)
           return item
         } else {
           const newItem = {
             id: `mock_${Math.random().toString(36).substring(2, 11)}`,
             createdAt: new Date(),
-            ...args.create
+            ...args?.create
           }
           table.push(newItem)
           return newItem
         }
       },
       delete: async (args: any) => {
-        const index = table.findIndex(i => this.matchWhere(i, args.where))
+        const index = table.findIndex(i => this.matchWhere(i, args?.where))
         if (index === -1) throw new Error("Not found")
         const deleted = table[index]
         table.splice(index, 1)
@@ -421,13 +421,28 @@ if (!isNeon && !isDummy && connectionString) {
   }
 }
 
+if (process.env.NODE_ENV === "production" && isDummy) {
+  console.warn("⚠️ ALERTA: DATABASE_URL no detectada o es dummy en producción. Usando Mock DB. La app no mostrará datos reales.");
+}
+
+// En Vercel / Serverless, usar el adapter "pg" de Node nativo a menudo causa cuelgues 
+// si el pool agota las conexiones. Configurar max: 1 lo hace compatible con Vercel.
 export const prisma =
   globalForPrisma.prisma || 
   (isDummy
     ? new MockPrisma()
     : isNeon
+      // @ts-ignore
       ? new PrismaClient({ adapter: new PrismaNeon({ connectionString }) })
-      : new PrismaClient({ adapter: new PrismaPg(new PgPool({ connectionString: cleanConnectionString, ssl: isLocal ? false : { rejectUnauthorized: false } })) })
+      : new PrismaClient({
+          adapter: new PrismaPg(
+            new PgPool({
+              connectionString: cleanConnectionString,
+              max: 1, // Crucial para Vercel Serverless para evitar port exhaustion
+              ssl: isLocal ? false : { rejectUnauthorized: false }
+            })
+          )
+        })
   )
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
