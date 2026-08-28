@@ -11,8 +11,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Sin autorización" }, { status: 401 })
   }
 
-  const branchId = session.user.activeBranchId
-  const eventId = session.user.activeEventId
+  const url = new URL(req.url)
+  const branchId = url.searchParams.get("branchId") || session?.user?.activeBranchId
+  const eventId = url.searchParams.get("eventId") || session?.user?.activeEventId
 
   if (!branchId || !eventId) {
     return NextResponse.json({ error: "Sin contexto activo" }, { status: 400 })

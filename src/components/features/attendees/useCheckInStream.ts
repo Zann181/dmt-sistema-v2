@@ -12,18 +12,22 @@ export interface CheckInEvent {
 
 interface UseCheckInStreamOptions {
   onCheckIn?: (event: CheckInEvent) => void
+  branchId?: string | null
+  eventId?: string | null
 }
 
-export function useCheckInStream({ onCheckIn }: UseCheckInStreamOptions = {}) {
+export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStreamOptions = {}) {
   const [isConnected, setIsConnected] = useState(false)
   const [checkInCount, setCheckInCount] = useState(0)
 
   useEffect(() => {
+    if (!branchId || !eventId) return
+
     let eventSource: EventSource | null = null
     let reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null
 
     const connectSSE = () => {
-      eventSource = new EventSource("/api/realtime/check-in")
+      eventSource = new EventSource(`/api/realtime/check-in?branchId=${branchId}&eventId=${eventId}`)
 
       eventSource.onopen = () => setIsConnected(true)
 

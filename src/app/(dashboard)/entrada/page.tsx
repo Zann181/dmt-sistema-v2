@@ -27,7 +27,7 @@ const toTitleCase = (str: string): string => {
 
 export default function EntradaPage() {
   const { activeBranchId, activeBranchName, activeEventId, activeEventName } = useContextStore()
-  const { isConnected, checkInCount } = useCheckInStream()
+  const { isConnected, checkInCount } = useCheckInStream({ branchId: activeBranchId, eventId: activeEventId })
   const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const router = useRouter()
