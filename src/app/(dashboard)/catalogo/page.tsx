@@ -5,8 +5,8 @@ import { CatalogoClient } from "./CatalogoClient"
 
 export default async function CatalogoPage() {
   const { session } = await requireAuth()
-  if (!session?.user?.permissions.accessCatalog) {
-    redirect("/dashboard")
+  if (!session?.user.isGlobalAdmin && !session?.user?.permissions.accessCatalog) {
+    redirect("/")
   }
 
   const branchId = session.user.activeBranchId

@@ -5,8 +5,8 @@ import { EventosClient } from "./EventosClient"
 
 export default async function EventosPage() {
   const { session } = await requireAuth()
-  if (!session?.user.permissions.manageEventsConfig && !session?.user.permissions.accessAttendees) {
-    redirect("/dashboard")
+  if (!session?.user.isGlobalAdmin && !session?.user.permissions.manageEventsConfig && !session?.user.permissions.accessAttendees) {
+    redirect("/")
   }
 
   const isGlobalAdmin = session.user.isSuperuser || session.user.isGlobalAdmin

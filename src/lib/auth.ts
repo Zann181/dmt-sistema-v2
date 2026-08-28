@@ -8,10 +8,14 @@ import { IdentityService } from "@/domains/identity/services/IdentityService"
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || "development-fallback-secret-at-least-32-characters-long-key-dmt",
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID 
+      ? [
+          Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          })
+        ]
+      : []),
     Credentials({
       credentials: {
         username: { label: "Usuario", type: "text" },

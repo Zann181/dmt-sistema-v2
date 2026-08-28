@@ -5,8 +5,8 @@ import { SucursalesClient } from "./SucursalesClient"
 
 export default async function SucursalesPage() {
   const { session } = await requireAuth()
-  if (!session?.user.permissions.manageBranchConfig) {
-    redirect("/dashboard")
+  if (!session?.user.isGlobalAdmin && !session?.user.permissions.manageBranchConfig) {
+    redirect("/")
   }
 
   // Si es superuser ve todas, si no solo las suyas
