@@ -1,6 +1,7 @@
 import { Resend } from "resend"
 import nodemailer from "nodemailer"
 import sharp from "sharp"
+import { formatThousands } from "@/shared/utils/price"
 
 export class EmailService {
   private static getClient() {
@@ -161,7 +162,8 @@ export class EmailService {
     event: any,
     attendeeName: string,
     qrCode?: string,
-    categoryName?: string
+    categoryName?: string,
+    paidAmount?: number | string
   ): Promise<{
     html: string
     attachments: Array<{
@@ -422,6 +424,10 @@ export class EmailService {
       if (categoryName) {
         result = result.replace(/{nombre_categoria}/g, categoryName)
       }
+      result = result.replace(/{link_mapa}/g, event.mapsUrl || "")
+      if (paidAmount !== undefined && paidAmount !== null) {
+        result = result.replace(/{valor_entrada}/g, `$${formatThousands(paidAmount.toString())}`)
+      }
       return result
     }
 
@@ -470,49 +476,86 @@ export class EmailService {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>${event.name}</title>
+  <style>
+    :root { color-scheme: light dark; supported-color-schemes: light dark; }
+    @media (prefers-color-scheme: dark) {
+      body, .email-body { background-color: ${emailBg} !important; color: ${textColor} !important; }
+      .email-wrap { background-color: ${emailBg} !important; }
+      .email-card { background-color: ${cardBg} !important; }
+      .email-header { background-color: ${headerBg} !important; }
+      .email-section { background-color: ${sectionBg} !important; }
+      .email-text { color: ${textColor} !important; }
+      .email-muted { color: ${mutedColor} !important; }
+      .email-accent { color: ${accentColor} !important; }
+      .email-title { color: ${titleColor} !important; }
+    }
+    /* Gmail app (iOS/Android) forces its own dark-mode color inversion and ignores
+       color-scheme/media queries; it tags the message with [data-ogsc]/[data-ogsb]
+       instead, which we override here to keep the intended dark palette. */
+    [data-ogsc] body, [data-ogsc] .email-body { color: ${textColor} !important; }
+    [data-ogsb] .email-body, [data-ogsb] .email-wrap { background-color: ${emailBg} !important; }
+    [data-ogsb] .email-card { background-color: ${cardBg} !important; }
+    [data-ogsb] .email-header { background-color: ${headerBg} !important; }
+    [data-ogsb] .email-section { background-color: ${sectionBg} !important; }
+    [data-ogsc] .email-text { color: ${textColor} !important; }
+    [data-ogsc] .email-muted { color: ${mutedColor} !important; }
+    [data-ogsc] .email-accent { color: ${accentColor} !important; }
+    [data-ogsc] .email-title { color: ${titleColor} !important; }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: ${emailBg}; color: ${textColor};">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${emailBg}; background-image: radial-gradient(circle at 15% 20%, ${accentColor}1a 0%, transparent 55%), radial-gradient(circle at 85% 80%, ${accentColor}15 0%, transparent 55%); padding: 40px 10px;">
+<body class="email-body" style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: ${emailBg}; color: ${textColor};">
+  <table class="email-wrap" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${emailBg}; background-image: radial-gradient(circle at 15% 20%, ${accentColor}1a 0%, transparent 55%), radial-gradient(circle at 85% 80%, ${accentColor}15 0%, transparent 55%); padding: 40px 10px;">
     <tr>
       <td align="center">
-        <table width="100%" max-width="450px" style="max-width: 450px; background-color: ${cardBg}; border: 1px solid ${borderColor}; border-radius: 12px; overflow: hidden; border-collapse: collapse; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
+        <table class="email-card" width="100%" max-width="450px" style="max-width: 450px; background-color: ${cardBg}; border: 1px solid ${borderColor}; border-radius: 12px; overflow: hidden; border-collapse: collapse; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);">
           <!-- Header -->
           <tr>
-            <td align="center" style="background-color: ${headerBg}; padding: 30px 20px 20px 20px; border-bottom: 1px solid ${borderColor};">
+            <td class="email-header" align="center" style="background-color: ${headerBg}; padding: 30px 20px 20px 20px; border-bottom: 1px solid ${borderColor};">
               ${logoHtml}
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
-            <td style="padding: 30px 24px; color: ${textColor}; position: relative;">
+            <td class="email-card email-text" style="padding: 30px 24px; color: ${textColor}; position: relative;">
               <!-- Watermark Logo -->
               ${branchLogoWatermarkUrl ? `
               <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; opacity: 0.035; background-image: url('${branchLogoWatermarkUrl}'); background-repeat: no-repeat; background-position: center; background-size: 260px; pointer-events: none;"></div>
               ` : ""}
 
               <div style="position: relative; z-index: 1;">
-                <h1 style="font-size: 18px; font-weight: bold; margin-top: 0; margin-bottom: 14px; letter-spacing: -0.025em; color: ${titleColor}; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${heading}</h1>
-                
+                <h1 class="email-title" style="font-size: 18px; font-weight: bold; margin-top: 0; margin-bottom: 14px; letter-spacing: -0.025em; color: ${titleColor}; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${heading}</h1>
+
                 ${introText}
 
                 <!-- Event Details -->
-                <table width="100%" border="0" cellspacing="0" cellpadding="16" style="background-color: ${sectionBg}; border: 1px solid ${borderColor}; border-radius: 8px; color: ${textColor}; margin-top: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
+                <table class="email-section" width="100%" border="0" cellspacing="0" cellpadding="16" style="background-color: ${sectionBg}; border: 1px solid ${borderColor}; border-radius: 8px; color: ${textColor}; margin-top: 20px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
                   <tr>
                     <td>
-                      <p style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: ${accentColor}; margin: 0 0 8px 0; letter-spacing: 2px;">
+                      <p class="email-accent" style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: ${accentColor}; margin: 0 0 8px 0; letter-spacing: 2px;">
                         // ${event.emailDetailsTitle || "Detalles del Evento"}
                       </p>
-                      <p style="font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: ${textColor};">
+                      <p class="email-text" style="font-size: 14px; font-weight: bold; margin: 0 0 6px 0; color: ${textColor};">
                         ${dateText}
                       </p>
-                      <p style="font-size: 13px; color: ${mutedColor}; margin: 0 0 10px 0;">
+                      <p class="email-muted" style="font-size: 13px; color: ${mutedColor}; margin: 0 0 10px 0;">
                         ${timeText}
                       </p>
-                      <p style="font-size: 11px; color: ${accentColor}; margin: 0; font-weight: bold; letter-spacing: 0.5px;">
+                      <p class="email-accent" style="font-size: 11px; color: ${accentColor}; margin: 0; font-weight: bold; letter-spacing: 0.5px;">
                         LOC_SYS: ${event.venueName || "Venue principal"}
                       </p>
+                      ${event.mapsUrl ? `
+                      <table border="0" cellspacing="0" cellpadding="0" style="margin-top: 12px;">
+                        <tr>
+                          <td align="center" bgcolor="${accentColor}" style="border-radius: 6px; background-color: ${accentColor};">
+                            <a href="${event.mapsUrl}" target="_blank" style="display: inline-block; padding: 10px 18px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: ${emailBg}; text-decoration: none; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">📍 ${event.mapsLabel || "Abrir en Google Maps"}</a>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ""}
                     </td>
                   </tr>
                 </table>
@@ -525,11 +568,11 @@ export class EmailService {
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 24px; border-top: 1px solid ${borderColor}; padding-top: 24px; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
                   <tr>
                     <td align="center">
-                      <p style="font-weight: bold; font-size: 12px; margin-top: 0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: ${textColor};">${qrTitle}</p>
+                      <p class="email-text" style="font-weight: bold; font-size: 12px; margin-top: 0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1.5px; color: ${textColor};">${qrTitle}</p>
                       <div style="display: inline-block; padding: 14px; background-color: #ffffff; border: 1px solid ${borderColor}; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
                         <img src="cid:acceso_qr.png" alt="Código QR" width="260" height="260" style="display: block;" />
                       </div>
-                      <p style="font-size: 10px; color: ${mutedColor}; margin-top: 12px; margin-bottom: 0; max-width: 280px; line-height: 1.4;">${qrNote}</p>
+                      <p class="email-muted" style="font-size: 10px; color: ${mutedColor}; margin-top: 12px; margin-bottom: 0; max-width: 280px; line-height: 1.4;">${qrNote}</p>
                     </td>
                   </tr>
                 </table>
@@ -538,8 +581,8 @@ export class EmailService {
               <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 28px; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
                 <tr>
                   <td>
-                    <p style="font-weight: 500; font-size: 13px; margin: 0 0 6px 0; color: ${textColor};">${closingText}</p>
-                    <p style="font-weight: bold; font-size: 11px; text-transform: uppercase; color: ${accentColor}; margin: 0; letter-spacing: 2px;">
+                    <p class="email-text" style="font-weight: 500; font-size: 13px; margin: 0 0 6px 0; color: ${textColor};">${closingText}</p>
+                    <p class="email-accent" style="font-weight: bold; font-size: 11px; text-transform: uppercase; color: ${accentColor}; margin: 0; letter-spacing: 2px;">
                       // ${teamSignature}
                     </p>
                   </td>
@@ -551,7 +594,7 @@ export class EmailService {
           <!-- Footer -->
           ${event.emailFooter ? `
           <tr>
-            <td align="center" style="background-color: ${emailBg}; padding: 20px 10px; border-top: 1px solid ${borderColor}; text-align: center; color: ${mutedColor}; font-size: 9px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
+            <td class="email-wrap email-muted" align="center" style="background-color: ${emailBg}; padding: 20px 10px; border-top: 1px solid ${borderColor}; text-align: center; color: ${mutedColor}; font-size: 9px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
               ${footerText}
               ${legalText}
             </td>

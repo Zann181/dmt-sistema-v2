@@ -91,15 +91,15 @@ export async function GET(req: Request) {
     let whereClause: any = { branchId }
 
     if (!isGlobal) {
-      // Check if user has active membership in this branch
+      // Check if user has active BRANCH_ADMIN membership in this branch (full access)
       const membership = await prisma.branchMembership.findFirst({
-        where: { userId: session.user.id, branchId, isActive: true }
+        where: { userId: session.user.id, branchId, isActive: true, role: "BRANCH_ADMIN" }
       })
 
       if (!membership) {
-        // If not a branch member, only allow accessing events where they have an assignment
+        // Roles scoped a evento (EVENT_ADMIN, ENTRANCE, BAR) o sin membresía: solo eventos asignados
         const assignments = await prisma.eventAssignment.findMany({
-          where: { userId: session.user.id, branchId },
+          where: { userId: session.user.id, branchId, isActive: true },
           select: { eventId: true }
         })
         const assignedEventIds = assignments.map((a: any) => a.eventId)

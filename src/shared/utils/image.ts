@@ -3,7 +3,7 @@
  * If the image is not an SVG, it is resized and compressed to WebP (preserving transparency) before wrapping,
  * ensuring database records stay extremely light.
  */
-export function processImageToSvg(file: File, maxDim: number = 500): Promise<string> {
+export function processImageToSvg(file: File, maxDim: number = 500, quality: number = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
     const isSvg = file.type === "image/svg+xml" || file.name.endsWith(".svg")
     const reader = new FileReader()
@@ -48,7 +48,7 @@ export function processImageToSvg(file: File, maxDim: number = 500): Promise<str
           ctx.drawImage(img, 0, 0, w, h)
 
           // Export as compressed WebP (supports transparency, lightweight, no PNG)
-          const compressedDataUrl = canvas.toDataURL("image/webp", 0.7)
+          const compressedDataUrl = canvas.toDataURL("image/webp", quality)
 
           // Wrap inside a lightweight SVG string
           const svgWrapper = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%">

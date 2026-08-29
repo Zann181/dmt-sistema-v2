@@ -134,7 +134,7 @@ const getInitialCreateForm = (branchId: string) => ({
   emailHeading: "Hola {nombre_asistente}",
   emailIntro: "Tu asistencia ha sido confirmada. Abajo tienes la info oficial del evento:",
   emailMessageTitle: "Mensaje del evento",
-  emailBody: "Tu registro para {nombre_evento} fue confirmado.\n\nFecha: {fecha_evento}\nCategoria: {nombre_categoria}\nQR: {codigo_qr}\n\nAdjuntamos tu codigo QR para el ingreso.",
+  emailBody: "Tu registro para {nombre_evento} fue confirmado.\n\nFecha: {fecha_evento}\nCategoria: {nombre_categoria} - Valor: {valor_entrada}\nQR: {codigo_qr}\n\nAdjuntamos tu codigo QR para el ingreso.",
   emailWarningTitle: "Importante",
   emailWarningText: "Ingreso Early hasta las 11:00 PM. Después de esa hora aplica multa de $25.000.",
   emailDetailsTitle: "Detalles",
@@ -362,6 +362,8 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       .replace(/{nombre_categoria}/g, "Cortesia ($1)")
       .replace(/{link_qr}/g, qrLink)
       .replace(/{flyer_evento}/g, flyerLink)
+      .replace(/{link_mapa}/g, configForm.mapsUrl || "")
+      .replace(/{valor_entrada}/g, "$50.000")
   }
 
   const getWhatsAppPreviewMessage = () => {
@@ -887,7 +889,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                               const file = e.target.files?.[0]
                               if (!file) return
                               try {
-                                const resultStr = await processImageToSvg(file, 600)
+                                const resultStr = await processImageToSvg(file, 1000, 0.85)
                                 setCreateForm({ ...createForm, flyerUrl: resultStr })
                               } catch (err: any) {
                                 // Ignore
@@ -1496,7 +1498,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                 const file = e.target.files?.[0]
                                 if (!file) return
                                 try {
-                                  const resultStr = await processImageToSvg(file, 600)
+                                  const resultStr = await processImageToSvg(file, 1000, 0.85)
                                   setConfigForm({ ...configForm, flyerUrl: resultStr })
                                 } catch (err: any) {
                                   // Ignore
@@ -1856,7 +1858,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                           placeholder="¡Hola, {nombre_asistente}! 🎟️..."
                         />
                         <p className="text-[10px] text-emerald-500 mt-1">
-                          Variables: {"{nombre_asistente}, {nombre_evento}, {fecha_evento}, {lugar_evento}, {nombre_categoria}, {link_qr}, {flyer_evento}"}
+                          Variables: {"{nombre_asistente}, {nombre_evento}, {fecha_evento}, {lugar_evento}, {nombre_categoria}, {link_qr}, {flyer_evento}, {link_mapa}, {valor_entrada}"}
                         </p>
                       </div>
                       <div className="text-xs text-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
@@ -1992,6 +1994,19 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                                    <p className="text-xs font-semibold italic" style={{ color: configForm.emailAccentColor || "#c44536" }}>
                                      📍 {configForm.venueName || "Venue principal sucursal"}
                                    </p>
+                                   {configForm.mapsUrl && (
+                                     <div className="pt-1">
+                                       <span
+                                         className="inline-block px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wide"
+                                         style={{
+                                           backgroundColor: configForm.emailAccentColor || "#c44536",
+                                           color: configForm.emailBackgroundColor || "#000000"
+                                         }}
+                                       >
+                                         📍 {configForm.mapsLabel || "Abrir en Google Maps"}
+                                       </span>
+                                     </div>
+                                   )}
                                  </div>
  
                                  {configForm.emailBody && (

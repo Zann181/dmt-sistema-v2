@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
     }
 
-    const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, name, qrCode, category.name)
+    const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, name, qrCode, category.name, attendee.paidAmount.toString())
     const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
       .replace(/{nombre_evento}/g, event.name)
       .replace(/{nombre_sucursal}/g, event.branch?.name || "")
@@ -116,6 +116,11 @@ export async function POST(req: Request) {
       },
       extraAttachments
     )
+
+    await prisma.attendee.update({
+      where: { id: attendee.id },
+      data: { emailSentAt: new Date() }
+    })
 
     return NextResponse.json({ message: "Correo reenviado con éxito" })
   } catch (error: any) {

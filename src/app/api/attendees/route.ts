@@ -27,7 +27,9 @@ export async function GET(req: Request) {
     if (!branchId || !eventId) return NextResponse.json({ data: [] })
 
     const q = url.searchParams.get("q") || ""
-    
+    const categoryId = url.searchParams.get("categoryId") || ""
+    const status = url.searchParams.get("status") || "all"
+
     const statsOnly = url.searchParams.get("stats") === "true"
     if (statsOnly) {
       if (!branchId || !eventId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
@@ -98,7 +100,10 @@ export async function GET(req: Request) {
             { name: { contains: q, mode: "insensitive" } },
             { cc: { contains: q, mode: "insensitive" } }
           ]
-        } : {})
+        } : {}),
+        ...(categoryId ? { categoryId } : {}),
+        ...(status === "checked" ? { hasCheckedIn: true } : {}),
+        ...(status === "pending" ? { hasCheckedIn: false } : {})
       },
       include: { category: true },
       orderBy: { createdAt: "desc" },
@@ -229,7 +234,7 @@ export async function POST(req: Request) {
   qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
 }
 
-        const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, parsed.name, qrCode, category.name)
+        const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, parsed.name, qrCode, category.name, parsed.paidAmount)
         const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
           .replace(/{nombre_evento}/g, event.name)
           .replace(/{nombre_sucursal}/g, event.branch?.name || "")
@@ -249,6 +254,10 @@ export async function POST(req: Request) {
           },
           extraAttachments
         )
+        await prisma.attendee.update({
+          where: { id: attendee.id },
+          data: { emailSentAt: new Date() }
+        })
       } catch (err: any) {
         console.error("⚠️ Error en el envío del correo del ticket:", err)
         mailError = err.message || "Error al enviar correo electrónico"

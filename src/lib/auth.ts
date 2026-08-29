@@ -5,8 +5,30 @@ import { prisma } from "@/infrastructure/database/prisma"
 import { verifyPassword } from "@/infrastructure/crypto"
 import { IdentityService } from "@/domains/identity/services/IdentityService"
 
+// auth() se llama muchas veces por request (cada página + cada ruta de API llamada
+// en paralelo por el cliente). Sin esto, cada llamada repite la misma consulta pesada
+// a la base de datos. TTL corto para no perder frescura de permisos.
+const sessionUserCache = new Map<string, { data: any; expires: number }>()
+const SESSION_CACHE_TTL_MS = 5000
+
+async function getCachedSessionUser(userId: string) {
+  const cached = sessionUserCache.get(userId)
+  if (cached && cached.expires > Date.now()) return cached.data
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      branchMemberships: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
+      eventAssignments: { where: { isActive: true }, orderBy: { createdAt: "asc" } }
+    }
+  })
+  sessionUserCache.set(userId, { data: dbUser, expires: Date.now() + SESSION_CACHE_TTL_MS })
+  return dbUser
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || "development-fallback-secret-at-least-32-characters-long-key-dmt",
+  trustHost: true,
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID 
       ? [
@@ -122,15 +144,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         const t = token as any
-        
-        // Fetch fresh user data from DB to prevent stale JWT permissions
-        const dbUser = await prisma.user.findUnique({
-          where: { id: t.userId as string },
-          include: { 
-            branchMemberships: { where: { isActive: true }, orderBy: { createdAt: "asc" } },
-            eventAssignments: { where: { isActive: true }, orderBy: { createdAt: "asc" } }
-          }
-        })
+
+        // Fetch fresh user data from DB to prevent stale JWT permissions (cacheado unos segundos)
+        const dbUser = await getCachedSessionUser(t.userId as string)
 
         if (!dbUser || !dbUser.isActive) {
           // Si el usuario fue eliminado o desactivado

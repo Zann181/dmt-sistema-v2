@@ -5,8 +5,13 @@ import ws from "ws"
 import bcrypt from "bcryptjs"
 import { Pool as PgPool } from "pg"
 import { PrismaPg } from "@prisma/adapter-pg"
+import dns from "dns"
 
 neonConfig.webSocketConstructor = ws
+
+// En Windows/algunas redes, Node resuelve el host de Supabase a IPv6 primero.
+// Si la red no soporta IPv6 saliente, la conexión se queda colgada sin fallar nunca.
+dns.setDefaultResultOrder("ipv4first")
 
 const globalForPrisma = globalThis as unknown as { prisma: any }
 const connectionString = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy"
@@ -438,8 +443,10 @@ export const prisma =
           adapter: new PrismaPg(
             new PgPool({
               connectionString: cleanConnectionString,
-              max: 1, // Crucial para Vercel Serverless para evitar port exhaustion
-              ssl: isLocal ? false : { rejectUnauthorized: false }
+              max: 1, // Crucial para Vercel Serverless para evitar port exhaustion. Local se deja igual que producción a propósito.
+              ssl: isLocal ? false : { rejectUnauthorized: false },
+              connectionTimeoutMillis: 10000, // Falla rápido en vez de colgarse indefinidamente
+              keepAlive: true, // Evita que NAT/firewall corte conexiones inactivas en silencio
             })
           )
         })

@@ -238,6 +238,7 @@ model Attendee {
   hasCheckedIn     Boolean  @default(false)
   checkedInAt      DateTime?
   includedBalance  Int      @default(0)
+  emailSentAt      DateTime?
 
   createdAt DateTime @default(now())
 
@@ -251,6 +252,7 @@ model Attendee {
   @@unique([eventId, cc])
   @@index([branchId])
   @@index([cc])
+  @@index([branchId, eventId])
   @@map("attendees")
 }
 

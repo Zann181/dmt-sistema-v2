@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
 import { useContextStore } from "@/stores/contextStore"
-import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus } from "lucide-react"
+import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon } from "lucide-react"
 
 // Icono personalizado de WhatsApp de alta calidad para el estilo premium
 const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
@@ -35,6 +35,8 @@ export default function EntradaPage() {
   // Search states
   const [searchInput, setSearchInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [filterCategoryId, setFilterCategoryId] = useState("")
+  const [filterStatus, setFilterStatus] = useState<"all" | "checked" | "pending">("all")
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"scan" | "search" | "add" | "dashboard">("dashboard")
@@ -125,6 +127,8 @@ export default function EntradaPage() {
 
   // Already Checked In Warning state
   const [alreadyCheckedInInfo, setAlreadyCheckedInInfo] = useState<any | null>(null)
+  // Successful Check-in Info state (invasive confirmation modal)
+  const [successCheckInInfo, setSuccessCheckInInfo] = useState<any | null>(null)
 
   // New Category creation states
   const [showNewCatModal, setShowNewCatModal] = useState(false)
@@ -266,7 +270,9 @@ export default function EntradaPage() {
       `*Detalles del Evento:*\n` +
       `📅 *Fecha:* ${eventDate}\n` +
       `📍 *Lugar:* ${activeEvent?.venueName || "Venue principal"}\n` +
-      `🎫 *Categoría:* ${a.category?.name || ""}\n\n` +
+      (activeEvent?.mapsUrl ? `🗺️ *${activeEvent?.mapsLabel || "Abrir en Google Maps"}:* ${activeEvent.mapsUrl}\n` : "") +
+      `🎫 *Categoría:* ${a.category?.name || ""}\n` +
+      `💵 *Valor de la entrada:* $${formatThousands((a.paidAmount ?? 0).toString())}\n\n` +
       `📥 *Descarga tu Código QR de Acceso:* \n` +
       `${qrLink}\n\n` +
       (flyerLink ? `🖼️ *Descarga el Flyer del Evento (.png):* \n${flyerLink}\n\n` : "") +
@@ -298,9 +304,16 @@ export default function EntradaPage() {
 
   // Attendee list query
   const { data: attendees, isLoading } = useQuery({
-    queryKey: ["attendees", activeBranchId, activeEventId, searchQuery],
+    queryKey: ["attendees", activeBranchId, activeEventId, searchQuery, filterCategoryId, filterStatus],
     queryFn: async () => {
-      const res = await fetch(`/api/attendees?branchId=${activeBranchId}&eventId=${activeEventId}&q=${encodeURIComponent(searchQuery)}`)
+      const params = new URLSearchParams({
+        branchId: activeBranchId!,
+        eventId: activeEventId!,
+        q: searchQuery,
+        status: filterStatus
+      })
+      if (filterCategoryId) params.set("categoryId", filterCategoryId)
+      const res = await fetch(`/api/attendees?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch")
       const json = await res.json()
       return json.data as any[]
@@ -360,6 +373,125 @@ export default function EntradaPage() {
       setAddError(err.message)
     }
   })
+
+  // Excel import
+  type ImportRow = { name: string; cc: string; email: string; phone: string }
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importRows, setImportRows] = useState<ImportRow[]>([])
+  const [importCategoryId, setImportCategoryId] = useState("")
+  const [importFileName, setImportFileName] = useState("")
+  const [importParsing, setImportParsing] = useState(false)
+  const [importResult, setImportResult] = useState<any>(null)
+
+  const sortedImportRows = [...importRows].sort((a, b) => {
+    const aHasEmail = a.email ? 1 : 0
+    const bHasEmail = b.email ? 1 : 0
+    return aHasEmail - bHasEmail
+  })
+
+  const handleImportFile = async (file: File) => {
+    setImportParsing(true)
+    setImportResult(null)
+    try {
+      const ExcelJS = (await import("exceljs")).default
+      const workbook = new ExcelJS.Workbook()
+      const buffer = await file.arrayBuffer()
+      await workbook.xlsx.load(buffer)
+      const sheet = workbook.worksheets[0]
+      const rows: ImportRow[] = []
+      sheet.eachRow((row) => {
+        const name = row.getCell(1).text?.trim() || ""
+        const cc = row.getCell(2).text?.trim() || ""
+        const email = row.getCell(3).text?.trim() || ""
+        const phone = row.getCell(4).text?.trim() || ""
+        if (name && cc) {
+          rows.push({ name: toTitleCase(name), cc, email, phone })
+        }
+      })
+      setImportRows(rows)
+      setImportFileName(file.name)
+      if (rows.length === 0) {
+        toast.error("No se encontraron filas válidas (nombre + cédula) en el archivo.")
+      }
+    } catch (err: any) {
+      toast.error("Error al leer el archivo: " + (err.message || err))
+    } finally {
+      setImportParsing(false)
+    }
+  }
+
+  const importMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/attendees/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branchId: activeBranchId,
+          eventId: activeEventId,
+          categoryId: importCategoryId,
+          rows: importRows.map(r => ({
+            name: r.name,
+            cc: r.cc,
+            phone: r.phone || null,
+            email: r.email || null
+          }))
+        })
+      })
+      if (!res.ok || !res.body) throw new Error((await res.json().catch(() => ({}))).error || "Error al importar")
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let summary: any = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        for (const line of lines) {
+          if (!line.trim()) continue
+          const evt = JSON.parse(line)
+
+          if (evt.type === "progress") {
+            if (evt.emailStatus === "sent") {
+              toast.success(`✉️ Correo enviado a ${evt.name}`, { description: `${evt.processed}/${evt.total} — ${evt.cc}` })
+            } else if (evt.emailStatus === "failed") {
+              toast.warning(`No se pudo enviar correo a ${evt.name}`, { description: evt.error || "Error de envío" })
+            } else if (evt.emailStatus === "no_email") {
+              toast.info(`${evt.name} registrado sin correo`, { description: `${evt.processed}/${evt.total} — ${evt.cc}` })
+            }
+          } else if (evt.type === "error") {
+            toast.error(evt.message)
+          } else if (evt.type === "summary") {
+            summary = evt.summary
+          }
+        }
+      }
+
+      return summary
+    },
+    onSuccess: (summary) => {
+      if (!summary) return
+      setImportResult(summary)
+      queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
+      toast.success(`Importación completa: ${summary.created} nuevos, ${summary.updated} actualizados, ${summary.emailsSent} correos enviados`)
+    },
+    onError: (err: any) => {
+      toast.error("Error al importar: " + err.message)
+    }
+  })
+
+  const closeImportModal = () => {
+    setShowImportModal(false)
+    setImportRows([])
+    setImportCategoryId("")
+    setImportFileName("")
+    setImportResult(null)
+  }
 
   const handleCategoryChange = (catId: string) => {
     const selectedCat = categories?.find((c: any) => c.id === catId)
@@ -448,6 +580,24 @@ export default function EntradaPage() {
   }
 
   // Check-In mutation
+  const playCheckInBeep = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      const ctx = new AudioCtx()
+      const oscillator = ctx.createOscillator()
+      const gain = ctx.createGain()
+      oscillator.type = "sine"
+      oscillator.frequency.value = 880
+      gain.gain.setValueAtTime(0.3, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2)
+      oscillator.connect(gain)
+      gain.connect(ctx.destination)
+      oscillator.start()
+      oscillator.stop(ctx.currentTime + 0.2)
+      oscillator.onended = () => ctx.close()
+    } catch (_) { /* ignore */ }
+  }
+
   const checkInMutation = useMutation({
     mutationFn: async (payload: { qrCodeOrCc: string }) => {
       const res = await fetch("/api/attendees/check-in", {
@@ -469,15 +619,14 @@ export default function EntradaPage() {
       }
       return json
     },
-    onSuccess: (resJson) => {
+    onSuccess: (resJson, variables) => {
+      playCheckInBeep()
+      // Remember this code to swallow duplicate scans of the same QR right after check-in
+      lastCheckInRef.current = { code: variables.qrCodeOrCc, time: Date.now() }
       // Invalidate attendees list queries to refresh UI status
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
       queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
-      setNotification({
-        type: "success",
-        message: `Check-in Exitoso: ${resJson.data.name}`,
-        subMessage: `Categoría: ${resJson.data.category.name}`
-      })
+      setSuccessCheckInInfo(resJson.data)
     },
     onError: (err: any) => {
       if (err.message === "ALREADY_CHECKED_IN") {
@@ -526,6 +675,10 @@ export default function EntradaPage() {
   const html5QrCodeRef = useRef<any>(null)
   const isScanTabActiveRef = useRef(false)
   const isStartingRef = useRef(false)
+  // Ignore re-reads of the same QR within this window right after a successful check-in
+  // (avoids the camera "bouncing" a false ALREADY_CHECKED_IN warning right after success)
+  const CHECKIN_COOLDOWN_MS = 6000
+  const lastCheckInRef = useRef<{ code: string; time: number } | null>(null)
 
   const startScanning = async () => {
     if (!isScanTabActiveRef.current || isStartingRef.current) return
@@ -533,7 +686,11 @@ export default function EntradaPage() {
     try {
       const { Html5Qrcode } = await import("html5-qrcode")
       if (!isScanTabActiveRef.current) return
-      const scanner = new Html5Qrcode("reader")
+      const scanner = new Html5Qrcode("reader", {
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
+      } as any)
       html5QrCodeRef.current = scanner
       setIsScanning(true)
 
@@ -545,19 +702,25 @@ export default function EntradaPage() {
           qrbox: (width, height) => {
             const size = Math.min(width, height) * 0.7
             return { width: size, height: size }
-          }
+          },
+          videoConstraints: {
+            facingMode: "environment",
+            advanced: [{ focusMode: "continuous" }]
+          } as any
         },
         async (decodedText) => {
+          // Same code we just checked in successfully, still in frame: ignore silently
+          if (
+            lastCheckInRef.current &&
+            lastCheckInRef.current.code === decodedText &&
+            Date.now() - lastCheckInRef.current.time < CHECKIN_COOLDOWN_MS
+          ) {
+            return
+          }
           try {
             await scanner.pause()
             await checkInMutation.mutateAsync({ qrCodeOrCc: decodedText })
-            setTimeout(() => {
-              if (html5QrCodeRef.current) {
-                try {
-                  html5QrCodeRef.current.resume()
-                } catch (_) {}
-              }
-            }, 2000)
+            // Resumes when the success modal closes (auto or manual)
           } catch (err: any) {
             if (err.message !== "ALREADY_CHECKED_IN") {
               setTimeout(() => {
@@ -568,6 +731,7 @@ export default function EntradaPage() {
                 }
               }, 2000)
             }
+            // ALREADY_CHECKED_IN resumes when its warning modal closes
           }
         },
         () => {} // silent frame mismatch
@@ -625,6 +789,18 @@ export default function EntradaPage() {
       return () => clearTimeout(timer)
     }
   }, [notification])
+
+  useEffect(() => {
+    if (successCheckInInfo) {
+      const timer = setTimeout(() => {
+        setSuccessCheckInInfo(null)
+        if (html5QrCodeRef.current && isScanning) {
+          html5QrCodeRef.current.resume().catch(() => {})
+        }
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [successCheckInInfo])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -815,6 +991,52 @@ export default function EntradaPage() {
             </div>
           </div>
         )}
+
+        {/* SUCCESSFUL CHECK-IN CONFIRMATION MODAL */}
+        {successCheckInInfo && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+            <div className="bg-zinc-950 border-2 border-primary rounded-xl p-6 w-full max-w-sm shadow-[0_0_50px_rgba(57,255,20,0.3)] space-y-4 font-mono text-center text-white relative">
+              <div className="w-16 h-16 rounded-full bg-green-950/50 border border-primary flex items-center justify-center mx-auto text-primary animate-bounce">
+                <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-black tracking-widest text-primary uppercase">
+                  ¡Ingreso Confirmado!
+                </h3>
+                <p className="text-sm font-bold text-white">{successCheckInInfo.name}</p>
+              </div>
+
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
+                <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                  <span className="text-emerald-500">Documento:</span>
+                  <span className="font-bold text-zinc-200">{successCheckInInfo.cc}</span>
+                </div>
+                <div className="flex justify-between pt-0.5">
+                  <span className="text-emerald-500">Categoría:</span>
+                  <span className="font-bold text-zinc-200">{successCheckInInfo.category?.name}</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessCheckInInfo(null)
+                    if (html5QrCodeRef.current && isScanning) {
+                      html5QrCodeRef.current.resume().catch(() => {})
+                    }
+                  }}
+                  className="w-full py-2.5 bg-primary hover:brightness-110 text-black rounded-md text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(57,255,20,0.2)] active:scale-95"
+                >
+                  Continuar Escaneando
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -990,12 +1212,12 @@ export default function EntradaPage() {
 
       {activeTab === "search" && (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px] animate-in fade-in duration-200">
-          <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-4">
-            <div className="relative flex-1">
+          <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre o cédula..." 
+              <input
+                type="text"
+                placeholder="Buscar por nombre o cédula..."
                 value={searchInput}
                 onChange={(e) => {
                   setSearchInput(e.target.value)
@@ -1004,6 +1226,25 @@ export default function EntradaPage() {
                 className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+            <select
+              value={filterCategoryId}
+              onChange={(e) => setFilterCategoryId(e.target.value)}
+              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            >
+              <option value="">Todas las categorías</option>
+              {categories?.map((cat: any) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as "all" | "checked" | "pending")}
+              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="checked">Ya ingresaron</option>
+              <option value="pending">No han ingresado</option>
+            </select>
             <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
               Buscar
             </button>
@@ -1097,11 +1338,19 @@ export default function EntradaPage() {
 
       {activeTab === "add" && (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden p-6 max-w-xl mx-auto animate-in fade-in duration-200 space-y-4">
-          <div className="border-b pb-3 border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <UserPlus className="text-indigo-650 dark:text-indigo-400" /> Registrar Nuevo Asistente
-            </h3>
-            <p className="text-xs text-emerald-500 mt-1">Registra de forma manual un asistente al evento actual.</p>
+          <div className="border-b pb-3 border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <UserPlus className="text-indigo-650 dark:text-indigo-400" /> Registrar Nuevo Asistente
+              </h3>
+              <p className="text-xs text-emerald-500 mt-1">Registra de forma manual un asistente al evento actual.</p>
+            </div>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="shrink-0 text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <FileSpreadsheet size={14} /> Importar Excel
+            </button>
           </div>
 
           {addError && (
@@ -1455,6 +1704,26 @@ export default function EntradaPage() {
                         </tr>
                       )}
                     </tbody>
+                    {stats.categoryStats?.length > 0 && (
+                      <tfoot>
+                        <tr className="bg-zinc-950 border-t-2 border-emerald-500/40">
+                          <td className="p-4 font-black text-white text-sm uppercase" colSpan={2}>Total</td>
+                          <td className="p-4 text-center text-white font-black">
+                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.total, 0)}
+                          </td>
+                          <td className="p-4 text-center text-primary font-black">
+                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.checkedIn, 0)}
+                          </td>
+                          <td className="p-4 text-center text-emerald-500 font-black">
+                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.pending, 0)}
+                          </td>
+                          <td className="p-4"></td>
+                          <td className="p-4 text-right font-black text-emerald-500 text-sm">
+                            ${formatThousands(stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.income, 0).toString())}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               </div>
@@ -1464,6 +1733,118 @@ export default function EntradaPage() {
       )}
 
       {/* CASH MOVEMENT MODAL */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-3xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <FileSpreadsheet className="text-indigo-650 dark:text-indigo-400" /> Importar Asistentes desde Excel
+              </h3>
+              <button onClick={closeImportModal} className="text-emerald-500 hover:text-zinc-655 dark:hover:text-zinc-200">
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-emerald-500">
+              El archivo debe tener 4 columnas sin encabezado: <strong>Nombre, Cédula, Correo, Celular</strong>. Si volvés a subir el mismo archivo actualizado, solo se envía correo a quien todavía no lo haya recibido.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Archivo (.xlsx) *</label>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleImportFile(file)
+                  }}
+                  className="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-indigo-50 dark:file:bg-indigo-900/30 file:text-indigo-650 dark:file:text-indigo-400 file:text-xs file:font-semibold cursor-pointer border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Categoría para todos *</label>
+                <select
+                  value={importCategoryId}
+                  onChange={(e) => setImportCategoryId(e.target.value)}
+                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                >
+                  <option value="">Selecciona categoría...</option>
+                  {categories?.map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>{cat.name} (${formatThousands(cat.price.toString())})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {importParsing && (
+              <div className="text-center text-sm text-emerald-500 py-4">Leyendo archivo...</div>
+            )}
+
+            {importRows.length > 0 && !importParsing && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-emerald-500">
+                    <strong className="text-zinc-700 dark:text-zinc-300">{importFileName}</strong> — {importRows.length} registros
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
+                    <AlertTriangle size={14} /> {importRows.filter(r => !r.email).length} sin correo (destacados, van primero)
+                  </span>
+                </div>
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-zinc-50 dark:bg-zinc-900/50 sticky top-0 border-b border-zinc-200 dark:border-zinc-800">
+                      <tr>
+                        <th className="px-3 py-2 font-medium text-emerald-500">Nombre</th>
+                        <th className="px-3 py-2 font-medium text-emerald-500">Cédula</th>
+                        <th className="px-3 py-2 font-medium text-emerald-500">Correo</th>
+                        <th className="px-3 py-2 font-medium text-emerald-500">Celular</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                      {sortedImportRows.map((r, i) => (
+                        <tr key={i} className={!r.email ? "bg-amber-100 dark:bg-amber-900/30" : ""}>
+                          <td className="px-3 py-1.5">{r.name}</td>
+                          <td className="px-3 py-1.5 text-emerald-500">{r.cc}</td>
+                          <td className="px-3 py-1.5">
+                            {r.email || <span className="text-amber-700 dark:text-amber-400 font-semibold">Sin correo</span>}
+                          </td>
+                          <td className="px-3 py-1.5 text-emerald-500">{r.phone || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {importResult && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs space-y-1">
+                <p>✅ {importResult.created} nuevos registrados, {importResult.updated} actualizados</p>
+                <p>📧 {importResult.emailsSent} correos enviados{importResult.emailFailedCount > 0 ? `, ${importResult.emailFailedCount} fallaron` : ""}</p>
+                <p>⚠️ {importResult.noEmailCount} sin correo (necesitan seguimiento)</p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={closeImportModal}
+                className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-4 py-2 rounded-md font-semibold transition-colors"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={() => importMutation.mutate()}
+                disabled={importRows.length === 0 || !importCategoryId || importMutation.isPending}
+                className="text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <UploadIcon size={14} /> {importMutation.isPending ? "Importando..." : "Confirmar e Importar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCashModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
@@ -1941,6 +2322,52 @@ export default function EntradaPage() {
                 className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)] active:scale-95"
               >
                 Aceptar y Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESSFUL CHECK-IN CONFIRMATION MODAL */}
+      {successCheckInInfo && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+          <div className="bg-zinc-950 border-2 border-primary rounded-xl p-6 w-full max-w-sm shadow-[0_0_50px_rgba(57,255,20,0.3)] space-y-4 font-mono text-center text-white relative">
+            <div className="w-16 h-16 rounded-full bg-green-950/50 border border-primary flex items-center justify-center mx-auto text-primary animate-bounce">
+              <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-lg font-black tracking-widest text-primary uppercase">
+                ¡Ingreso Confirmado!
+              </h3>
+              <p className="text-sm font-bold text-white">{successCheckInInfo.name}</p>
+            </div>
+
+            <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-3 text-left space-y-2 text-xs">
+              <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
+                <span className="text-emerald-500">Documento:</span>
+                <span className="font-bold text-zinc-200">{successCheckInInfo.cc}</span>
+              </div>
+              <div className="flex justify-between pt-0.5">
+                <span className="text-emerald-500">Categoría:</span>
+                <span className="font-bold text-zinc-200">{successCheckInInfo.category?.name}</span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessCheckInInfo(null)
+                  if (html5QrCodeRef.current && isScanning) {
+                    html5QrCodeRef.current.resume().catch(() => {})
+                  }
+                }}
+                className="w-full py-2.5 bg-primary hover:brightness-110 text-black rounded-md text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(57,255,20,0.2)] active:scale-95"
+              >
+                Continuar Escaneando
               </button>
             </div>
           </div>
