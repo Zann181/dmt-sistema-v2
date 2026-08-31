@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 import { Pool as PgPool } from "pg"
 import { PrismaPg } from "@prisma/adapter-pg"
 import dns from "dns"
+import { getConnectionString as getNetlifyDbConnectionString } from "@netlify/database"
 
 neonConfig.webSocketConstructor = ws
 
@@ -14,7 +15,21 @@ neonConfig.webSocketConstructor = ws
 dns.setDefaultResultOrder("ipv4first")
 
 const globalForPrisma = globalThis as unknown as { prisma: any }
-const connectionString = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy"
+
+// En Netlify, la connection string de Netlify DB (Neon) no se expone como env var
+// normal — hay que pedirla al SDK. Si no está disponible (fuera de Netlify), se usa
+// DATABASE_URL como en cualquier otro entorno.
+function resolveConnectionString() {
+  try {
+    const netlifyUrl = getNetlifyDbConnectionString()
+    if (netlifyUrl) return netlifyUrl
+  } catch {
+    // No estamos en un entorno Netlify (build/runtime) con DB provisionada
+  }
+  return process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy"
+}
+
+const connectionString = resolveConnectionString()
 
 // In-Memory Mock Database for offline development
 class MockPrisma {
