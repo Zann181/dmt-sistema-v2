@@ -57,7 +57,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
           const sales = payload.data as any[]
           sales.forEach(sale => {
             toast.success(`Nueva venta registrada: ${sale.product.name} x${sale.quantity}`, {
-              description: `Total: $${Number(sale.total).toLocaleString()} | Por ${sale.soldBy.username}`,
+              description: `Total: $${Number(sale.total).toLocaleString('es-CO')} | Por ${sale.soldBy.username}`,
               icon: <Beer className="text-emerald-500" />
             })
           })
@@ -167,21 +167,21 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
               title="Ingresos Totales (Evento)"
-              value={`$${Number(combined?.totalIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(combined?.totalIncome).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Taquilla + Barra"
               icon={<TrendingUp size={20} />}
               gradient="bg-indigo-600"
             />
             <MetricCard
               title="Resultado Neto Operativo"
-              value={`$${Number(combined?.netOperating).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(combined?.netOperating).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Ventas brutas - Gastos"
               icon={<Sparkles size={20} />}
               gradient="bg-emerald-600"
             />
             <MetricCard
               title="Caja Fuerte (Efectivo Total)"
-              value={`$${Number(combined?.cashBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(combined?.cashBalance).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Dinero en caja fuerte física"
               icon={<Banknote size={20} />}
               gradient="bg-amber-600"
@@ -210,13 +210,13 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                   <span className="text-xs text-emerald-500 block font-semibold">Gastos Entrada</span>
                   <span className="text-xl font-extrabold text-red-600 dark:text-red-400 font-mono mt-1 block">
-                    ${Number(entrance?.totalExpenses).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${Number(entrance?.totalExpenses).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                   <span className="text-xs text-emerald-500 block font-semibold">Retiros Entrada</span>
                   <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-                    ${Number(entrance?.cashDropTotal).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${Number(entrance?.cashDropTotal).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </div>
@@ -236,19 +236,19 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                   <span className="text-xs text-emerald-500 block font-semibold">Ingresos Barra</span>
                   <span className="text-xl font-extrabold text-green-600 dark:text-green-400 font-mono mt-1 block">
-                    ${Number(bar?.totalIncome).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${Number(bar?.totalIncome).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                   <span className="text-xs text-emerald-500 block font-semibold">Gastos Barra</span>
                   <span className="text-xl font-extrabold text-red-600 dark:text-red-400 font-mono mt-1 block">
-                    ${Number(bar?.totalExpenses).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${Number(bar?.totalExpenses).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800/50">
                   <span className="text-xs text-emerald-500 block font-semibold">Vaciados Barra</span>
                   <span className="text-xl font-extrabold text-amber-600 dark:text-amber-400 font-mono mt-1 block">
-                    ${Number(bar?.cashDropTotal).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    ${Number(bar?.cashDropTotal).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                   </span>
                 </div>
               </div>
@@ -263,21 +263,21 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
               title="Ventas de Taquilla"
-              value={`$${Number(entrance?.totalIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(entrance?.totalIncome).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Total cobrado en entrada"
               icon={<ArrowUpRight size={20} className="text-emerald-500" />}
               gradient="bg-indigo-500"
             />
             <MetricCard
               title="Egresos y Gastos (Entrada)"
-              value={`$${Number(entrance?.totalExpenses).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(entrance?.totalExpenses).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Pagos con caja de entrada"
               icon={<ArrowDownRight size={20} className="text-red-500" />}
               gradient="bg-red-500"
             />
             <MetricCard
               title="Efectivo en Caja Entrada"
-              value={`$${Number(entrance?.cashBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(entrance?.cashBalance).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Ingresos taquilla - egresos/drops"
               icon={<Banknote size={20} className="text-emerald-500" />}
               gradient="bg-amber-500"
@@ -319,21 +319,21 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
               title="Ventas Totales (Barra)"
-              value={`$${Number(bar?.totalIncome).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(bar?.totalIncome).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Ingreso total por tickets/bebidas"
               icon={<ArrowUpRight size={20} className="text-emerald-500" />}
               gradient="bg-indigo-500"
             />
             <MetricCard
               title="Egresos y Retiros (Barra)"
-              value={`$${Number(bar?.totalExpenses + bar?.cashDropTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(bar?.totalExpenses + bar?.cashDropTotal).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Gastos de insumos + vaciados"
               icon={<ArrowDownRight size={20} className="text-red-500" />}
               gradient="bg-red-500"
             />
             <MetricCard
               title="Efectivo en Caja Barra"
-              value={`$${Number(bar?.cashBalance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              value={`$${Number(bar?.cashBalance).toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
               description="Ventas en efectivo - egresos/drops"
               icon={<Banknote size={20} className="text-emerald-500" />}
               gradient="bg-amber-500"
@@ -358,7 +358,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-emerald-500 font-medium">Cant: <span className="text-zinc-700 dark:text-zinc-300 font-extrabold font-mono">{prod.quantity}</span></span>
-                      <span className="font-extrabold text-zinc-900 dark:text-white font-mono">${Number(prod.total).toLocaleString()}</span>
+                      <span className="font-extrabold text-zinc-900 dark:text-white font-mono">${Number(prod.total).toLocaleString('es-CO')}</span>
                     </div>
                   </div>
                 ))}

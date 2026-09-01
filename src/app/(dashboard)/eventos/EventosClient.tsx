@@ -743,7 +743,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
             <h3 className="font-semibold text-lg leading-tight">{event.name}</h3>
             <p className="text-sm text-emerald-500 mt-1">Sucursal: {event.branch?.name}</p>
             <p className="text-xs text-emerald-500 mt-2">
-              📅 {new Date(event.startsAt).toLocaleString()}
+              📅 {new Date(event.startsAt).toLocaleString('es-CO')}
             </p>
 
             <div className="mt-6 flex flex-col-reverse sm:flex-row gap-3 mt-auto pt-4 border-t border-zinc-100 dark:border-zinc-800">

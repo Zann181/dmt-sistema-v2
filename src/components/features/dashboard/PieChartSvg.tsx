@@ -75,7 +75,7 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
                 <span className="font-bold text-zinc-600 dark:text-emerald-500">{segment.name}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-emerald-500 font-mono">${segment.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                <span className="text-[10px] text-emerald-500 font-mono">${segment.value.toLocaleString('es-CO', { maximumFractionDigits: 0 })}</span>
                 <span className="font-extrabold text-zinc-900 dark:text-white font-mono">
                   {percent.toFixed(0)}%
                 </span>

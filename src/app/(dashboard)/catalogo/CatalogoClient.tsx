@@ -178,7 +178,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
                   </td>
                   <td className="px-6 py-4 text-emerald-500 max-w-xs truncate">{product.description || "—"}</td>
                   <td className="px-6 py-4 font-bold text-zinc-800 dark:text-zinc-200">
-                    ${product.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${product.price.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">

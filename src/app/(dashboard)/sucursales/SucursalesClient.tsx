@@ -821,7 +821,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                               <div>
                                 <span className="font-semibold text-sm block text-zinc-800 dark:text-zinc-200">{cat.name}</span>
                                 <span className="text-xs text-emerald-500">
-                                  Precio: ${Number(cat.price).toLocaleString()} | Bebidas: {cat.includedConsumptions}
+                                  Precio: ${Number(cat.price).toLocaleString('es-CO')} | Bebidas: {cat.includedConsumptions}
                                 </span>
                                 {cat.description && (
                                   <p className="text-[11px] text-emerald-500 max-w-xs truncate mt-0.5">{cat.description}</p>

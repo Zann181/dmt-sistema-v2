@@ -221,7 +221,7 @@ export default function BarraPage() {
                   <span className="font-semibold text-sm leading-tight text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{p.name}</span>
                   <div className="flex flex-col">
                     {p.description && <span className="text-[10px] text-emerald-500 truncate mb-1">{p.description}</span>}
-                    <span className="text-zinc-900 dark:text-white font-extrabold text-base">${Number(p.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="text-zinc-900 dark:text-white font-extrabold text-base">${Number(p.price).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </button>
               ))}
@@ -255,7 +255,7 @@ export default function BarraPage() {
               <div key={item.eventProductId} className="flex items-center justify-between p-3 bg-zinc-50/50 dark:bg-zinc-950/40 rounded-xl border border-zinc-100 dark:border-zinc-800/60 shadow-sm">
                 <div className="flex-1 pr-3">
                   <p className="font-semibold text-sm leading-tight text-zinc-800 dark:text-zinc-200">{item.name}</p>
-                  <p className="text-zinc-900 dark:text-white text-xs font-bold mt-1">${(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  <p className="text-zinc-900 dark:text-white text-xs font-bold mt-1">${(item.price * item.quantity).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 shadow-sm">
                   <button 
@@ -280,7 +280,7 @@ export default function BarraPage() {
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/30">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-emerald-500">Total</span>
-            <span className="text-2xl font-black text-zinc-900 dark:text-white">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+            <span className="text-2xl font-black text-zinc-900 dark:text-white">${total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -335,7 +335,7 @@ export default function BarraPage() {
             <form onSubmit={handleConfirmCheckout} className="space-y-4">
               <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg flex items-center justify-between">
                 <span className="font-semibold text-emerald-500 text-sm">Total del Pedido:</span>
-                <span className="text-xl font-black">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-xl font-black">${total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
               </div>
 
               {checkoutType === "CASH" && (
@@ -352,7 +352,7 @@ export default function BarraPage() {
                   {parseThousands(cashReceived) > total && (
                     <div className="mt-3 flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-500 font-bold">
                       <span>Cambio a entregar:</span>
-                      <span>${(parseThousands(cashReceived) - total).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span>${(parseThousands(cashReceived) - total).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                     </div>
                   )}
                 </div>
@@ -401,7 +401,7 @@ export default function BarraPage() {
                   <div className="flex items-center justify-between text-xs font-semibold border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <span className="text-emerald-500">Restante por pagar:</span>
                     <span className={`text-sm font-black ${remainingMixed === 0 ? "text-green-600" : remainingMixed < 0 ? "text-amber-600" : "text-red-500"}`}>
-                      {remainingMixed === 0 ? "Completado" : `$${remainingMixed.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                      {remainingMixed === 0 ? "Completado" : `$${remainingMixed.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
                     </span>
                   </div>
                 </div>
@@ -443,12 +443,12 @@ export default function BarraPage() {
               {successDetails.cart.map((item: any) => (
                 <div key={item.eventProductId} className="flex justify-between text-sm">
                   <span className="text-zinc-600 dark:text-emerald-500">{item.name} <span className="text-emerald-500">x{item.quantity}</span></span>
-                  <span className="font-semibold">${(item.price * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="font-semibold">${(item.price * item.quantity).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
                 </div>
               ))}
               <div className="flex justify-between text-base font-extrabold border-t pt-3 mt-3 border-zinc-100 dark:border-zinc-800/55">
                 <span>Total pagado:</span>
-                <span>${successDetails.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>${successDetails.total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
 
@@ -457,9 +457,9 @@ export default function BarraPage() {
                 <div key={idx} className="flex justify-between">
                   <span>Pago con {p.method}:</span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                    ${p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    ${p.amount.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
                     {p.reference && ` (Ref: ${p.reference})`}
-                    {p.change !== undefined && p.change > 0 && ` (Cambio: $${p.change.toLocaleString()})`}
+                    {p.change !== undefined && p.change > 0 && ` (Cambio: $${p.change.toLocaleString('es-CO')})`}
                   </span>
                 </div>
               ))}
