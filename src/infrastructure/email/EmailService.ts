@@ -202,12 +202,28 @@ export class EmailService {
         const parsed = this.parseDataUri(trimmed)
         if (parsed) {
           const cid = "logo_image"
+          let logoBuffer = parsed.buffer
+          let logoContentType = parsed.contentType
+          let logoExtension = parsed.extension
+          try {
+            // Igual que con el logo envuelto en SVG: reescalar con buen
+            // remuestreo evita que un logo subido en baja resolución se vea
+            // pixelado al estirarlo por CSS en el cliente de correo.
+            logoBuffer = await sharp(parsed.buffer)
+              .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
+              .png()
+              .toBuffer()
+            logoContentType = "image/png"
+            logoExtension = "png"
+          } catch (e) {
+            // Si sharp no puede procesarla (ej. SVG dentro de un data URI), se usa tal cual
+          }
           attachments.push({
-            content: parsed.buffer,
-            filename: `logo.${parsed.extension}`,
+            content: logoBuffer,
+            filename: `logo.${logoExtension}`,
             cid,
             contentId: cid,
-            contentType: parsed.contentType,
+            contentType: logoContentType,
           })
           logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
         } else {
@@ -224,17 +240,23 @@ export class EmailService {
           const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
                         cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
           if (match && match[3]) {
-            const contentType = match[2]
             const base64 = match[3]
-            const buffer = Buffer.from(base64, "base64")
-            const ext = contentType.split("/")[1] || "webp"
+            const rawBuffer = Buffer.from(base64, "base64")
+            // La imagen incrustada puede venir en baja resolución (recorte/preview
+            // pequeño); se reescala con buen remuestreo al doble del tamaño de
+            // visualización (retina) en vez de mandar los bytes crudos y dejar
+            // que el cliente de correo la estire por CSS (eso pixela).
+            const pngBuffer = await sharp(rawBuffer)
+              .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
+              .png()
+              .toBuffer()
             const cid = "logo_image"
             attachments.push({
-              content: buffer,
-              filename: `logo.${ext}`,
+              content: pngBuffer,
+              filename: "logo.png",
               cid,
               contentId: cid,
-              contentType,
+              contentType: "image/png",
             })
             logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
           } else {
