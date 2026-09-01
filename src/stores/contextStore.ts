@@ -22,6 +22,7 @@ export const useContextStore = create<ContextStore>()(
     }),
     {
       name: "dmt-context-storage",
+      skipHydration: true,
     }
   )
 )

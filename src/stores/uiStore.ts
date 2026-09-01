@@ -23,6 +23,7 @@ export const useUIStore = create<UIStore>()(
     {
       name: "dmt-ui-storage",
       partialize: (state) => ({ isSidebarCollapsed: state.isSidebarCollapsed }), // only persist desktop collapsed state
+      skipHydration: true,
     }
   )
 )
