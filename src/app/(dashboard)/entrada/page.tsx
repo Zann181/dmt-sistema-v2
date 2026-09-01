@@ -1579,65 +1579,65 @@ export default function EntradaPage() {
           ) : (
             <>
               {/* Metric Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 font-mono">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4 font-mono">
                 {/* Total Recaudado */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-emerald-500">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-emerald-500">
                     <Banknote size={48} />
                   </div>
-                  <p className="text-[10px] text-emerald-500 uppercase font-bold tracking-wider">Ingreso Total</p>
-                  <p className="text-2xl font-black text-emerald-500 mt-1">
+                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingreso Total</p>
+                  <p className="text-base md:text-2xl font-black text-emerald-500 mt-1">
                     ${formatThousands(stats.totalIncome.toString())}
                   </p>
-                  <p className="text-[9px] text-emerald-500 mt-2 font-sans">
+                  <p className="hidden md:block text-[9px] text-emerald-500 mt-2 font-sans">
                     Recaudado acumulado en taquilla
                   </p>
                 </div>
 
                 {/* Recaudado Hoy */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
                     <Banknote size={48} />
                   </div>
-                  <p className="text-[10px] text-emerald-500 uppercase font-bold tracking-wider">Ingreso de Hoy</p>
-                  <p className="text-2xl font-black text-indigo-400 mt-1">
+                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingreso de Hoy</p>
+                  <p className="text-base md:text-2xl font-black text-indigo-400 mt-1">
                     ${formatThousands(stats.todayIncome.toString())}
                   </p>
-                  <p className="text-[9px] text-emerald-500 mt-2 font-sans flex items-center gap-1.5">
+                  <p className="hidden md:flex text-[9px] text-emerald-500 mt-2 font-sans items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
                     Dinero registrado en el día
                   </p>
                 </div>
 
                 {/* Total Registrados */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
                     <Users size={48} />
                   </div>
-                  <p className="text-[10px] text-emerald-500 uppercase font-bold tracking-wider">Total Registrados</p>
-                  <p className="text-2xl font-black text-white mt-1">
+                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Total Registrados</p>
+                  <p className="text-base md:text-2xl font-black text-white mt-1">
                     {stats.totalCount}
                   </p>
-                  <p className="text-[9px] text-emerald-500 mt-2 font-sans">
+                  <p className="hidden md:block text-[9px] text-emerald-500 mt-2 font-sans">
                     Total de asistentes registrados
                   </p>
                 </div>
 
                 {/* Check-ins vs Faltantes */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 shadow-lg relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-primary">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-primary">
                     <QrCode size={48} />
                   </div>
-                  <p className="text-[10px] text-emerald-500 uppercase font-bold tracking-wider">Ingresados / Faltan</p>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="text-2xl font-black text-primary">{stats.checkedInCount}</span>
+                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingresados / Faltan</p>
+                  <div className="flex items-baseline gap-1.5 md:gap-2 mt-1 flex-wrap">
+                    <span className="text-base md:text-2xl font-black text-primary">{stats.checkedInCount}</span>
                     <span className="text-emerald-500 text-xs">/</span>
-                    <span className="text-emerald-500 text-sm font-bold">{stats.pendingCount} pendientes</span>
+                    <span className="text-emerald-500 text-[10px] md:text-sm font-bold">{stats.pendingCount} pendientes</span>
                   </div>
-                  
+
                   {/* Progress Bar */}
-                  <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-3 overflow-hidden">
-                    <div 
+                  <div className="w-full bg-zinc-800 rounded-full h-1.5 mt-2 md:mt-3 overflow-hidden">
+                    <div
                       className="bg-primary h-1.5 rounded-full shadow-[0_0_10px_rgba(57,255,20,0.5)] transition-all duration-500"
                       style={{ width: `${stats.totalCount > 0 ? (stats.checkedInCount / stats.totalCount) * 100 : 0}%` }}
                     />
