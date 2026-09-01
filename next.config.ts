@@ -8,7 +8,9 @@ const nextConfig: NextConfig = {
   // y se fuerza a incluir su binario nativo en el tracing de salida.
   serverExternalPackages: ["sharp"],
   outputFileTracingIncludes: {
-    "/api/**/*": ["./node_modules/sharp/**/*"],
+    // El binario nativo real vive en node_modules/@img/sharp-* (paquete
+    // separado por plataforma), no dentro de node_modules/sharp.
+    "/api/**/*": ["./node_modules/sharp/**/*", "./node_modules/@img/**/*"],
   },
 };
 
