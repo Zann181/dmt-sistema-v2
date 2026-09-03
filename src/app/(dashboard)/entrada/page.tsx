@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
 import { useContextStore } from "@/stores/contextStore"
-import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon, CheckCircle2 } from "lucide-react"
+import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon, CheckCircle2, Tag, SlidersHorizontal, Rows3 } from "lucide-react"
 
 // Icono personalizado de WhatsApp de alta calidad para el estilo premium
 const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
@@ -1174,7 +1174,7 @@ export default function EntradaPage() {
             href="/entrada?mode=scan&fullscreen=true"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 md:flex-none justify-center text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white px-3 py-2.5 rounded-md font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-black px-3 py-2.5 rounded-md font-bold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
           >
             <QrCode size={14} /> Abrir Escáner QR
           </a>
@@ -1245,8 +1245,8 @@ export default function EntradaPage() {
 
       {activeTab === "search" && (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px] animate-in fade-in duration-200">
-          <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[200px]">
+          <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 md:gap-3">
+            <div className="relative w-full md:flex-1 md:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
               <input
                 type="text"
@@ -1262,47 +1262,64 @@ export default function EntradaPage() {
                 className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
-            <select
-              value={filterCategoryId}
-              onChange={(e) => {
-                setFilterCategoryId(e.target.value)
-                setPage(1)
-              }}
-              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            >
-              <option value="">Todas las categorías</option>
-              {categories?.map((cat: any) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value as "all" | "checked" | "pending")
-                setPage(1)
-              }}
-              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="checked">Ya ingresaron</option>
-              <option value="pending">No han ingresado</option>
-            </select>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value))
-                setPage(1)
-              }}
-              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-              title="Resultados por página"
-            >
-              {[10, 20, 30, 50, 100].map((n) => (
-                <option key={n} value={n}>{n} por página</option>
-              ))}
-            </select>
-            <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-              Buscar
-            </button>
+
+            <div className="grid grid-cols-2 gap-2 md:contents">
+              <div className="relative">
+                <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={14} />
+                <select
+                  value={filterCategoryId}
+                  onChange={(e) => {
+                    setFilterCategoryId(e.target.value)
+                    setPage(1)
+                  }}
+                  title="Filtrar por categoría"
+                  className="w-full pl-8 pr-2 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs md:text-sm"
+                >
+                  <option value="">Categoría</option>
+                  {categories?.map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="relative">
+                <SlidersHorizontal className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={14} />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.value as "all" | "checked" | "pending")
+                    setPage(1)
+                  }}
+                  title="Filtrar por estado"
+                  className="w-full pl-8 pr-2 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs md:text-sm"
+                >
+                  <option value="all">Estado</option>
+                  <option value="checked">Ya ingresaron</option>
+                  <option value="pending">No han ingresado</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 md:contents">
+              <div className="relative">
+                <Rows3 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={14} />
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value))
+                    setPage(1)
+                  }}
+                  title="Resultados por página"
+                  className="w-full pl-8 pr-2 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs md:text-sm"
+                >
+                  {[10, 20, 30, 50, 100].map((n) => (
+                    <option key={n} value={n}>{n} / pág.</option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-black font-bold px-4 py-2 rounded-md transition-colors">
+                Buscar
+              </button>
+            </div>
           </form>
 
           <div className="flex-1 overflow-y-auto p-0">
