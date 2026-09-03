@@ -239,6 +239,7 @@ model Attendee {
   checkedInAt      DateTime?
   includedBalance  Int      @default(0)
   emailSentAt      DateTime?
+  qrDeliveredManuallyAt DateTime?
 
   createdAt DateTime @default(now())
 

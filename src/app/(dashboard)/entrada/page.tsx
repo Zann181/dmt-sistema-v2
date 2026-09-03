@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
 import { useContextStore } from "@/stores/contextStore"
-import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon } from "lucide-react"
+import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon, CheckCircle2 } from "lucide-react"
 
 // Icono personalizado de WhatsApp de alta calidad para el estilo premium
 const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
@@ -296,6 +296,26 @@ export default function EntradaPage() {
     },
     onSuccess: () => {
       toast.success("Correo de ticket reenviado con éxito")
+    },
+    onError: (err: any) => {
+      toast.error(err.message)
+    }
+  })
+
+  // Manually confirm QR delivered by another channel (WhatsApp, en persona, etc.)
+  const confirmManualDeliveryMutation = useMutation({
+    mutationFn: async (attendeeId: string) => {
+      const res = await fetch("/api/attendees/confirm-delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attendeeId })
+      })
+      if (!res.ok) throw new Error((await res.json()).error || "Error al confirmar entrega")
+      return res.json()
+    },
+    onSuccess: () => {
+      toast.success("Entrega del QR confirmada")
+      queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
     },
     onError: (err: any) => {
       toast.error(err.message)
@@ -1270,65 +1290,100 @@ export default function EntradaPage() {
                     <td colSpan={4} className="px-6 py-8 text-center text-emerald-500">No hay asistentes registrados para este evento.</td>
                   </tr>
                 ) : (
-                  attendees?.map((a) => (
-                    <tr key={a.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                      <td className="px-6 py-3 font-medium">{a.name}</td>
-                      <td className="px-6 py-3 text-emerald-500">{a.cc}</td>
-                      <td className="px-6 py-3 text-emerald-500">
-                        <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">{a.category.name}</span>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          {a.hasCheckedIn ? (
-                            <span className="text-green-600 dark:text-green-400 font-medium text-xs bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">Ingresó</span>
-                          ) : (
-                            <button 
-                              onClick={() => checkInMutation.mutate({ qrCodeOrCc: a.cc })}
-                              disabled={checkInMutation.isPending}
-                              className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-650 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded font-medium transition-colors disabled:opacity-50"
-                            >
-                              {checkInMutation.isPending ? "Procesando..." : "Check-in"}
-                            </button>
-                          )}
-                          <div className="flex items-center gap-1.5">
-                            {a.phone && (
-                              <button
-                                onClick={() => handleWhatsAppShare(a)}
-                                className="p-1 text-emerald-500 hover:text-green-500 dark:hover:text-green-400 transition-colors"
-                                title="Enviar por WhatsApp"
-                              >
-                                <WhatsAppIcon size={14} />
-                              </button>
-                            )}
-                            {a.email && (
-                              <button
-                                onClick={() => resendEmailMutation.mutate(a.id)}
-                                disabled={resendEmailMutation.isPending}
-                                className="p-1 text-emerald-500 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
-                                title={resendEmailMutation.isPending ? "Reenviando..." : "Reenviar Correo"}
-                              >
-                                <Mail size={14} />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => startEditing(a)}
-                              className="p-1 text-emerald-500 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors"
-                              title="Editar"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAttendee(a)}
-                              className="p-1 text-emerald-500 hover:text-red-650 dark:hover:text-red-400 transition-colors"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  [...(attendees ?? [])]
+                    .sort((a, b) => {
+                      const aPending = !a.emailSentAt && !a.qrDeliveredManuallyAt ? 0 : 1
+                      const bPending = !b.emailSentAt && !b.qrDeliveredManuallyAt ? 0 : 1
+                      return aPending - bPending
+                    })
+                    .map((a) => {
+                      const pendingDelivery = !a.emailSentAt && !a.qrDeliveredManuallyAt
+                      return (
+                        <tr
+                          key={a.id}
+                          className={`transition-colors ${
+                            pendingDelivery
+                              ? "bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/30"
+                              : "hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+                          }`}
+                        >
+                          <td className="px-6 py-3 font-medium">
+                            <div className="flex items-center gap-2">
+                              {a.name}
+                              {pendingDelivery && (
+                                <span className="text-amber-700 dark:text-amber-400 font-semibold text-[10px] bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded whitespace-nowrap">
+                                  Sin enviar
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-3 text-emerald-500">{a.cc}</td>
+                          <td className="px-6 py-3 text-emerald-500">
+                            <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded text-xs">{a.category.name}</span>
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            <div className="flex items-center justify-end gap-3">
+                              {a.hasCheckedIn ? (
+                                <span className="text-green-600 dark:text-green-400 font-medium text-xs bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">Ingresó</span>
+                              ) : (
+                                <button
+                                  onClick={() => checkInMutation.mutate({ qrCodeOrCc: a.cc })}
+                                  disabled={checkInMutation.isPending}
+                                  className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-650 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded font-medium transition-colors disabled:opacity-50"
+                                >
+                                  {checkInMutation.isPending ? "Procesando..." : "Check-in"}
+                                </button>
+                              )}
+                              <div className="flex items-center gap-1.5">
+                                {a.phone && (
+                                  <button
+                                    onClick={() => handleWhatsAppShare(a)}
+                                    className="p-1 text-emerald-500 hover:text-green-500 dark:hover:text-green-400 transition-colors"
+                                    title="Enviar por WhatsApp"
+                                  >
+                                    <WhatsAppIcon size={14} />
+                                  </button>
+                                )}
+                                {a.email && (
+                                  <button
+                                    onClick={() => resendEmailMutation.mutate(a.id)}
+                                    disabled={resendEmailMutation.isPending}
+                                    className="p-1 text-emerald-500 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
+                                    title={resendEmailMutation.isPending ? "Reenviando..." : "Reenviar Correo"}
+                                  >
+                                    <Mail size={14} />
+                                  </button>
+                                )}
+                                {pendingDelivery && (
+                                  <button
+                                    onClick={() => confirmManualDeliveryMutation.mutate(a.id)}
+                                    disabled={confirmManualDeliveryMutation.isPending}
+                                    className="p-1 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 transition-colors disabled:opacity-50"
+                                    title="Confirmar que ya se le envió el QR por otro medio"
+                                  >
+                                    <CheckCircle2 size={14} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => startEditing(a)}
+                                  className="p-1 text-emerald-500 hover:text-indigo-650 dark:hover:text-indigo-400 transition-colors"
+                                  title="Editar"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteAttendee(a)}
+                                  className="p-1 text-emerald-500 hover:text-red-650 dark:hover:text-red-400 transition-colors"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
                 )}
               </tbody>
             </table>
