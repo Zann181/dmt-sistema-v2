@@ -338,7 +338,9 @@ export default function EntradaPage() {
       const json = await res.json()
       return json.data as any[]
     },
-    enabled: !!activeBranchId && !!activeEventId
+    // Solo se necesita en "search" (la tabla) y "add" (chequeo de cédula duplicada) —
+    // no pedirla en dashboard/scan evita un fetch de más en cada edición/check-in.
+    enabled: !!activeBranchId && !!activeEventId && (activeTab === "search" || activeTab === "add")
   })
 
   // Stats Query for the entries dashboard
@@ -349,7 +351,9 @@ export default function EntradaPage() {
       if (!res.ok) throw new Error("Error fetching stats")
       return (await res.json()).data
     },
-    enabled: !!activeBranchId && !!activeEventId
+    // Solo se ve en la pestaña dashboard — no recalcularla de fondo cada vez que
+    // se edita/registra un asistente en otra pestaña.
+    enabled: !!activeBranchId && !!activeEventId && activeTab === "dashboard"
   })
 
   // Add attendee mutation
