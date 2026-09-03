@@ -11,7 +11,7 @@ export default function UsuariosPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
-  const { data: session } = useQuery({
+  const { data: session, isLoading: isSessionLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       const res = await fetch("/api/auth/session")
@@ -19,7 +19,7 @@ export default function UsuariosPage() {
       return await res.json()
     }
   })
-  
+
   const isSuper = session?.user?.isSuperuser || session?.user?.isGlobalAdmin;
 
   const [createForm, setCreateForm] = useState({
@@ -248,6 +248,26 @@ export default function UsuariosPage() {
     setShowEditModal(true)
   }
 
+  if (isSessionLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isSuper) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] text-center max-w-md mx-auto space-y-4">
+        <ShieldAlert size={48} className="text-amber-500" />
+        <h2 className="text-xl font-bold">Acceso Restringido</h2>
+        <p className="text-emerald-500 text-sm">
+          Solo los administradores pueden ver y gestionar los usuarios del sistema.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -255,13 +275,15 @@ export default function UsuariosPage() {
           <h2 className="text-2xl font-bold tracking-tight">Administración de Usuarios</h2>
           <p className="text-emerald-500">Administra accesos globales, asignaciones a sucursales y roles.</p>
         </div>
-        <button 
-          onClick={() => { setErrorMsg(""); setShowCreateModal(true) }}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto justify-center rounded-md font-medium transition-colors"
-        >
-          <UserPlus size={18} />
-          Nuevo Usuario
-        </button>
+        {isSuper && (
+          <button
+            onClick={() => { setErrorMsg(""); setShowCreateModal(true) }}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 w-full sm:w-auto justify-center rounded-md font-medium transition-colors"
+          >
+            <UserPlus size={18} />
+            Nuevo Usuario
+          </button>
+        )}
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
@@ -274,17 +296,17 @@ export default function UsuariosPage() {
                 <th className="px-6 py-3 font-medium text-emerald-500">Sucursales</th>
                 <th className="px-6 py-3 font-medium text-emerald-500">Eventos</th>
                 <th className="px-6 py-3 font-medium text-emerald-500">Estado</th>
-                <th className="px-6 py-3 font-medium text-emerald-500 text-right">Acciones</th>
+                {isSuper && <th className="px-6 py-3 font-medium text-emerald-500 text-right">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {usersLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-emerald-500">Cargando usuarios...</td>
+                  <td colSpan={isSuper ? 6 : 5} className="px-6 py-8 text-center text-emerald-500">Cargando usuarios...</td>
                 </tr>
               ) : users?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-emerald-500">No hay usuarios en el sistema.</td>
+                  <td colSpan={isSuper ? 6 : 5} className="px-6 py-8 text-center text-emerald-500">No hay usuarios en el sistema.</td>
                 </tr>
               ) : (
                 users?.map((u) => (
@@ -337,20 +359,22 @@ export default function UsuariosPage() {
                         {u.isActive ? "Activo" : "Inactivo"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button 
-                        onClick={() => handleOpenEdit(u)}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        onClick={() => { if(confirm("¿Eliminar usuario?")) deleteUserMutation.mutate(u.id) }}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-emerald-500 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-900 rounded transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
+                    {isSuper && (
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button
+                          onClick={() => handleOpenEdit(u)}
+                          className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          onClick={() => { if(confirm("¿Eliminar usuario?")) deleteUserMutation.mutate(u.id) }}
+                          className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-emerald-500 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-900 rounded transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

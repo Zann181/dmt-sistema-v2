@@ -1579,14 +1579,14 @@ export default function EntradaPage() {
           ) : (
             <>
               {/* Metric Cards Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4 font-mono">
+              <div className="grid grid-cols-2 gap-2.5 md:gap-4 font-mono">
                 {/* Total Recaudado */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-5 shadow-lg relative overflow-hidden group">
                   <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-emerald-500">
                     <Banknote size={48} />
                   </div>
                   <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingreso Total</p>
-                  <p className="text-base md:text-2xl font-black text-emerald-500 mt-1">
+                  <p className="text-lg md:text-3xl font-black text-emerald-500 mt-1">
                     ${formatThousands(stats.totalIncome.toString())}
                   </p>
                   <p className="hidden md:block text-[9px] text-emerald-500 mt-2 font-sans">
@@ -1594,43 +1594,14 @@ export default function EntradaPage() {
                   </p>
                 </div>
 
-                {/* Recaudado Hoy */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
-                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
-                    <Banknote size={48} />
-                  </div>
-                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingreso de Hoy</p>
-                  <p className="text-base md:text-2xl font-black text-indigo-400 mt-1">
-                    ${formatThousands(stats.todayIncome.toString())}
-                  </p>
-                  <p className="hidden md:flex text-[9px] text-emerald-500 mt-2 font-sans items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                    Dinero registrado en el día
-                  </p>
-                </div>
-
-                {/* Total Registrados */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
-                  <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-indigo-400">
-                    <Users size={48} />
-                  </div>
-                  <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Total Registrados</p>
-                  <p className="text-base md:text-2xl font-black text-white mt-1">
-                    {stats.totalCount}
-                  </p>
-                  <p className="hidden md:block text-[9px] text-emerald-500 mt-2 font-sans">
-                    Total de asistentes registrados
-                  </p>
-                </div>
-
                 {/* Check-ins vs Faltantes */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-4 shadow-lg relative overflow-hidden group">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 md:p-5 shadow-lg relative overflow-hidden group">
                   <div className="hidden md:block absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform text-primary">
                     <QrCode size={48} />
                   </div>
                   <p className="text-[9px] md:text-[10px] text-emerald-500 uppercase font-bold tracking-wider truncate">Ingresados / Faltan</p>
                   <div className="flex items-baseline gap-1.5 md:gap-2 mt-1 flex-wrap">
-                    <span className="text-base md:text-2xl font-black text-primary">{stats.checkedInCount}</span>
+                    <span className="text-lg md:text-3xl font-black text-primary">{stats.checkedInCount}</span>
                     <span className="text-emerald-500 text-xs">/</span>
                     <span className="text-emerald-500 text-[10px] md:text-sm font-bold">{stats.pendingCount} pendientes</span>
                   </div>
@@ -1654,78 +1625,92 @@ export default function EntradaPage() {
                   <span className="text-[10px] text-emerald-500">Actualizado en tiempo real</span>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-xs text-left">
-                    <thead>
-                      <tr className="bg-zinc-950/50 text-emerald-500 border-b border-zinc-800">
-                        <th className="p-4 font-bold uppercase tracking-wider">Categoría</th>
-                        <th className="p-4 font-bold uppercase tracking-wider text-right">Precio Unitario</th>
-                        <th className="p-4 font-bold uppercase tracking-wider text-center">Registrados</th>
-                        <th className="p-4 font-bold uppercase tracking-wider text-center">Ingresados</th>
-                        <th className="p-4 font-bold uppercase tracking-wider text-center">Faltantes</th>
-                        <th className="p-4 font-bold uppercase tracking-wider">Porcentaje Asistencia</th>
-                        <th className="p-4 font-bold uppercase tracking-wider text-right">Recaudado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-800/60">
-                      {stats.categoryStats?.map((cat: any) => {
-                        const pct = cat.total > 0 ? Math.round((cat.checkedIn / cat.total) * 100) : 0
-                        return (
-                          <tr key={cat.id} className="hover:bg-zinc-800/30 transition-colors border-b border-zinc-800/40">
-                            <td className="p-4 font-bold text-white text-sm">{cat.name}</td>
-                            <td className="p-4 text-right text-zinc-300 font-bold">
+                {/* Self-adjusting grid, no table - works at any viewport */}
+                {stats.categoryStats?.length > 0 ? (
+                  <div className="p-4 grid gap-3 grid-cols-[repeat(auto-fit,minmax(210px,1fr))]">
+                    {stats.categoryStats.map((cat: any) => {
+                      const pct = cat.total > 0 ? Math.round((cat.checkedIn / cat.total) * 100) : 0
+                      return (
+                        <div key={cat.id} className="bg-zinc-950/60 border border-zinc-800 rounded-lg p-4 space-y-3 hover:border-zinc-700 active:scale-[0.98] active:border-zinc-600 transition-all cursor-default">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-white text-sm truncate">{cat.name}</span>
+                            <span className="font-bold text-zinc-300 text-xs whitespace-nowrap">
                               {cat.price > 0 ? `$${formatThousands(cat.price.toString())}` : "Gratis"}
-                            </td>
-                            <td className="p-4 text-center text-white font-bold">{cat.total}</td>
-                            <td className="p-4 text-center text-primary font-bold">{cat.checkedIn}</td>
-                            <td className="p-4 text-center text-emerald-500 font-bold">{cat.pending}</td>
-                            <td className="p-4 min-w-[160px]">
-                              <div className="flex items-center gap-3">
-                                <span className="w-8 text-right font-bold text-zinc-300">{pct}%</span>
-                                <div className="flex-1 bg-zinc-800 rounded-full h-2 overflow-hidden max-w-[100px]">
-                                  <div 
-                                    className="bg-primary h-2 rounded-full shadow-[0_0_5px_rgba(57,255,20,0.3)] transition-all duration-300"
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </td>
-                            <td className="p-4 text-right font-black text-emerald-500 text-sm">
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex-1 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-primary h-1.5 rounded-full shadow-[0_0_5px_rgba(57,255,20,0.3)] transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-zinc-300 w-8 text-right">{pct}%</span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-1.5 text-center">
+                            <div>
+                              <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Reg.</p>
+                              <p className="text-sm font-black text-white">{cat.total}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Ingr.</p>
+                              <p className="text-sm font-black text-primary">{cat.checkedIn}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Falt.</p>
+                              <p className="text-sm font-black text-emerald-500">{cat.pending}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-2.5 border-t border-zinc-800 flex items-center justify-between">
+                            <span className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Recaudado</span>
+                            <span className="text-sm font-black text-emerald-500">
                               ${formatThousands(cat.income.toString())}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                      {stats.categoryStats?.length === 0 && (
-                        <tr>
-                          <td colSpan={7} className="p-8 text-center text-emerald-500 italic">
-                            No hay categorías creadas para esta sucursal.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                    {stats.categoryStats?.length > 0 && (
-                      <tfoot>
-                        <tr className="bg-zinc-950 border-t-2 border-emerald-500/40">
-                          <td className="p-4 font-black text-white text-sm uppercase" colSpan={2}>Total</td>
-                          <td className="p-4 text-center text-white font-black">
-                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.total, 0)}
-                          </td>
-                          <td className="p-4 text-center text-primary font-black">
-                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.checkedIn, 0)}
-                          </td>
-                          <td className="p-4 text-center text-emerald-500 font-black">
-                            {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.pending, 0)}
-                          </td>
-                          <td className="p-4"></td>
-                          <td className="p-4 text-right font-black text-emerald-500 text-sm">
-                            ${formatThousands(stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.income, 0).toString())}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    )}
-                  </table>
-                </div>
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-emerald-500 italic text-xs">
+                    No hay categorías creadas para esta sucursal.
+                  </div>
+                )}
+
+                {stats.categoryStats?.length > 0 && (
+                  <div className="p-4 bg-zinc-950 border-t-2 border-emerald-500/40 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                    <span className="font-black text-white text-xs uppercase tracking-wider">Total</span>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                      <div className="text-center">
+                        <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Reg.</p>
+                        <p className="text-sm font-black text-white">
+                          {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.total, 0)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Ingr.</p>
+                        <p className="text-sm font-black text-primary">
+                          {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.checkedIn, 0)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Falt.</p>
+                        <p className="text-sm font-black text-emerald-500">
+                          {stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.pending, 0)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-emerald-500 uppercase font-bold tracking-wider">Recaudado</p>
+                        <p className="text-sm font-black text-emerald-500">
+                          ${formatThousands(stats.categoryStats.reduce((sum: number, cat: any) => sum + cat.income, 0).toString())}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

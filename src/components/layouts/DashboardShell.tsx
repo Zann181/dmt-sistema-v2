@@ -177,7 +177,7 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
           )}
 
           {/* Usuarios */}
-          {(session.user.isSuperuser || session.user.isGlobalAdmin || p.accessAttendees) && (
+          {(session.user.isSuperuser || session.user.isGlobalAdmin) && (
             <Link href="/usuarios" className={linkClass("/usuarios")} title={collapsed ? "Usuarios" : undefined}>
               <Users size={18} className="shrink-0" />
               <span className={`transition-opacity duration-200 ${collapsed ? "opacity-0 w-0 hidden" : "opacity-100"}`}>
