@@ -29,6 +29,8 @@ export async function GET(req: Request) {
     const q = url.searchParams.get("q") || ""
     const categoryId = url.searchParams.get("categoryId") || ""
     const status = url.searchParams.get("status") || "all"
+    const limit = Math.min(Math.max(parseInt(url.searchParams.get("limit") || "20", 10) || 20, 1), 100)
+    const offset = Math.max(parseInt(url.searchParams.get("offset") || "0", 10) || 0, 0)
 
     const statsOnly = url.searchParams.get("stats") === "true"
     if (statsOnly) {
@@ -91,25 +93,32 @@ export async function GET(req: Request) {
       })
     }
     
-    const attendees = await prisma.attendee.findMany({
-      where: {
-        branchId,
-        eventId,
-        ...(q ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { cc: { contains: q, mode: "insensitive" } }
-          ]
-        } : {}),
-        ...(categoryId ? { categoryId } : {}),
-        ...(status === "checked" ? { hasCheckedIn: true } : {}),
-        ...(status === "pending" ? { hasCheckedIn: false } : {})
-      },
-      include: { category: true },
-      orderBy: { createdAt: "desc" },
-      take: 50
-    })
-    return NextResponse.json({ data: attendees })
+    const where = {
+      branchId,
+      eventId,
+      ...(q ? {
+        OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { cc: { contains: q, mode: "insensitive" as const } }
+        ]
+      } : {}),
+      ...(categoryId ? { categoryId } : {}),
+      ...(status === "checked" ? { hasCheckedIn: true } : {}),
+      ...(status === "pending" ? { hasCheckedIn: false } : {})
+    }
+
+    const [attendees, total] = await Promise.all([
+      prisma.attendee.findMany({
+        where,
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+        skip: offset
+      }),
+      prisma.attendee.count({ where })
+    ])
+
+    return NextResponse.json({ data: attendees, total, limit, offset })
   } catch (err) {
     return NextResponse.json({ error: "Server Error" }, { status: 500 })
   }

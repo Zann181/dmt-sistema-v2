@@ -37,6 +37,8 @@ export default function EntradaPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterCategoryId, setFilterCategoryId] = useState("")
   const [filterStatus, setFilterStatus] = useState<"all" | "checked" | "pending">("all")
+  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useState(1)
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"scan" | "search" | "add" | "dashboard">("dashboard")
@@ -323,25 +325,31 @@ export default function EntradaPage() {
   })
 
   // Attendee list query
-  const { data: attendees, isLoading } = useQuery({
-    queryKey: ["attendees", activeBranchId, activeEventId, searchQuery, filterCategoryId, filterStatus],
+  const { data: attendeesResult, isLoading } = useQuery({
+    queryKey: ["attendees", activeBranchId, activeEventId, searchQuery, filterCategoryId, filterStatus, page, pageSize],
     queryFn: async () => {
       const params = new URLSearchParams({
         branchId: activeBranchId!,
         eventId: activeEventId!,
         q: searchQuery,
-        status: filterStatus
+        status: filterStatus,
+        limit: pageSize.toString(),
+        offset: ((page - 1) * pageSize).toString()
       })
       if (filterCategoryId) params.set("categoryId", filterCategoryId)
       const res = await fetch(`/api/attendees?${params.toString()}`)
       if (!res.ok) throw new Error("Failed to fetch")
       const json = await res.json()
-      return json.data as any[]
+      return { attendees: json.data as any[], total: json.total as number }
     },
     // Solo se necesita en "search" (la tabla) y "add" (chequeo de cédula duplicada) —
     // no pedirla en dashboard/scan evita un fetch de más en cada edición/check-in.
     enabled: !!activeBranchId && !!activeEventId && (activeTab === "search" || activeTab === "add")
   })
+
+  const attendees = attendeesResult?.attendees
+  const attendeesTotal = attendeesResult?.total ?? 0
+  const totalPages = Math.max(Math.ceil(attendeesTotal / pageSize), 1)
 
   // Stats Query for the entries dashboard
   const { data: stats, isLoading: isStatsLoading, refetch: refetchStats } = useQuery({
@@ -829,6 +837,7 @@ export default function EntradaPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setSearchQuery(searchInput)
+    setPage(1)
   }
 
   const isFullscreen = searchParams.get("fullscreen") === "true"
@@ -1245,14 +1254,20 @@ export default function EntradaPage() {
                 value={searchInput}
                 onChange={(e) => {
                   setSearchInput(e.target.value)
-                  if (e.target.value === "") setSearchQuery("")
+                  if (e.target.value === "") {
+                    setSearchQuery("")
+                    setPage(1)
+                  }
                 }}
                 className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <select
               value={filterCategoryId}
-              onChange={(e) => setFilterCategoryId(e.target.value)}
+              onChange={(e) => {
+                setFilterCategoryId(e.target.value)
+                setPage(1)
+              }}
               className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             >
               <option value="">Todas las categorías</option>
@@ -1262,12 +1277,28 @@ export default function EntradaPage() {
             </select>
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as "all" | "checked" | "pending")}
+              onChange={(e) => {
+                setFilterStatus(e.target.value as "all" | "checked" | "pending")
+                setPage(1)
+              }}
               className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             >
               <option value="all">Todos los estados</option>
               <option value="checked">Ya ingresaron</option>
               <option value="pending">No han ingresado</option>
+            </select>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value))
+                setPage(1)
+              }}
+              className="px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              title="Resultados por página"
+            >
+              {[10, 20, 30, 50, 100].map((n) => (
+                <option key={n} value={n}>{n} por página</option>
+              ))}
             </select>
             <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
               Buscar
@@ -1392,6 +1423,33 @@ export default function EntradaPage() {
               </tbody>
             </table>
           </div>
+
+          {!isLoading && attendeesTotal > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-zinc-200 dark:border-zinc-800 text-sm">
+              <span className="text-emerald-500 text-xs">
+                {Math.min((page - 1) * pageSize + 1, attendeesTotal)}–{Math.min(page * pageSize, attendeesTotal)} de {attendeesTotal}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Anterior
+                </button>
+                <span className="text-xs text-emerald-500 whitespace-nowrap">Página {page} de {totalPages}</span>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={page >= totalPages}
+                  className="px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
