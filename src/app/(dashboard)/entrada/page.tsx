@@ -834,11 +834,14 @@ export default function EntradaPage() {
     }
   }, [successCheckInInfo])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSearchQuery(searchInput)
-    setPage(1)
-  }
+  // Búsqueda en vivo: espera una pausa corta al escribir antes de disparar la query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   const isFullscreen = searchParams.get("fullscreen") === "true"
 
@@ -1245,25 +1248,19 @@ export default function EntradaPage() {
 
       {activeTab === "search" && (
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px] animate-in fade-in duration-200">
-          <form onSubmit={handleSearch} className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 md:gap-3">
+          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 md:gap-3">
             <div className="relative w-full md:flex-1 md:min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
               <input
                 type="text"
                 placeholder="Buscar por nombre o cédula..."
                 value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value)
-                  if (e.target.value === "") {
-                    setSearchQuery("")
-                    setPage(1)
-                  }
-                }}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 md:contents">
+            <div className="grid grid-cols-3 gap-2 md:contents">
               <div className="relative">
                 <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={14} />
                 <select
@@ -1297,9 +1294,6 @@ export default function EntradaPage() {
                   <option value="pending">No han ingresado</option>
                 </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 md:contents">
               <div className="relative">
                 <Rows3 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none" size={14} />
                 <select
@@ -1316,11 +1310,8 @@ export default function EntradaPage() {
                   ))}
                 </select>
               </div>
-              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-black font-bold px-4 py-2 rounded-md transition-colors">
-                Buscar
-              </button>
             </div>
-          </form>
+          </div>
 
           <div className="flex-1 overflow-y-auto p-0">
             <table className="w-full text-sm text-left">
