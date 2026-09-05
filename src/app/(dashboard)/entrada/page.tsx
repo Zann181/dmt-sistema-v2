@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
 import { useContextStore } from "@/stores/contextStore"
-import { Users, QrCode, Search, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon, CheckCircle2, Tag, SlidersHorizontal, Rows3 } from "lucide-react"
+import { Users, QrCode, Search, Ticket, Banknote, ShieldAlert, X, Download, UserPlus, Edit, Trash2, Mail, Plus, FileSpreadsheet, AlertTriangle, Upload as UploadIcon, CheckCircle2, Tag, SlidersHorizontal, Rows3 } from "lucide-react"
 
 // Icono personalizado de WhatsApp de alta calidad para el estilo premium
 const WhatsAppIcon = ({ size = 14 }: { size?: number }) => (
@@ -53,15 +53,15 @@ export default function EntradaPage() {
   const [isDragging, setIsDragging] = useState(false)
   const startX = useRef(0)
 
-  // Cash movement states
-  const [showCashModal, setShowCashModal] = useState(false)
-  const [cashForm, setCashForm] = useState({
-    movementType: "EXPENSE" as "EXPENSE" | "CASH_DROP",
-    description: "",
-    totalAmount: "",
+  // Day-entry (ingreso día) states — walk-ins registered in bulk, sin nombre ni cédula
+  const [showDayEntryModal, setShowDayEntryModal] = useState(false)
+  const [dayEntryForm, setDayEntryForm] = useState({
+    categoryId: "",
+    quantity: "1",
+    unitAmount: "",
     method: "CASH" as "CASH" | "TRANSFER" | "QR" | "CARD"
   })
-  const [cashError, setCashError] = useState("")
+  const [dayEntryError, setDayEntryError] = useState("")
 
   // Add attendee form state
   const [addForm, setAddForm] = useState({
@@ -510,7 +510,7 @@ export default function EntradaPage() {
       setImportResult(summary)
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
       queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
-      toast.success(`Importación completa: ${summary.created} nuevos, ${summary.updated} actualizados, ${summary.emailsSent} correos enviados`)
+      toast.success(`Importación completa: ${summary.created} nuevos, ${summary.skipped} ya existían (ignorados), ${summary.emailsSent} correos enviados`)
     },
     onError: (err: any) => {
       toast.error("Error al importar: " + err.message)
@@ -673,32 +673,33 @@ export default function EntradaPage() {
     }
   })
 
-  const registerCashMovementMutation = useMutation({
-    mutationFn: async (data: typeof cashForm) => {
-      const res = await fetch("/api/cash/movements", {
+  const registerDayEntryMutation = useMutation({
+    mutationFn: async (data: typeof dayEntryForm) => {
+      const res = await fetch("/api/cash/movements/event-day", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           branchId: activeBranchId,
           eventId: activeEventId,
-          module: "ENTRANCE",
-          movementType: data.movementType,
-          description: data.description,
-          totalAmount: parseThousands(data.totalAmount),
+          categoryId: data.categoryId,
+          quantity: Number(data.quantity) || 0,
+          unitAmount: Number(parseThousands(data.unitAmount)) || 0,
           method: data.method
         })
       })
-      if (!res.ok) throw new Error((await res.json()).error || "Error al registrar movimiento de caja")
+      if (!res.ok) throw new Error((await res.json()).error || "Error al registrar el ingreso del día")
       return res.json()
     },
     onSuccess: () => {
-      setShowCashModal(false)
-      setCashForm({ movementType: "EXPENSE", description: "", totalAmount: "", method: "CASH" })
-      setCashError("")
-      toast.success("Movimiento de caja registrado con éxito")
+      setShowDayEntryModal(false)
+      setDayEntryForm({ categoryId: "", quantity: "1", unitAmount: "", method: "CASH" })
+      setDayEntryError("")
+      toast.success("Ingreso del día registrado con éxito")
+      queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+      queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
     },
     onError: (err: any) => {
-      setCashError(err.message)
+      setDayEntryError(err.message)
     }
   })
 
@@ -1172,29 +1173,29 @@ export default function EntradaPage() {
           <h2 className="text-2xl font-bold tracking-tight">Entrada & Check-in</h2>
           <p className="text-emerald-500 text-sm hidden sm:block">Control de acceso y escáner QR.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
           <a
             href="/entrada?mode=scan&fullscreen=true"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 md:flex-none justify-center text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-black px-3 py-2.5 rounded-md font-bold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center text-xs bg-indigo-600 hover:bg-indigo-750 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-black px-2.5 py-1.5 rounded-md font-bold transition-colors flex items-center gap-1 shadow-sm whitespace-nowrap"
           >
-            <QrCode size={14} /> Abrir Escáner QR
+            <QrCode size={12} /> Abrir Escáner QR
           </a>
           <a
             href={`/api/attendees/export/excel?branchId=${activeBranchId}&eventId=${activeEventId}`}
             download
-            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1 shadow-sm whitespace-nowrap"
           >
-            <Download size={14} /> Exportar CSV
+            <Download size={12} /> Exportar CSV
           </a>
           <button
-            onClick={() => setShowCashModal(true)}
-            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-3 py-2.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap"
+            onClick={() => setShowDayEntryModal(true)}
+            className="flex-1 md:flex-none justify-center text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 font-semibold transition-colors flex items-center gap-1 shadow-sm whitespace-nowrap"
           >
-            <Banknote size={14} /> Movimiento Caja
+            <Ticket size={12} /> Ingreso Día
           </button>
-          <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2.5 rounded-md font-bold text-xs">
+          <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-2.5 py-1.5 rounded-md font-bold text-xs whitespace-nowrap">
             {checkInCount} check-ins hoy
           </div>
         </div>
@@ -1930,7 +1931,7 @@ export default function EntradaPage() {
 
             {importResult && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs space-y-1">
-                <p>✅ {importResult.created} nuevos registrados, {importResult.updated} actualizados</p>
+                <p>✅ {importResult.created} nuevos registrados, {importResult.skipped} ya existían (ignorados)</p>
                 <p>📧 {importResult.emailsSent} correos enviados{importResult.emailFailedCount > 0 ? `, ${importResult.emailFailedCount} fallaron` : ""}</p>
                 <p>⚠️ {importResult.noEmailCount} sin correo (necesitan seguimiento)</p>
               </div>
@@ -1955,94 +1956,111 @@ export default function EntradaPage() {
         </div>
       )}
 
-      {showCashModal && (
+      {showDayEntryModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
-                <Banknote className="text-indigo-650 dark:text-indigo-400" /> Movimiento de Caja (Entrada)
+                <Ticket className="text-indigo-650 dark:text-indigo-400" /> Ingreso Día
               </h3>
-              <button onClick={() => setShowCashModal(false)} className="text-emerald-500 hover:text-zinc-655 dark:hover:text-zinc-200">
+              <button onClick={() => setShowDayEntryModal(false)} className="text-emerald-500 hover:text-zinc-655 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
 
-            {cashError && (
+            <p className="text-xs text-emerald-500 -mt-2">
+              Registra en bloque personas que entraron pagando en puerta, sin pedir nombre ni cédula.
+            </p>
+
+            {dayEntryError && (
               <div className="p-3 bg-red-50 dark:bg-red-955/20 text-red-655 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
-                <ShieldAlert size={16} /> {cashError}
+                <ShieldAlert size={16} /> {dayEntryError}
               </div>
             )}
 
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                registerCashMovementMutation.mutate(cashForm)
+                if (!dayEntryForm.categoryId) {
+                  setDayEntryError("Selecciona una categoría")
+                  return
+                }
+                registerDayEntryMutation.mutate(dayEntryForm)
               }}
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Tipo de Movimiento</label>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Categoría</label>
                 <select
-                  value={cashForm.movementType}
-                  onChange={(e) => setCashForm({ ...cashForm, movementType: e.target.value as any })}
+                  value={dayEntryForm.categoryId}
+                  onChange={(e) => setDayEntryForm({ ...dayEntryForm, categoryId: e.target.value })}
                   className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
-                >
-                  <option value="EXPENSE">Gasto Operativo (Salida de dinero)</option>
-                  <option value="CASH_DROP">Vaciado de Caja / Retiro de efectivo</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
-                <input
-                  type="text"
-                  placeholder={cashForm.movementType === "EXPENSE" ? "Ej: Compra de hielos" : "Ej: Retiro parcial caja fuerte"}
-                  value={cashForm.description}
-                  onChange={(e) => setCashForm({ ...cashForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   required
-                />
+                >
+                  <option value="">Selecciona una categoría</option>
+                  {categories?.map((cat: any) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto ($)</label>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Personas</label>
                   <input
-                    type="text"
-                    placeholder="0"
-                    value={cashForm.totalAmount}
-                    onChange={(e) => setCashForm({ ...cashForm, totalAmount: formatThousands(e.target.value) })}
+                    type="number"
+                    min={1}
+                    max={500}
+                    placeholder="1"
+                    value={dayEntryForm.quantity}
+                    onChange={(e) => setDayEntryForm({ ...dayEntryForm, quantity: e.target.value })}
                     className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
-                  <select
-                    value={cashForm.method}
-                    onChange={(e) => setCashForm({ ...cashForm, method: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="CASH">Efectivo</option>
-                    <option value="TRANSFER">Transferencia</option>
-                    <option value="QR">Código QR</option>
-                    <option value="CARD">Tarjeta</option>
-                  </select>
+                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Valor c/u ($)</label>
+                  <input
+                    type="text"
+                    placeholder="0"
+                    value={dayEntryForm.unitAmount}
+                    onChange={(e) => setDayEntryForm({ ...dayEntryForm, unitAmount: formatThousands(e.target.value) })}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                    required
+                  />
                 </div>
               </div>
 
+              <div>
+                <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
+                <select
+                  value={dayEntryForm.method}
+                  onChange={(e) => setDayEntryForm({ ...dayEntryForm, method: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="CASH">Efectivo</option>
+                  <option value="TRANSFER">Transferencia</option>
+                  <option value="QR">Código QR</option>
+                  <option value="CARD">Tarjeta</option>
+                </select>
+              </div>
+
+              <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md px-3 py-2">
+                Total: ${formatThousands(((Number(dayEntryForm.quantity) || 0) * (Number(parseThousands(dayEntryForm.unitAmount)) || 0)).toString())}
+              </div>
+
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setShowCashModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                <button type="button" onClick={() => setShowDayEntryModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={registerCashMovementMutation.isPending}
+                  disabled={registerDayEntryMutation.isPending}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {registerCashMovementMutation.isPending ? "Registrando..." : "Registrar"}
+                  {registerDayEntryMutation.isPending ? "Registrando..." : "Registrar"}
                 </button>
               </div>
             </form>
