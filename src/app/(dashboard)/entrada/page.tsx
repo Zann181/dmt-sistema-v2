@@ -1020,11 +1020,18 @@ export default function EntradaPage() {
 
   if (activeTab === "scan" && isFullscreen) {
     return (
-      <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center p-4 animate-in fade-in duration-200 select-none">
+      <div
+        className="fixed inset-0 bg-black z-[9999] flex flex-col items-center overflow-y-auto px-4 animate-in fade-in duration-200 select-none"
+        style={{
+          paddingTop: "max(1rem, env(safe-area-inset-top))",
+          paddingBottom: "max(1rem, env(safe-area-inset-bottom))"
+        }}
+      >
         {/* Floating Swipeable Notification */}
         {notification && (
           <div
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm bg-zinc-900 border rounded-xl p-4 shadow-2xl border-zinc-800"
+            className="fixed left-1/2 -translate-x-1/2 z-[10000] w-full max-w-sm bg-zinc-900 border rounded-xl p-4 shadow-2xl border-zinc-800"
+            style={{ top: "max(1rem, env(safe-area-inset-top))" }}
           >
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${
@@ -1056,7 +1063,7 @@ export default function EntradaPage() {
           </div>
         )}
 
-        <div className="w-full max-w-md flex flex-col items-center space-y-6">
+        <div className="w-full max-w-md flex-1 flex flex-col items-center justify-center space-y-6 py-4">
           {/* Toggle deslizable arriba de todo: cambia a Ingreso Día incrustado en la
               misma pantalla (sin popup) y sin salir del escáner (la cámara solo se pausa) */}
           <div className="relative w-full flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
