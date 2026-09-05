@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
+import { Prisma } from "@prisma/client"
 import { formatZodError } from "@/shared/utils/zod"
 import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
 import { EmailService } from "@/infrastructure/email/EmailService"
@@ -107,16 +108,57 @@ export async function GET(req: Request) {
       ...(status === "pending" ? { hasCheckedIn: false } : {})
     }
 
-    const [attendees, total] = await Promise.all([
-      prisma.attendee.findMany({
-        where,
-        include: { category: true },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset
-      }),
-      prisma.attendee.count({ where })
-    ])
+    // Los pendientes de entrega ("Sin enviar" en amarillo) van primero en toda la
+    // búsqueda (no solo dentro de la página actual) hasta que se les confirme el envío.
+    // La MockPrisma de desarrollo offline no implementa $queryRaw, así que en ese
+    // modo se cae a ordenar en JS dentro de la página como antes.
+    const sortPendingFirst = (list: any[]) => [...list].sort((a: any, b: any) => {
+      const aPending = !a.emailSentAt && !a.qrDeliveredManuallyAt ? 0 : 1
+      const bPending = !b.emailSentAt && !b.qrDeliveredManuallyAt ? 0 : 1
+      return aPending - bPending
+    })
+
+    let attendees: any[]
+    let total: number
+
+    if (typeof (prisma as any).$queryRaw === "function") {
+      const conditions: Prisma.Sql[] = [
+        Prisma.sql`"branchId" = ${branchId}`,
+        Prisma.sql`"eventId" = ${eventId}`
+      ]
+      if (q) conditions.push(Prisma.sql`(name ILIKE ${`%${q}%`} OR cc ILIKE ${`%${q}%`})`)
+      if (categoryId) conditions.push(Prisma.sql`"categoryId" = ${categoryId}`)
+      if (status === "checked") conditions.push(Prisma.sql`"hasCheckedIn" = true`)
+      if (status === "pending") conditions.push(Prisma.sql`"hasCheckedIn" = false`)
+
+      const orderedIdsQuery = prisma.$queryRaw`
+        SELECT id FROM attendees
+        WHERE ${Prisma.join(conditions, " AND ")}
+        ORDER BY (CASE WHEN "emailSentAt" IS NULL AND "qrDeliveredManuallyAt" IS NULL THEN 0 ELSE 1 END) ASC,
+                 "createdAt" DESC
+        LIMIT ${limit} OFFSET ${offset}
+      ` as Promise<{ id: string }[]>
+      const [orderedIds, count] = await Promise.all([
+        orderedIdsQuery,
+        prisma.attendee.count({ where })
+      ])
+
+      const ids: string[] = orderedIds.map((r) => r.id)
+      const unordered = await prisma.attendee.findMany({
+        where: { id: { in: ids } },
+        include: { category: true }
+      })
+      const rank = new Map(ids.map((id, i) => [id, i]))
+      attendees = unordered.sort((a: any, b: any) => rank.get(a.id)! - rank.get(b.id)!)
+      total = count
+    } else {
+      const [rows, count] = await Promise.all([
+        prisma.attendee.findMany({ where, include: { category: true }, orderBy: { createdAt: "desc" } }),
+        prisma.attendee.count({ where })
+      ])
+      attendees = sortPendingFirst(rows).slice(offset, offset + limit)
+      total = count
+    }
 
     return NextResponse.json({ data: attendees, total, limit, offset })
   } catch (err) {

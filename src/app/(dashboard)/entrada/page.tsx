@@ -1334,12 +1334,7 @@ export default function EntradaPage() {
                     <td colSpan={4} className="px-6 py-8 text-center text-emerald-500">No hay asistentes registrados para este evento.</td>
                   </tr>
                 ) : (
-                  [...(attendees ?? [])]
-                    .sort((a, b) => {
-                      const aPending = !a.emailSentAt && !a.qrDeliveredManuallyAt ? 0 : 1
-                      const bPending = !b.emailSentAt && !b.qrDeliveredManuallyAt ? 0 : 1
-                      return aPending - bPending
-                    })
+                  (attendees ?? [])
                     .map((a) => {
                       const pendingDelivery = !a.emailSentAt && !a.qrDeliveredManuallyAt
                       return (
