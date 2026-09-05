@@ -317,6 +317,10 @@ export function DashboardShell({ children, session }: DashboardShellProps) {
                   <span>Salir</span>
                 </button>
               </div>
+
+              <p className="text-center text-[8px] text-zinc-700 uppercase tracking-wider font-semibold pt-1">
+                Desarrollado por ZAMA Soluciones
+              </p>
             </div>
           ) : (
             /* Collapsed Bottom Options: small logo / exit */
