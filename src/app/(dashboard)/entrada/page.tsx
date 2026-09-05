@@ -691,9 +691,8 @@ export default function EntradaPage() {
       return res.json()
     },
     onSuccess: () => {
-      setShowDayEntryModal(false)
+      closeDayEntryModal()
       setDayEntryForm({ categoryId: "", quantity: "1", unitAmount: "", method: "CASH" })
-      setDayEntryError("")
       toast.success("Ingreso del día registrado con éxito")
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
       queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
@@ -795,6 +794,23 @@ export default function EntradaPage() {
     setIsScanning(false)
   }
 
+  // Deja el escáner corriendo de fondo (solo pausa la cámara) para poder abrir
+  // "Ingreso Día" encima sin perder la sesión del QR y volver de un toque.
+  const openDayEntryFromScanner = () => {
+    if (html5QrCodeRef.current && isScanning) {
+      html5QrCodeRef.current.pause()
+    }
+    setShowDayEntryModal(true)
+  }
+
+  const closeDayEntryModal = () => {
+    setShowDayEntryModal(false)
+    setDayEntryError("")
+    if (html5QrCodeRef.current && isScanning && isScanTabActiveRef.current) {
+      html5QrCodeRef.current.resume().catch(() => {})
+    }
+  }
+
   useEffect(() => {
     if (activeTab === "scan" && activeBranchId && activeEventId) {
       isScanTabActiveRef.current = true
@@ -843,6 +859,118 @@ export default function EntradaPage() {
     }, 350)
     return () => clearTimeout(timer)
   }, [searchInput])
+
+  const dayEntryModal = showDayEntryModal && (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            <Ticket className="text-indigo-650 dark:text-indigo-400" /> Ingreso Día
+          </h3>
+          <button onClick={closeDayEntryModal} className="text-emerald-500 hover:text-zinc-655 dark:hover:text-zinc-200">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="text-xs text-emerald-500 -mt-2">
+          Registra en bloque personas que entraron pagando en puerta, sin pedir nombre ni cédula.
+        </p>
+
+        {dayEntryError && (
+          <div className="p-3 bg-red-50 dark:bg-red-955/20 text-red-655 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
+            <ShieldAlert size={16} /> {dayEntryError}
+          </div>
+        )}
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!dayEntryForm.categoryId) {
+              setDayEntryError("Selecciona una categoría")
+              return
+            }
+            registerDayEntryMutation.mutate(dayEntryForm)
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="text-xs font-semibold text-emerald-500 block mb-1">Categoría</label>
+            <select
+              value={dayEntryForm.categoryId}
+              onChange={(e) => setDayEntryForm({ ...dayEntryForm, categoryId: e.target.value })}
+              className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+              required
+            >
+              <option value="">Selecciona una categoría</option>
+              {categories?.map((cat: any) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-emerald-500 block mb-1">Personas</label>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                placeholder="1"
+                value={dayEntryForm.quantity}
+                onChange={(e) => setDayEntryForm({ ...dayEntryForm, quantity: e.target.value })}
+                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-emerald-500 block mb-1">Valor c/u ($)</label>
+              <input
+                type="text"
+                placeholder="0"
+                value={dayEntryForm.unitAmount}
+                onChange={(e) => setDayEntryForm({ ...dayEntryForm, unitAmount: formatThousands(e.target.value) })}
+                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
+            <select
+              value={dayEntryForm.method}
+              onChange={(e) => setDayEntryForm({ ...dayEntryForm, method: e.target.value as any })}
+              className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="CASH">Efectivo</option>
+              <option value="TRANSFER">Transferencia</option>
+              <option value="QR">Código QR</option>
+              <option value="CARD">Tarjeta</option>
+            </select>
+          </div>
+
+          <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md px-3 py-2">
+            Total: ${formatThousands(((Number(dayEntryForm.quantity) || 0) * (Number(parseThousands(dayEntryForm.unitAmount)) || 0)).toString())}
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
+            <button type="button" onClick={closeDayEntryModal} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={registerDayEntryMutation.isPending}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+            >
+              {registerDayEntryMutation.isPending ? "Registrando..." : "Registrar"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 
   const isFullscreen = searchParams.get("fullscreen") === "true"
 
@@ -903,6 +1031,28 @@ export default function EntradaPage() {
               Escáner de Entradas
             </h2>
             <p className="text-xs text-emerald-500">{activeEventName}</p>
+          </div>
+
+          {/* Toggle deslizable: cambia a Ingreso Día sin salir del escáner (la cámara solo se pausa) */}
+          <div className="relative w-full max-w-[280px] flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+            <div
+              className="absolute top-1 bottom-1 w-1/2 rounded-lg bg-indigo-600 transition-transform duration-300 ease-out"
+              style={{ transform: showDayEntryModal ? "translateX(100%)" : "translateX(0%)" }}
+            />
+            <button
+              type="button"
+              onClick={closeDayEntryModal}
+              className={`relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${!showDayEntryModal ? "text-white" : "text-emerald-500"}`}
+            >
+              <QrCode size={14} /> Escanear
+            </button>
+            <button
+              type="button"
+              onClick={openDayEntryFromScanner}
+              className={`relative z-10 flex-1 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${showDayEntryModal ? "text-white" : "text-emerald-500"}`}
+            >
+              <Ticket size={14} /> Ingreso Día
+            </button>
           </div>
 
           <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 flex flex-col items-center justify-center shadow-2xl">
@@ -1074,6 +1224,8 @@ export default function EntradaPage() {
             </div>
           </div>
         )}
+
+        {dayEntryModal}
       </div>
     )
   }
@@ -1951,117 +2103,7 @@ export default function EntradaPage() {
         </div>
       )}
 
-      {showDayEntryModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Ticket className="text-indigo-650 dark:text-indigo-400" /> Ingreso Día
-              </h3>
-              <button onClick={() => setShowDayEntryModal(false)} className="text-emerald-500 hover:text-zinc-655 dark:hover:text-zinc-200">
-                <X size={18} />
-              </button>
-            </div>
-
-            <p className="text-xs text-emerald-500 -mt-2">
-              Registra en bloque personas que entraron pagando en puerta, sin pedir nombre ni cédula.
-            </p>
-
-            {dayEntryError && (
-              <div className="p-3 bg-red-50 dark:bg-red-955/20 text-red-655 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
-                <ShieldAlert size={16} /> {dayEntryError}
-              </div>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (!dayEntryForm.categoryId) {
-                  setDayEntryError("Selecciona una categoría")
-                  return
-                }
-                registerDayEntryMutation.mutate(dayEntryForm)
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Categoría</label>
-                <select
-                  value={dayEntryForm.categoryId}
-                  onChange={(e) => setDayEntryForm({ ...dayEntryForm, categoryId: e.target.value })}
-                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
-                  required
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {categories?.map((cat: any) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Personas</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={500}
-                    placeholder="1"
-                    value={dayEntryForm.quantity}
-                    onChange={(e) => setDayEntryForm({ ...dayEntryForm, quantity: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Valor c/u ($)</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    value={dayEntryForm.unitAmount}
-                    onChange={(e) => setDayEntryForm({ ...dayEntryForm, unitAmount: formatThousands(e.target.value) })}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
-                <select
-                  value={dayEntryForm.method}
-                  onChange={(e) => setDayEntryForm({ ...dayEntryForm, method: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="CASH">Efectivo</option>
-                  <option value="TRANSFER">Transferencia</option>
-                  <option value="QR">Código QR</option>
-                  <option value="CARD">Tarjeta</option>
-                </select>
-              </div>
-
-              <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md px-3 py-2">
-                Total: ${formatThousands(((Number(dayEntryForm.quantity) || 0) * (Number(parseThousands(dayEntryForm.unitAmount)) || 0)).toString())}
-              </div>
-
-              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setShowDayEntryModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={registerDayEntryMutation.isPending}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {registerDayEntryMutation.isPending ? "Registrando..." : "Registrar"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {dayEntryModal}
 
       {/* EDIT ATTENDEE MODAL */}
       {editingAttendee && (
