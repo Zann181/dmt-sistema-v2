@@ -1527,7 +1527,9 @@ export default function EntradaPage() {
                 ) : (
                   (attendees ?? [])
                     .map((a) => {
-                      const pendingDelivery = !a.emailSentAt && !a.qrDeliveredManuallyAt
+                      // Los ingresos del día (Ingreso Día) no tienen QR/ticket que entregar,
+                      // así que nunca cuentan como "pendiente de envío".
+                      const pendingDelivery = a.origin !== "EVENT_DAY" && !a.emailSentAt && !a.qrDeliveredManuallyAt
                       return (
                         <tr
                           key={a.id}

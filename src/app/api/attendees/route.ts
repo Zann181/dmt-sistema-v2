@@ -110,13 +110,15 @@ export async function GET(req: Request) {
 
     // Los pendientes de entrega ("Sin enviar" en amarillo) van primero en toda la
     // búsqueda (no solo dentro de la página actual) hasta que se les confirme el envío.
+    // Los ingresos del día (Ingreso Día, sin QR que entregar) nunca cuentan como
+    // pendientes y van al final de la lista.
     // La MockPrisma de desarrollo offline no implementa $queryRaw, así que en ese
     // modo se cae a ordenar en JS dentro de la página como antes.
-    const sortPendingFirst = (list: any[]) => [...list].sort((a: any, b: any) => {
-      const aPending = !a.emailSentAt && !a.qrDeliveredManuallyAt ? 0 : 1
-      const bPending = !b.emailSentAt && !b.qrDeliveredManuallyAt ? 0 : 1
-      return aPending - bPending
-    })
+    const sortRank = (a: any) => {
+      if (a.origin === "EVENT_DAY") return 2
+      return !a.emailSentAt && !a.qrDeliveredManuallyAt ? 0 : 1
+    }
+    const sortPendingFirst = (list: any[]) => [...list].sort((a: any, b: any) => sortRank(a) - sortRank(b))
 
     let attendees: any[]
     let total: number
@@ -134,7 +136,11 @@ export async function GET(req: Request) {
       const orderedIdsQuery = prisma.$queryRaw`
         SELECT id FROM attendees
         WHERE ${Prisma.join(conditions, " AND ")}
-        ORDER BY (CASE WHEN "emailSentAt" IS NULL AND "qrDeliveredManuallyAt" IS NULL THEN 0 ELSE 1 END) ASC,
+        ORDER BY (CASE
+                    WHEN origin = 'EVENT_DAY' THEN 2
+                    WHEN "emailSentAt" IS NULL AND "qrDeliveredManuallyAt" IS NULL THEN 0
+                    ELSE 1
+                  END) ASC,
                  "createdAt" DESC
         LIMIT ${limit} OFFSET ${offset}
       ` as Promise<{ id: string }[]>
