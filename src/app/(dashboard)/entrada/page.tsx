@@ -857,17 +857,8 @@ export default function EntradaPage() {
     }
   }, [notification])
 
-  useEffect(() => {
-    if (successCheckInInfo) {
-      const timer = setTimeout(() => {
-        setSuccessCheckInInfo(null)
-        if (html5QrCodeRef.current && isScanning) {
-          html5QrCodeRef.current.resume().catch(() => {})
-        }
-      }, 2500)
-      return () => clearTimeout(timer)
-    }
-  }, [successCheckInInfo])
+  // El modal de check-in exitoso ya NO se cierra solo: se queda hasta que el
+  // usuario toque "Continuar Escaneando" (antes duraba 2.5s y no daba tiempo a leer).
 
   // Búsqueda en vivo: espera una pausa corta al escribir antes de disparar la query
   useEffect(() => {
