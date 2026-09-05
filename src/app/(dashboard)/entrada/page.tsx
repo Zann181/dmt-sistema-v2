@@ -121,8 +121,19 @@ export default function EntradaPage() {
   useEffect(() => {
     if (dayEntryForm.categoryId || !categories?.length) return
     const diaCategory = categories.find((c: any) => c.name.trim().toLowerCase() === "día" || c.name.trim().toLowerCase() === "dia")
-    if (diaCategory) setDayEntryForm(prev => ({ ...prev, categoryId: diaCategory.id }))
+    if (diaCategory) {
+      setDayEntryForm(prev => ({ ...prev, categoryId: diaCategory.id, unitAmount: formatThousands(diaCategory.price.toString()) }))
+    }
   }, [categories])
+
+  const handleDayEntryCategoryChange = (catId: string) => {
+    const selectedCat = categories?.find((c: any) => c.id === catId)
+    setDayEntryForm(prev => ({
+      ...prev,
+      categoryId: catId,
+      unitAmount: selectedCat ? formatThousands(selectedCat.price.toString()) : prev.unitAmount
+    }))
+  }
 
   // Get current session for permission checks
   const { data: session } = useQuery({
@@ -867,8 +878,10 @@ export default function EntradaPage() {
     return () => clearTimeout(timer)
   }, [searchInput])
 
-  const dayEntryModal = showDayEntryModal && (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+  // Tarjeta del formulario de Ingreso Día. En el dashboard normal se envuelve en un
+  // modal emergente; en el escáner de pantalla completa se incrusta directo en la
+  // pantalla (reemplazando la cámara) para cambiar de una a otra sin salir del QR.
+  const dayEntryCard = showDayEntryModal && (
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
           <h3 className="text-lg font-bold flex items-center gap-2">
@@ -904,7 +917,7 @@ export default function EntradaPage() {
             <label className="text-xs font-semibold text-emerald-500 block mb-1">Categoría</label>
             <select
               value={dayEntryForm.categoryId}
-              onChange={(e) => setDayEntryForm({ ...dayEntryForm, categoryId: e.target.value })}
+              onChange={(e) => handleDayEntryCategoryChange(e.target.value)}
               className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
               required
             >
@@ -990,6 +1003,12 @@ export default function EntradaPage() {
           </div>
         </form>
       </div>
+  )
+
+  // Versión modal (dashboard normal): la tarjeta con fondo oscurecido detrás.
+  const dayEntryModal = showDayEntryModal && (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[99999] animate-in fade-in duration-200">
+      {dayEntryCard}
     </div>
   )
 
@@ -1046,16 +1065,9 @@ export default function EntradaPage() {
         )}
 
         <div className="w-full max-w-md flex flex-col items-center space-y-6">
-          <div className="text-center space-y-1 w-full">
-            <h2 className="text-xl font-bold tracking-tight text-white flex items-center justify-center gap-2">
-              <QrCode size={20} className="text-indigo-400 animate-pulse" />
-              Escáner de Entradas
-            </h2>
-            <p className="text-xs text-emerald-500">{activeEventName}</p>
-          </div>
-
-          {/* Toggle deslizable: cambia a Ingreso Día sin salir del escáner (la cámara solo se pausa) */}
-          <div className="relative w-full max-w-[280px] flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+          {/* Toggle deslizable arriba de todo: cambia a Ingreso Día incrustado en la
+              misma pantalla (sin popup) y sin salir del escáner (la cámara solo se pausa) */}
+          <div className="relative w-full flex bg-zinc-900 border border-zinc-800 rounded-xl p-1">
             <div
               className="absolute top-1 bottom-1 w-1/2 rounded-lg bg-indigo-600 transition-transform duration-300 ease-out"
               style={{ transform: showDayEntryModal ? "translateX(100%)" : "translateX(0%)" }}
@@ -1076,12 +1088,24 @@ export default function EntradaPage() {
             </button>
           </div>
 
-          <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 flex flex-col items-center justify-center shadow-2xl">
-            <div 
-              id="reader" 
-              className="absolute inset-0 w-full h-full z-10 block" 
+          {!showDayEntryModal && (
+            <div className="text-center space-y-1 w-full">
+              <h2 className="text-xl font-bold tracking-tight text-white flex items-center justify-center gap-2">
+                <QrCode size={20} className="text-indigo-400 animate-pulse" />
+                Escáner de Entradas
+              </h2>
+              <p className="text-xs text-emerald-500">{activeEventName}</p>
+            </div>
+          )}
+
+          {/* El escáner nunca se desmonta (el html5-qrcode necesita el nodo #reader vivo);
+              solo se oculta con CSS mientras se ve Ingreso Día. */}
+          <div className={`relative w-full aspect-square rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-950 flex flex-col items-center justify-center shadow-2xl ${showDayEntryModal ? "hidden" : ""}`}>
+            <div
+              id="reader"
+              className="absolute inset-0 w-full h-full z-10 block"
             />
-            
+
             <div className="text-center space-y-4 z-0">
               <div className="w-16 h-16 rounded-full bg-indigo-950 text-indigo-400 flex items-center justify-center mx-auto shadow-sm animate-pulse">
                 <QrCode size={32} />
@@ -1094,13 +1118,17 @@ export default function EntradaPage() {
             </div>
           </div>
 
+          {showDayEntryModal && dayEntryCard}
+
+          {!showDayEntryModal && (
           <div className="flex items-center justify-end w-full px-2 text-emerald-500 text-xs">
             <div className="bg-indigo-950/40 text-indigo-400 px-3 py-1.5 rounded-lg font-bold">
               {checkInCount} check-ins
             </div>
           </div>
+          )}
 
-          {isScanning ? (
+          {!showDayEntryModal && (isScanning ? (
             <p className="text-xs text-emerald-500 flex items-center justify-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
               Apunta al código QR para registrar la entrada
@@ -1112,7 +1140,7 @@ export default function EntradaPage() {
             >
               Reintentar Cámara
             </button>
-          )}
+          ))}
 
           <button
             onClick={() => {
@@ -1245,8 +1273,6 @@ export default function EntradaPage() {
             </div>
           </div>
         )}
-
-        {dayEntryModal}
       </div>
     )
   }
