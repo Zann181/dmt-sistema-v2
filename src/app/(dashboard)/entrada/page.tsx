@@ -938,6 +938,7 @@ export default function EntradaPage() {
               <label className="text-xs font-semibold text-emerald-500 block mb-1">Valor c/u ($)</label>
               <input
                 type="text"
+                inputMode="numeric"
                 placeholder="0"
                 value={dayEntryForm.unitAmount}
                 onChange={(e) => setDayEntryForm({ ...dayEntryForm, unitAmount: formatThousands(e.target.value) })}
