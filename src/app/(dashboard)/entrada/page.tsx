@@ -117,6 +117,13 @@ export default function EntradaPage() {
     enabled: !!activeBranchId
   })
 
+  // Preselecciona la categoría "Día" en Ingreso Día apenas cargan las categorías
+  useEffect(() => {
+    if (dayEntryForm.categoryId || !categories?.length) return
+    const diaCategory = categories.find((c: any) => c.name.trim().toLowerCase() === "día" || c.name.trim().toLowerCase() === "dia")
+    if (diaCategory) setDayEntryForm(prev => ({ ...prev, categoryId: diaCategory.id }))
+  }, [categories])
+
   // Get current session for permission checks
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -938,16 +945,30 @@ export default function EntradaPage() {
 
           <div>
             <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
-            <select
-              value={dayEntryForm.method}
-              onChange={(e) => setDayEntryForm({ ...dayEntryForm, method: e.target.value as any })}
-              className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="CASH">Efectivo</option>
-              <option value="TRANSFER">Transferencia</option>
-              <option value="QR">Código QR</option>
-              <option value="CARD">Tarjeta</option>
-            </select>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setDayEntryForm({ ...dayEntryForm, method: "CASH" })}
+                className={`py-2 rounded-md border font-semibold text-sm transition-colors ${
+                  dayEntryForm.method === "CASH"
+                    ? "bg-indigo-600 border-indigo-600 text-white"
+                    : "border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                Efectivo
+              </button>
+              <button
+                type="button"
+                onClick={() => setDayEntryForm({ ...dayEntryForm, method: "QR" })}
+                className={`py-2 rounded-md border font-semibold text-sm transition-colors ${
+                  dayEntryForm.method === "QR"
+                    ? "bg-indigo-600 border-indigo-600 text-white"
+                    : "border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                Código QR
+              </button>
+            </div>
           </div>
 
           <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 rounded-md px-3 py-2">
