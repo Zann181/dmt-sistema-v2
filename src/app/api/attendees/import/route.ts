@@ -105,7 +105,7 @@ async function runImport(
     .replace(/{nombre_sucursal}/g, event.branch?.name || "")
 
   let created = 0
-  let updated = 0
+  let skipped = 0
   let emailsSent = 0
   let noEmailCount = 0
   let emailFailedCount = 0
@@ -124,52 +124,43 @@ async function runImport(
       where: { eventId_cc: { eventId: parsed.eventId, cc } }
     })
 
-    let attendee = existing
-    let shouldSendEmail = false
-
+    // Ya está registrado para este evento: se ignora por completo, no se toca ni se reenvía nada.
     if (existing) {
-      attendee = await prisma.attendee.update({
-        where: { id: existing.id },
-        data: {
-          name,
-          phone: phone || existing.phone,
-          email: email || existing.email,
-        }
-      })
-      updated++
-      shouldSendEmail = !existing.emailSentAt && !!attendee.email
-    } else {
-      const uniqueId = Math.random().toString(36).substring(2, 12)
-      const qrCode = `${branch.codePrefix}-${event.slug.substring(0, 5).toUpperCase()}-${uniqueId}`
-      attendee = await prisma.attendee.create({
-        data: {
-          name,
-          cc,
-          phone,
-          email,
-          branchId: parsed.branchId,
-          eventId: parsed.eventId,
-          categoryId: parsed.categoryId,
-          createdById,
-          origin: "MANUAL",
-          qrCode,
-          includedBalance: category.includedConsumptions,
-          hasCheckedIn: false,
-          paidAmount: category.price,
-        }
-      })
-      created++
-      shouldSendEmail = !!email
+      skipped++
+      processed++
+      continue
     }
+
+    const uniqueId = Math.random().toString(36).substring(2, 12)
+    const qrCode = `${branch.codePrefix}-${event.slug.substring(0, 5).toUpperCase()}-${uniqueId}`
+    const attendee = await prisma.attendee.create({
+      data: {
+        name,
+        cc,
+        phone,
+        email,
+        branchId: parsed.branchId,
+        eventId: parsed.eventId,
+        categoryId: parsed.categoryId,
+        createdById,
+        origin: "MANUAL",
+        qrCode,
+        includedBalance: category.includedConsumptions,
+        hasCheckedIn: false,
+        paidAmount: category.price,
+      }
+    })
+    created++
+    const shouldSendEmail = !!email
 
     processed++
 
     if (!shouldSendEmail) {
-      if (!attendee!.email) noEmailCount++
+      noEmailCount++
       emit({
-        type: "progress", processed, total, cc, name, email: attendee!.email,
-        status: existing ? "updated" : "created",
-        emailStatus: attendee!.email ? "already_sent" : "no_email"
+        type: "progress", processed, total, cc, name, email: attendee.email,
+        status: "created",
+        emailStatus: "no_email"
       })
       continue
     }
@@ -179,18 +170,18 @@ async function runImport(
       if (qrLogoUrl) {
         const logoBuffer = await loadQrLogoBuffer(qrLogoUrl)
         qrBuffer = logoBuffer.length > 0
-          ? await QrCodeService.generateWithLogo(attendee!.qrCode, QrCodeService.preprocessLogoBuffer(logoBuffer), { scale: logoScale, backgroundColor: logoBackgroundColor }, qrOptions)
-          : await QrCodeService.generateBuffer(attendee!.qrCode, qrOptions)
+          ? await QrCodeService.generateWithLogo(attendee.qrCode, QrCodeService.preprocessLogoBuffer(logoBuffer), { scale: logoScale, backgroundColor: logoBackgroundColor }, qrOptions)
+          : await QrCodeService.generateBuffer(attendee.qrCode, qrOptions)
       } else {
-        qrBuffer = await QrCodeService.generateBuffer(attendee!.qrCode, qrOptions)
+        qrBuffer = await QrCodeService.generateBuffer(attendee.qrCode, qrOptions)
       }
 
       const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(
-        event, name, attendee!.qrCode, category.name, attendee!.paidAmount.toString()
+        event, name, attendee.qrCode, category.name, attendee.paidAmount.toString()
       )
 
       await EmailService.sendTicketEmail(
-        attendee!.email!,
+        attendee.email!,
         subject,
         htmlContent,
         qrBuffer,
@@ -206,18 +197,18 @@ async function runImport(
         extraAttachments
       )
 
-      await prisma.attendee.update({ where: { id: attendee!.id }, data: { emailSentAt: new Date() } })
+      await prisma.attendee.update({ where: { id: attendee.id }, data: { emailSentAt: new Date() } })
       emailsSent++
-      emit({ type: "progress", processed, total, cc, name, email: attendee!.email, status: existing ? "updated" : "created", emailStatus: "sent" })
+      emit({ type: "progress", processed, total, cc, name, email: attendee.email, status: "created", emailStatus: "sent" })
     } catch (err: any) {
       console.error(`⚠️ Error enviando correo de importación a ${email}:`, err)
       emailFailedCount++
-      emit({ type: "progress", processed, total, cc, name, email: attendee!.email, status: existing ? "updated" : "created", emailStatus: "failed", error: err.message })
+      emit({ type: "progress", processed, total, cc, name, email: attendee.email, status: "created", emailStatus: "failed", error: err.message })
     }
   }
 
   emit({
     type: "summary",
-    summary: { created, updated, emailsSent, noEmailCount, emailFailedCount, total }
+    summary: { created, skipped, emailsSent, noEmailCount, emailFailedCount, total }
   })
 }
