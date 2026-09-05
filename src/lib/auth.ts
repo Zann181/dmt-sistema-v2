@@ -77,7 +77,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  // 90 días: dispositivos ya autenticados (taquilla, barra) no deben volver a
+  // pedir usuario/contraseña en cada turno.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 90 },
   callbacks: {
     async signIn({ account, profile }) {
       if (account?.provider === "google") {
@@ -179,7 +181,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       options: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        // "strict" hace que el navegador descarte la cookie al entrar por una
+        // navegación de nivel superior iniciada fuera del sitio (abrir el enlace
+        // desde el lector de QR de la cámara, un acceso directo, etc.), lo que
+        // forzaba a re-loguearse aunque la sesión siguiera vigente. "lax" (el
+        // default de NextAuth) evita eso y sigue bloqueando CSRF en POST.
+        sameSite: "lax",
         path: "/",
       },
     },
