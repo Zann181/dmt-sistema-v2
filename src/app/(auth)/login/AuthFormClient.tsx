@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
-import { ShieldAlert, KeyRound, Sparkles, User, Mail, Lock, ArrowRight, UserPlus, CheckCircle } from "lucide-react"
+import { ShieldAlert, Sparkles, User, Mail, Lock, ArrowRight, UserPlus, CheckCircle } from "lucide-react"
 
 const ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Usuario o contraseña incorrectos. Por favor, intenta de nuevo.",
@@ -138,15 +138,12 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
         
         <div className="relative bg-black border border-emerald-500/30 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-[0_0_40px_rgba(16,185,129,0.4)] space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 mb-1">
-              {activeTab === "login" ? (
-                <KeyRound size={24} className="animate-pulse" />
-              ) : (
-                <UserPlus size={24} className="animate-pulse" />
-              )}
+            <div className="inline-flex w-14 h-14 rounded-full overflow-hidden mb-1 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dmt.png" alt="DMT" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-2xl font-bold tracking-widest text-emerald-500 uppercase drop-shadow-[0_0_15px_rgba(52,211,153,0.8)] text-emerald-500">
-              DMT Sistema v2
+              DMT Sistema
             </h1>
             <p className="text-emerald-500 text-[10px] uppercase tracking-wider font-semibold">
               Ingresa tus credenciales de acceso
@@ -319,9 +316,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
             </form>
           )}
 
-          <div className="text-center text-[9px] text-zinc-600 border-t border-zinc-900 pt-4 flex justify-center items-center gap-1.5 uppercase tracking-widest font-bold">
-            <ShieldAlert size={11} className="text-emerald-500 animate-pulse" />
-            <span>ACCESO EXCLUSIVO PERSONAL AUTORIZADO</span>
+          <div className="text-center text-[9px] text-zinc-600 border-t border-zinc-900 pt-4 space-y-2 uppercase tracking-widest font-bold">
+            <div className="flex justify-center items-center gap-1.5">
+              <ShieldAlert size={11} className="text-emerald-500 animate-pulse" />
+              <span>ACCESO EXCLUSIVO PERSONAL AUTORIZADO</span>
+            </div>
+            <p className="text-zinc-700 normal-case tracking-normal font-semibold">
+              Desarrollado por ZAMA Soluciones
+            </p>
           </div>
         </div>
       </div>
