@@ -88,8 +88,10 @@ export class EmailService {
         const info = await transporter.sendMail(mailOptions)
         console.log("✅ Correo enviado via SMTP:", info.messageId)
         return info
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ Error al enviar correo via SMTP:", error)
+        // Incluir la cuenta usada para saber qué credenciales rechazó el servidor
+        if (error?.message) error.message = `[${smtpConfig.user}] ${error.message}`
         throw error
       }
     }
