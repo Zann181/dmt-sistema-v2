@@ -1,0 +1,2 @@
+# Netlify DB checksums applied migrations byte-for-byte; keep LF on every OS.
+netlify/database/migrations/** text eol=lf
