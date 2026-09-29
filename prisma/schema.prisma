@@ -146,9 +146,9 @@ model Event {
   emailHost                   String @default("smtp.gmail.com") @db.VarChar(120)
   emailPort                   Int    @default(587)
   emailSecure                 Boolean @default(false)
-  emailUser                   String @default("jeffersonpher@gmail.com") @db.VarChar(120)
+  emailUser                   String @default("zamamotas@gmail.com") @db.VarChar(120)
   emailPassword               String @default("") @db.VarChar(120)
-  emailFrom                   String @default("DMT69 <jeffersonpher@gmail.com>") @db.VarChar(180)
+  emailFrom                   String @default("EVENT <zamamotas@gmail.com>") @db.VarChar(180)
 
   // Email Template
   emailSubject             String @default("Tu acceso está listo: {nombre_evento}") @db.VarChar(180)
