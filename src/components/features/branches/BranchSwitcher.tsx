@@ -4,10 +4,12 @@ import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
 import { useEffect, useState } from "react"
 import { Store, ChevronDown } from "lucide-react"
+import { useDropdown } from "./useDropdown"
 
 export function BranchSwitcher() {
   const [mounted, setMounted] = useState(false)
   const { activeBranchId, activeBranchName, setActiveBranch } = useContextStore()
+  const { open, setOpen, ref, toggle } = useDropdown()
 
   useEffect(() => {
     setMounted(true)
@@ -27,7 +29,9 @@ export function BranchSwitcher() {
   const activeBranch = branches?.find(b => b.id === activeBranchId)
 
   useEffect(() => {
-    if (mounted && branches && branches.length > 0 && !activeBranchId) {
+    if (!mounted || !branches || branches.length === 0) return
+    // Sin sucursal, o la guardada ya no es visible para este usuario: tomar la primera
+    if (!branches.some((b) => b.id === activeBranchId)) {
       setActiveBranch(branches[0].id, branches[0].name)
     }
   }, [mounted, branches, activeBranchId, setActiveBranch])
@@ -64,19 +68,28 @@ export function BranchSwitcher() {
   }
 
   return (
-    <div className="relative group">
-      <button className="flex items-center gap-2 px-3 py-2 border rounded-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="flex items-center gap-2 max-w-full px-3 py-2 border rounded-md bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
         {renderLogo(activeBranch?.logoUrl, activeBranch?.logoBgColor, "w-5 h-5")}
-        <span className="text-sm font-medium">{activeBranchName || "Seleccionar Sucursal"}</span>
-        <ChevronDown size={14} className="text-emerald-500 ml-2" />
+        <span className="text-sm font-medium truncate">{activeBranch?.name || activeBranchName || "Seleccionar Sucursal"}</span>
+        <ChevronDown size={14} className={`text-emerald-500 ml-2 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      <div className="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+      {open && (
+      <div className="mt-1 w-56 max-w-full max-h-64 overflow-y-auto bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg">
         <div className="py-1">
           {branches?.map((branch) => (
             <button
               key={branch.id}
-              onClick={() => setActiveBranch(branch.id, branch.name)}
+              type="button"
+              onClick={() => {
+                if (branch.id !== activeBranchId) setActiveBranch(branch.id, branch.name)
+                setOpen(false)
+              }}
               className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 flex items-center gap-2 ${activeBranchId === branch.id ? "bg-zinc-50 dark:bg-zinc-900 font-medium" : ""}`}
             >
               {renderLogo(branch.logoUrl, branch.logoBgColor, "w-4 h-4")}
@@ -88,6 +101,7 @@ export function BranchSwitcher() {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }
