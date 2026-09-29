@@ -534,11 +534,14 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
   const updateEventMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!selectedEvent) return
+      // Contraseña SMTP vacía = no tocar la guardada
+      const { emailPassword, ...rest } = data
       const res = await fetch(`/api/events/${selectedEvent.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
+          ...rest,
+          ...(emailPassword ? { emailPassword } : {}),
           startsAt: new Date(data.startsAt).toISOString(),
           endsAt: new Date(data.endsAt).toISOString(),
         }),
@@ -634,7 +637,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       emailPort: event.emailPort ?? 587,
       emailSecure: event.emailSecure ?? false,
       emailUser: event.emailUser ?? "jeffersonpher@gmail.com",
-      emailPassword: event.emailPassword ?? "",
+      emailPassword: "", // vacío = mantener la contraseña guardada
       emailFrom: event.emailFrom ?? "DMT69 <jeffersonpher@gmail.com>",
 
       // Email Template
@@ -1810,7 +1813,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                           type="password"
                           value={configForm.emailPassword || ""}
                           onChange={(e) => setConfigForm({ ...configForm, emailPassword: e.target.value })}
-                          placeholder="Contraseña"
+                          placeholder="Vacío = mantener la actual"
                           className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>

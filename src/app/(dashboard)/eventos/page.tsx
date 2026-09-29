@@ -126,7 +126,14 @@ export default async function EventosPage() {
     emailAccentColor: event.emailAccentColor,
     emailBorderColor: event.emailBorderColor,
     emailSectionBackgroundColor: event.emailSectionBackgroundColor,
-    emailWarningBackgroundColor: event.emailWarningBackgroundColor
+    emailWarningBackgroundColor: event.emailWarningBackgroundColor,
+    // SMTP (la contraseña no se envía al navegador; el formulario la deja vacía = mantener)
+    emailHost: event.emailHost,
+    emailPort: event.emailPort,
+    emailSecure: event.emailSecure,
+    emailUser: event.emailUser,
+    emailFrom: event.emailFrom,
+    whatsappMessage: event.whatsappMessage
   }))
 
   return <EventosClient initialEvents={events} branches={branches} />
