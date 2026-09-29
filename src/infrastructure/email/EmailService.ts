@@ -35,6 +35,18 @@ export class EmailService {
       contentType: string
     }>
   ): Promise<any> {
+    // Campos SMTP vacíos en el evento caen a las variables de entorno (SMTP_*),
+    // así la contraseña no tiene que vivir en el código ni en cada evento.
+    if (smtpConfig) {
+      smtpConfig = {
+        ...smtpConfig,
+        host: smtpConfig.host || process.env.SMTP_HOST || "smtp.gmail.com",
+        user: smtpConfig.user || process.env.SMTP_USER,
+        pass: smtpConfig.pass || process.env.SMTP_PASSWORD,
+        from: smtpConfig.from || process.env.SMTP_FROM,
+      }
+    }
+
     // Si se especifican credenciales SMTP, enviar vía nodemailer
     if (smtpConfig && smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
       try {

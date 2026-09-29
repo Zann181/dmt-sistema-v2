@@ -69,8 +69,8 @@ Cuando creas un nuevo evento, el sistema viene pre-rellenado con datos de ejempl
 - **Servidor SMTP (Gmail por defecto)**:
   - Servidor: `smtp.gmail.com`
   - Puerto: `587` (con TLS)
-  - Usuario: `zamamotas@gmail.com`
-  - Contraseña: `uxxg iyhg rgsb xbmw` (Contraseña de aplicación de Gmail)
+  - Usuario: `jeffersonpher@gmail.com`
+  - Contraseña: vacía en el evento; se toma de la variable de entorno `SMTP_PASSWORD` (Contraseña de aplicación de Gmail)
 - **Modificación**: Puedes alterar estas credenciales directamente al crear el evento (sección avanzada colapsable) o editarlas más tarde en **Eventos** ➔ **Configurar** ➔ pestaña **Plantilla Email**.
 - **Flyer y QR**:
   - Los correos enviarán el código QR del asistente automáticamente como imagen inline referenciando `cid:acceso_qr.png`.

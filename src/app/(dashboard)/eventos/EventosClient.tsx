@@ -124,9 +124,9 @@ const getInitialCreateForm = (branchId: string) => ({
   emailHost: "smtp.gmail.com",
   emailPort: 587,
   emailSecure: false,
-  emailUser: "zamamotas@gmail.com",
-  emailPassword: "uxxg iyhg rgsb xbmw",
-  emailFrom: "EVENT <zamamotas@gmail.com>",
+  emailUser: "jeffersonpher@gmail.com",
+  emailPassword: "",
+  emailFrom: "DMT69 <jeffersonpher@gmail.com>",
 
   // Email Template
   emailSubject: "Tu acceso está listo: {nombre_evento}",
@@ -633,9 +633,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
       emailHost: event.emailHost ?? "smtp.gmail.com",
       emailPort: event.emailPort ?? 587,
       emailSecure: event.emailSecure ?? false,
-      emailUser: event.emailUser ?? "zamamotas@gmail.com",
-      emailPassword: event.emailPassword ?? "uxxg iyhg rgsb xbmw",
-      emailFrom: event.emailFrom ?? "EVENT <zamamotas@gmail.com>",
+      emailUser: event.emailUser ?? "jeffersonpher@gmail.com",
+      emailPassword: event.emailPassword ?? "",
+      emailFrom: event.emailFrom ?? "DMT69 <jeffersonpher@gmail.com>",
 
       // Email Template
       emailSubject: event.emailSubject || "",
