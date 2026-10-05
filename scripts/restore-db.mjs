@@ -7,7 +7,7 @@
 // Pide la connection string DIRECTA de Neon (sin "-pooler" en el host) por consola,
 // o la toma de $env:DATABASE_URL_UNPOOLED / $env:DATABASE_URL.
 //
-// 1. Si la base no tiene las tablas, las crea con `prisma migrate deploy`.
+// 1. Aplica las migraciones pendientes con `prisma migrate deploy` (crea las tablas si no existen).
 // 2. Inserta las filas en orden de dependencias (foreign keys), en una transacción.
 // 3. Verifica que los conteos coincidan con manifest.json.
 
@@ -43,11 +43,6 @@ const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(connectionString)
 const client = new pg.Client({ connectionString, ...(isLocal ? { ssl: false } : {}) })
 await client.connect()
 
-async function tableExists(name) {
-  const { rows } = await client.query("SELECT to_regclass($1) AS t", [`public.${quote(name)}`])
-  return rows[0].t !== null
-}
-
 // Orden topológico: primero las tablas de las que dependen las demás
 async function dependencyOrder() {
   const { rows } = await client.query(`
@@ -72,13 +67,12 @@ async function dependencyOrder() {
 }
 
 try {
-  if (!(await tableExists("users"))) {
-    console.log("La base no tiene tablas: aplicando migraciones con prisma migrate deploy...")
-    execSync("npx prisma migrate deploy", {
-      stdio: "inherit",
-      env: { ...process.env, DATABASE_URL_UNPOOLED: connectionString },
-    })
-  }
+  // Siempre: crea las tablas en una base nueva y aplica migraciones pendientes en una existente
+  console.log("Aplicando migraciones con prisma migrate deploy...")
+  execSync("npx prisma migrate deploy", {
+    stdio: "inherit",
+    env: { ...process.env, DATABASE_URL_UNPOOLED: connectionString },
+  })
 
   const order = await dependencyOrder()
 
