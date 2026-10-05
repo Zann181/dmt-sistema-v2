@@ -1,12 +1,12 @@
-// Backup de la base de datos de producción (Netlify DB / Postgres) a JSON local.
+// Backup de la base de datos de producción (Postgres / Neon) a JSON local.
 //
 // Uso (PowerShell):
 //   node scripts/backup-db.mjs [carpeta-destino]
-// Pide la connection string de Netlify DB por consola (o la toma de
+// Pide la connection string de la base por consola (o la toma de
 // $env:BACKUP_DATABASE_URL si está definida).
 //
 // Genera <carpeta-destino>/db/ (por defecto backups/<timestamp>/db/) con un JSON
-// por tabla, el schema de Prisma, las migraciones de Netlify y un manifest.json
+// por tabla, el schema de Prisma, las migraciones y un manifest.json
 // con conteos. El directorio backups/ está en .gitignore: contiene datos
 // personales y hashes de contraseñas.
 
@@ -18,7 +18,7 @@ import readline from "node:readline/promises"
 let connectionString = process.env.BACKUP_DATABASE_URL
 if (!connectionString) {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-  connectionString = (await rl.question("Connection string de Netlify DB (postgresql://...): ")).trim()
+  connectionString = (await rl.question("Connection string de la base (postgresql://...): ")).trim()
   rl.close()
 }
 if (!connectionString) {
@@ -63,7 +63,7 @@ try {
 
   fs.writeFileSync(path.join(outDir, "manifest.json"), JSON.stringify(manifest, null, 2))
   fs.copyFileSync("prisma/schema.prisma", path.join(outDir, "schema.prisma"))
-  fs.cpSync("netlify/database/migrations", path.join(outDir, "migrations"), { recursive: true })
+  fs.cpSync("prisma/migrations", path.join(outDir, "migrations"), { recursive: true })
 
   console.log(`\nBackup listo en ${outDir}`)
 } catch (err) {

@@ -39,23 +39,36 @@ if not defined LOCAL_IP (
 )
 
 echo [*] Configurando entorno para permitir acceso desde celulares...
-:: Actualizar .env.local con la IP detectada para que la sesion funcione en el celular
+:: Las URLs con la IP detectada van en .env.development.local (pisa a .env.local en dev).
+:: .env.local queda para DATABASE_URL de Neon, que este .bat nunca toca.
 :: HTTPS es obligatorio para que la camara (escaner QR) funcione en el celular
-echo NEXTAUTH_URL=https://%LOCAL_IP%:%PORT%> .env.local
-echo AUTH_URL=https://%LOCAL_IP%:%PORT%>> .env.local
-echo NEXT_PUBLIC_APP_URL=https://%LOCAL_IP%:%PORT%>> .env.local
-echo NEXT_PUBLIC_MEDIA_BASE_URL=https://%LOCAL_IP%:%PORT%>> .env.local
+echo NEXTAUTH_URL=https://%LOCAL_IP%:%PORT%> .env.development.local
+echo AUTH_URL=https://%LOCAL_IP%:%PORT%>> .env.development.local
+echo NEXT_PUBLIC_APP_URL=https://%LOCAL_IP%:%PORT%>> .env.development.local
+echo NEXT_PUBLIC_MEDIA_BASE_URL=https://%LOCAL_IP%:%PORT%>> .env.development.local
+
+:: La base de datos es la de Neon (produccion). Se descarga una vez con:
+::   npx vercel env pull .env.local --environment=production
+findstr /B /C:"DATABASE_URL=" .env.local >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo [!] Falta DATABASE_URL en .env.local. Ejecuta una sola vez:
+    echo     npx vercel login
+    echo     npx vercel link --project dmt69
+    echo     npx vercel env pull .env.local --environment=production
+    pause
+    exit /b 1
+)
 
 echo.
 echo [*] Instalando dependencias (si es necesario)...
 call npm install
 
 echo.
-echo [*] Iniciando el servidor con la base de datos de PRODUCCION (Netlify)...
+echo [*] Iniciando el servidor con la base de datos de PRODUCCION (Neon)...
 :: El servidor corre en su propia ventana minimizada; este .bat la cierra la proxima vez.
-:: scripts\start-local.mjs pide la conexion a Netlify y arranca next dev con ella.
 if exist .dmt-error.log del .dmt-error.log
-start "%SERVER_TITLE%" /min cmd /c "title %SERVER_TITLE% && node scripts\start-local.mjs"
+start "%SERVER_TITLE%" /min cmd /c "title %SERVER_TITLE% && npx next dev --experimental-https --port %PORT% || echo [!] El servidor se detuvo con error> .dmt-error.log"
 
 echo [*] Esperando a que el servidor responda...
 for /l %%i in (1,1,90) do (

@@ -1,8 +1,0 @@
-[build]
-  command = "npm run build"
-  # Cada deploy a producción cuesta 15 créditos. Si el commit no toca nada que afecte
-  # a la app (docs, scripts locales, .bat, backups), Netlify cancela el build y no cobra.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- src prisma netlify public package.json package-lock.json next.config.ts netlify.toml tsconfig.json postcss.config.mjs components.json"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"

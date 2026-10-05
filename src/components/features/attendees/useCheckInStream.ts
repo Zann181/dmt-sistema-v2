@@ -18,7 +18,31 @@ interface UseCheckInStreamOptions {
 }
 
 // Cada cuánto se pregunta por check-ins nuevos (solo con la pestaña visible)
-const POLL_INTERVAL_MS = 15_000
+const POLL_INTERVAL_MS = 30_000
+// Sin tocar la pantalla este tiempo se deja de consultar. Así un celular olvidado
+// abierto no mantiene despierta la base (Neon Free: 100 CU-hora/mes) ni gasta
+// invocaciones de Vercel; al volver a tocarla se reanuda al instante.
+const IDLE_AFTER_MS = 10 * 60_000
+
+function useUserIdle(timeoutMs: number) {
+  const [isIdle, setIsIdle] = useState(false)
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>
+    const reset = () => {
+      setIsIdle(false)
+      clearTimeout(timer)
+      timer = setTimeout(() => setIsIdle(true), timeoutMs)
+    }
+    const events = ["pointerdown", "keydown", "touchstart", "visibilitychange"] as const
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }))
+    reset()
+    return () => {
+      clearTimeout(timer)
+      events.forEach((e) => window.removeEventListener(e, reset))
+    }
+  }, [timeoutMs])
+  return isIdle
+}
 
 /**
  * Check-ins hechos desde otros dispositivos mientras la pantalla está abierta.
@@ -27,6 +51,7 @@ const POLL_INTERVAL_MS = 15_000
  */
 export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStreamOptions = {}) {
   const queryClient = useQueryClient()
+  const isIdle = useUserIdle(IDLE_AFTER_MS)
   const [checkInCount, setCheckInCount] = useState(0)
   const cursorRef = useRef<string | null>(null)
   const onCheckInRef = useRef(onCheckIn)
@@ -40,7 +65,7 @@ export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStr
     setCheckInCount(0)
   }, [branchId, eventId])
 
-  const { data, isError, isSuccess } = useQuery({
+  const { data, isError, isSuccess, refetch } = useQuery({
     queryKey: ["check-in-stream", branchId, eventId],
     queryFn: async () => {
       const params = new URLSearchParams({ branchId: branchId!, eventId: eventId! })
@@ -50,11 +75,18 @@ export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStr
       return (await res.json()) as { data: CheckInEvent[]; cursor: string }
     },
     enabled: !!branchId && !!eventId,
-    refetchInterval: POLL_INTERVAL_MS,
+    refetchInterval: isIdle ? false : POLL_INTERVAL_MS,
     refetchIntervalInBackground: false,
     staleTime: 0,
     gcTime: 0,
   })
+
+  // Al volver de la inactividad (solo en esa transición), ponerse al día de inmediato
+  const wasIdleRef = useRef(false)
+  useEffect(() => {
+    if (wasIdleRef.current && !isIdle && branchId && eventId) refetch()
+    wasIdleRef.current = isIdle
+  }, [isIdle, branchId, eventId, refetch])
 
   useEffect(() => {
     if (!data) return
@@ -68,5 +100,5 @@ export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStr
     queryClient.invalidateQueries({ queryKey: ["attendees-stats", branchId, eventId] })
   }, [data, queryClient, branchId, eventId])
 
-  return { isConnected: isSuccess && !isError, checkInCount }
+  return { isConnected: isSuccess && !isError && !isIdle, checkInCount }
 }

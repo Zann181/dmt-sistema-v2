@@ -30,13 +30,8 @@ export async function POST(req: Request) {
     const access = await requireBranchPermission(session, parsed.branchId, parsed.module === "BAR" ? "accessSales" : "accessAttendees", parsed.eventId)
     if (access instanceof NextResponse) return access
 
-    // Resolve user role in this branch context
-    const membership = await prisma.branchMembership.findFirst({
-      where: { userId: session.user.id, branchId: parsed.branchId }
-    })
-    const createdRole = membership 
-      ? membership.role 
-      : (session.user.isSuperuser || session.user.isGlobalAdmin ? "admin" : "staff")
+    // Rol con el que actúa en esta sucursal/evento (incluye staff asignado solo al evento)
+    const createdRole = access.role ?? (access.isGlobal ? "admin" : "staff")
 
     // Create Cash Movement and nested CashMovementPayment record
     const movement = await prisma.cashMovement.create({

@@ -37,12 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Categoría no encontrada" }, { status: 400 })
     }
 
-    const membership = await prisma.branchMembership.findFirst({
-      where: { userId: session.user.id, branchId: parsed.branchId }
-    })
-    const createdRole = membership
-      ? membership.role
-      : (session.user.isSuperuser || session.user.isGlobalAdmin ? "admin" : "staff")
+    // Rol con el que actúa en esta sucursal/evento (incluye staff asignado solo al evento)
+    const createdRole = access.role ?? (access.isGlobal ? "admin" : "staff")
 
     const totalAmount = parsed.quantity * parsed.unitAmount
     const description = parsed.description || `Ingreso día — ${parsed.quantity} persona${parsed.quantity === 1 ? "" : "s"}`

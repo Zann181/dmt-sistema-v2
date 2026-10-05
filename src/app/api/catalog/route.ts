@@ -5,6 +5,7 @@ import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const createProductSchema = z.object({
   name: z.string().min(1).max(150),
@@ -14,12 +15,13 @@ const createProductSchema = z.object({
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessCatalog) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const branchId = session.user.activeBranchId
+  const branchId = new URL(req.url).searchParams.get("branchId") || session.user.activeBranchId
   if (!branchId) return NextResponse.json({ data: [] })
+
+  const access = await requireBranchPermission(session, branchId, "accessCatalog")
+  if (access instanceof NextResponse) return access
 
   try {
     const products = await CatalogService.getBranchProducts(branchId)
@@ -31,14 +33,16 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessCatalog) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-  const branchId = session.user.activeBranchId
-  if (!branchId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const body = await req.json()
     const parsed = createProductSchema.parse(body)
+
+    const branchId = body.branchId || session.user.activeBranchId
+    if (!branchId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
+    const access = await requireBranchPermission(session, branchId, "accessCatalog")
+    if (access instanceof NextResponse) return access
 
     const product = await prisma.product.create({
       data: {

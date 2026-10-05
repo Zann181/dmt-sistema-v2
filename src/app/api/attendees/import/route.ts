@@ -43,6 +43,10 @@ async function loadQrLogoBuffer(qrLogoUrl: string) {
   return Buffer.from("")
 }
 
+// Vercel Hobby permite hasta 300 s por función (incluido el tiempo de streaming).
+// A ~1–3 s por correo SMTP, una importación grande puede cortarse: importar por partes.
+export const maxDuration = 300
+
 export async function POST(req: Request) {
   const session = await auth()
   if (!session?.user) {

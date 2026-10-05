@@ -2,7 +2,7 @@
 
 Sistema de gestión integral para el control de accesos, venta en barra (POS), administración de inventario y flujos de caja de las sucursales y eventos de **DMT**. 
 
-Este proyecto representa una reescritura completa del sistema de gestión anterior (originalmente desarrollado en un monolito Django) hacia una arquitectura moderna, escalable y reactiva basada en **Next.js 16 (App Router)**, **React 19**, **Prisma 6** y **Tailwind CSS v4**, diseñada para ser desplegada en **Vercel** de manera gratuita combinada con **Neon PostgreSQL** o **Supabase**.
+Este proyecto representa una reescritura completa del sistema de gestión anterior (originalmente desarrollado en un monolito Django) hacia una arquitectura moderna, escalable y reactiva basada en **Next.js 16 (App Router)**, **React 19**, **Prisma 7** y **Tailwind CSS v4**, diseñada para ser desplegada en **Vercel** de manera gratuita combinada con **Neon PostgreSQL**.
 
 ---
 
@@ -33,9 +33,9 @@ graph TD
     Domain["Capa de Dominio (DDD)<br>src/domains/[nombre]/<br>(Entities, Value Objects, Services, Repos)"]
     
     InfraPrisma["Infraestructura: ORM Prisma 6"]
-    DB[(Base de Datos Persistente<br>PostgreSQL en Neon / Supabase)]
+    DB[(Base de Datos Persistente<br>PostgreSQL en Neon)]
     
-    InfraBlob["Infraestructura: Vercel Blob Storage<br>(Logotipos, Flyers, Multimedia)"]
+    InfraBlob["Infraestructura: imágenes generadas con sharp<br>(QR, flyers, tarjetas)"]
     InfraMail["Infraestructura: SMTP / Resend<br>(Confirmación & Envío de QRs)"]
     InfraQR["Infraestructura: Sharp / Node-QRCode<br>(Generador Server-side de Accesos)"]
 
@@ -341,7 +341,7 @@ Sigue estas instrucciones detalladas para levantar el entorno de desarrollo loca
 ### 📋 Requisitos Previos
 Asegúrate de contar con los siguientes elementos instalados:
 *   **Node.js** (Versión 18 o superior recomendada, se prefiere v22). Descárgalo de [nodejs.org](https://nodejs.org/).
-*   **PostgreSQL** de forma local o una cuenta en un proveedor en la nube como [Neon.tech](https://neon.tech/) o [Supabase](https://supabase.com/).
+*   **PostgreSQL** de forma local o una cuenta en un proveedor en la nube como [Neon.tech](https://neon.tech/).
 
 ---
 
@@ -362,11 +362,11 @@ Abre el archivo `.env` configurado e introduce los valores reales requeridos:
     openssl rand -base64 32
     ```
 *   **`DATABASE_URL`**: Tu cadena de conexión PostgreSQL.
-    *   *Ejemplo Neon/Supabase:* `postgresql://usuario:contraseña@ep-pool-name.us-east-2.aws.neon.tech/neondb?sslmode=require`
+    *   *Ejemplo Neon:* `postgresql://usuario:contraseña@ep-pool-name.us-east-2.aws.neon.tech/neondb?sslmode=require`
     *   *Ejemplo local:* `postgresql://postgres:contraseña@localhost:5432/dmt_db`
     *   *Nota:* Si dejas la cadena con la palabra clave `dummy` por defecto, el sistema usará un almacenamiento simulado en memoria no persistente.
 *   **`DATABASE_DIRECT_URL`**: Conexión directa a la base de datos (requerido por Neon para ejecutar migraciones directas).
-*   **`BLOB_READ_WRITE_TOKEN`**: Token de Vercel Blob para subir imágenes (logos y flyers). Puedes obtenerlo desde la consola de Vercel Storage.
+*   **`DATABASE_URL_UNPOOLED`**: conexión directa de Neon (sin `-pooler`), la usan las migraciones (`npm run db:migrate`).
 *   **`RESEND_API_KEY`** & **`RESEND_FROM_EMAIL`**: API key de Resend para el envío masivo de invitaciones y correos de soporte técnico de QR. En desarrollo puedes usar `onboarding@resend.dev`.
 
 ### Paso 3: Sincronizar el Esquema de la Base de Datos

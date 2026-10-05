@@ -1,118 +1,62 @@
-# Guía de Despliegue: DMT Sistema v2 en Vercel + Neon
+# Despliegue en Vercel + Neon
 
-Esta guía explica paso a paso cómo preparar la base de datos, verificar su seguridad y realizar el despliegue del sistema de eventos en **Vercel** usando **Neon PostgreSQL Serverless**.
+Producción: **https://dmt69.vercel.app**. El proyecto Vercel `dmt69` (equipo DMT) despliega automáticamente cada push a `master`. La base de datos es Neon, conectada mediante la integración del Marketplace de Vercel.
 
----
+## Arquitectura
 
-## 🔒 Auditoría y Seguridad de la Conexión
-
-Hemos verificado que el mecanismo de conexión a la base de datos es robusto y seguro para entornos de producción en la nube:
-
-1. **Encriptación SSL Forzada**:
-   - Cuando utilizas **Neon Serverless** (`neon.tech`), la conexión se realiza a través de WebSockets encriptados de forma nativa (`wss://`) mediante la biblioteca `@neondatabase/serverless` y el adaptador de Prisma `PrismaNeon`.
-   - Si utilizas cualquier otro proveedor de PostgreSQL (ej. Supabase, AWS RDS), Prisma Client requiere y negocia conexiones SSL por defecto. Se recomienda añadir el parámetro `?sslmode=require` al final de tu cadena de conexión.
-2. **Conexión Separada para Migraciones (DDL)**:
-   - Configurar `DATABASE_DIRECT_URL` permite que los cambios estructurales se realicen directamente sobre la base de datos sin pasar por el pool de conexiones (PgBouncer), evitando bloqueos y errores de "Prepared statements".
-
-Puedes comprobar la seguridad de tu base de datos local o remota en cualquier momento ejecutando:
-```bash
-$env:NODE_PATH="node_modules"; npx tsx .gemini/antigravity/brain/fe20fa15-3f3c-4a09-b540-272a7850a3b9/scratch/test-db.ts
+```
+Navegador ──► Vercel (iad1)  Next.js 16: páginas + /api/* como funciones Node (Fluid compute)
+                 │  pg Pool + @prisma/adapter-pg  (DATABASE_URL, pooled)
+                 ▼
+              Neon Postgres (aws-us-east-1)       migraciones con DATABASE_URL_UNPOOLED
 ```
 
----
+- Conexión: `src/infrastructure/database/prisma.ts`. Usa un Pool TCP contra la URL *pooled* y `attachDatabasePool` (lo que recomiendan Prisma 7 y Neon para Vercel).
+- Migraciones: `prisma/migrations/`, aplicadas con `npx prisma migrate deploy`, que usa `DATABASE_URL_UNPOOLED` según `prisma.config.ts`. **No** corren en el build, para que un preview nunca migre producción.
+- Imágenes (`qr.png`, `flyer.png`, `card.png`): se cachean en el CDN con `Vercel-CDN-Cache-Control`.
 
-## 🛠️ Paso a Paso para el Despliegue
+## Variables de entorno (Vercel → Settings → Environment Variables)
 
-### Paso 1: Crear la Base de Datos en Neon
+| Variable | Origen | Notas |
+|---|---|---|
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `PG*`, `POSTGRES_*` | Integración Neon (automático) | No editar a mano |
+| `AUTH_SECRET` | **Manual, tipo Sensitive** | `openssl rand -base64 32`. Sin esto el login no funciona en producción |
+| `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MEDIA_BASE_URL` | Manual | `https://dmt69.vercel.app`. Se usan en links de email/WhatsApp |
+| `NEXT_PUBLIC_TIMEZONE` | Manual (opcional) | `America/Bogota` |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Manual (opcional) | Valores por defecto. Cada evento tiene su propio remitente en la DB |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Manual (opcional) | Login con Google |
 
-1. Ve a **[https://neon.tech](https://neon.tech)** y crea una cuenta gratuita.
-2. Crea un nuevo proyecto llamado `dmt-sistema-v2`.
-3. Copia tus dos cadenas de conexión desde el dashboard de Neon:
-   - **DATABASE_URL (Pooled)**: Es la URL de conexión que tiene habilitado el Connection Pooling (suele incluir `?sslmode=require&pgbouncer=true` o similar). Se usa para la ejecución del servidor web en Vercel.
-   - **DATABASE_DIRECT_URL (Direct Connection)**: Es la URL directa a la base de datos (puerto `5432` estándar). Se usa para crear/modificar tablas y correr seeds.
+## Límites de los planes gratuitos (y cómo los cuida el código)
 
----
+| Límite | Valor | Mitigación |
+|---|---|---|
+| **Vercel Hobby: solo uso no comercial** | — | Para un negocio corresponde Pro ($20/mes) |
+| Duración máxima de una función | 300 s | `maxDuration = 300` en la importación. A ~1–3 s por correo, importar por partes si hay más de ~100 asistentes |
+| Vercel: CPU activa / invocaciones | 4 h / 1 M al mes | Polling de check-ins cada 30 s, solo con la pestaña visible y pausado tras 10 min sin uso |
+| **Neon Free: cómputo** | 100 CU-hora/mes; se duerme tras 5 min sin uso | Mismo polling con pausa por inactividad. En Neon → Compute, poner el autoscaling máximo en **0.25 CU** |
+| Neon: historial de restauración | 6 h | Backups propios con `scripts/backup-db.mjs` |
+| Gmail SMTP | ~500 correos/día por cuenta | Repartir entre los remitentes de cada evento |
 
-### Paso 2: Configurar tu Entorno Local y Crear las Tablas
+## Configuración recomendada en Neon / integración
 
-1. En la raíz de tu proyecto, abre tu archivo `.env` y añade las URLs que copiaste:
-   ```env
-   # Cadena de conexión con Pooling (para la App)
-   DATABASE_URL="postgresql://usuario:contraseña@tu-host-pooler.neon.tech/neondb?sslmode=require&pgbouncer=true"
+- **Desmarcar el entorno Preview** en la integración para que los deploys de prueba no usen la base de producción.
+- **Dejar apagado "preview branching":** cada rama consume del mismo cupo de 100 CU-hora.
+- Autoscaling: mínimo y máximo en 0.25 CU.
 
-   # Cadena de conexión Directa (para Migraciones)
-   DATABASE_DIRECT_URL="postgresql://usuario:contraseña@tu-host-directo.neon.tech/neondb?sslmode=require"
-   ```
-2. Ejecuta la sincronización del esquema para crear todas las tablas en tu base de datos de Neon:
-   ```bash
-   npm run db:push
-   ```
-3. Ejecuta el seed para sembrar los roles, categorías iniciales y el usuario administrador por defecto (`admin` / `CambiarEstaContraseña123!`):
-   ```bash
-   npm run db:seed
-   ```
-   *(Nota: Una vez hecho esto, tu servidor local `npm run dev` ya estará guardando y cargando todo de tu base de datos de Neon, por lo que tus cambios no se perderán al reiniciar el servidor).*
+## Operación
 
----
+```powershell
+# Backup (pide la connection string; la directa de Neon sirve)
+node scripts/backup-db.mjs
 
-### Paso 3: Configurar el Almacenamiento e Email
+# Restaurar en una base vacía (crea las tablas con prisma migrate deploy)
+node scripts/restore-db.mjs backups/<carpeta>/db
 
-El sistema requiere servicios en la nube para guardar imágenes (flyers y logos) y enviar correos electrónicos:
+# Restaurar sobrescribiendo los datos actuales (p. ej. sincronización final)
+node scripts/restore-db.mjs backups/<carpeta>/db --reemplazar
 
-1. **Vercel Blob** (Imágenes y códigos QR):
-   - En tu panel de Vercel ➔ ve a la pestaña **Storage** ➔ selecciona **Blob** ➔ haz clic en **Create Store**.
-   - Copia el token de acceso generado: `BLOB_READ_WRITE_TOKEN`.
-2. **Resend** (Envío de Emails):
-   - Regístrate en **[https://resend.com](https://resend.com)** (cuenta gratuita de 3,000 emails/mes).
-   - Crea una API Key.
-   - Si tienes un dominio propio, verifícalo en Resend. Si estás haciendo pruebas, puedes usar el correo remitente por defecto `onboarding@resend.dev`.
+# Aplicar migraciones nuevas a producción
+$env:DATABASE_URL_UNPOOLED = "<connection string directa>"; npx prisma migrate deploy
+```
 
----
-
-### Paso 4: Agregar Variables de Entorno en Vercel
-
-En el panel de tu proyecto en **Vercel** (Settings ➔ Environment Variables), añade **todas** las siguientes variables de entorno:
-
-| Variable | Valor / Ejemplo | Propósito |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | `postgresql://...pgbouncer=true` | Conexión agrupada a Neon |
-| `DATABASE_DIRECT_URL` | `postgresql://...` (puerto 5432) | Conexión directa a Neon |
-| `BLOB_READ_WRITE_TOKEN` | `vercel_blob_rw_...` | Subida de imágenes a Vercel Blob |
-| `RESEND_API_KEY` | `re_...` | API Key para despacho de emails |
-| `RESEND_FROM_EMAIL` | `no-reply@tudominio.com` o `onboarding@resend.dev` | Remitente del ticket de acceso |
-| `AUTH_SECRET` | Genera uno con `openssl rand -base64 32` | Encriptación de sesiones Auth.js |
-| `NEXT_PUBLIC_APP_URL` | `https://tu-proyecto.vercel.app` | URL base para los enlaces en correos y QR |
-| `NEXT_PUBLIC_MEDIA_BASE_URL` | `https://tu-proyecto.vercel.app` | URL base para renderizar flyer/logos |
-| `NODE_ENV` | `production` | Modo de ejecución optimizado |
-
----
-
-### Paso 5: Desplegar la Aplicación
-
-Puedes desplegar conectando tu repositorio de GitHub a Vercel para despliegues automáticos (recomendado) o usando **Vercel CLI**:
-
-#### Opción A: Conectando GitHub (Recomendada)
-1. Sube tu código a un repositorio de GitHub.
-2. En Vercel Dashboard ➔ haz clic en **Add New** ➔ **Project**.
-3. Importa tu repositorio.
-4. Asegúrate de añadir las variables de entorno listadas en el Paso 4.
-5. Haz clic en **Deploy**. Cada vez que hagas `git push`, Vercel actualizará tu app automáticamente.
-
-#### Opción B: Usando Vercel CLI
-1. Instala Vercel CLI si no lo tienes:
-   ```bash
-   npm i -g vercel
-   ```
-2. Inicia sesión:
-   ```bash
-   vercel login
-   ```
-3. Ejecuta el comando de despliegue inicial en la carpeta raíz del proyecto:
-   ```bash
-   vercel
-   ```
-   *(Sigue las preguntas en pantalla para vincular el proyecto).*
-4. Despliega a producción final:
-   ```bash
-   vercel --prod
-   ```
+Desarrollo local contra la base de producción: `arrancar.bat`. La primera vez pide `npx vercel env pull .env.local --environment=production`.

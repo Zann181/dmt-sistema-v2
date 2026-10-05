@@ -6,8 +6,8 @@ import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 export const dynamic = "force-dynamic"
 
-// Reemplaza el stream SSE de /api/realtime/check-in: en Netlify una conexión SSE
-// mantiene una función abierta (se cobra por tiempo) y consultaba la base cada 2 s.
+// Reemplaza el stream SSE de /api/realtime/check-in: en serverless una conexión SSE
+// mantiene una función abierta (se cobra por tiempo) y la base nunca se duerme.
 // Ahora el cliente pregunta cada pocos segundos "¿qué check-ins hubo desde <cursor>?"
 // y la función responde y termina. El cursor lo da el servidor, así no se pierden
 // check-ins entre consultas ni por diferencias de reloj del celular.

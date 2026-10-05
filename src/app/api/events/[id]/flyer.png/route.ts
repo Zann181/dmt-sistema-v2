@@ -67,6 +67,8 @@ export async function GET(
         "Content-Type": "image/png",
         "Content-Disposition": `attachment; filename="flyer_${event.slug}.png"`,
         "Cache-Control": "public, max-age=31536000, immutable",
+        // Cache del CDN de Vercel: las siguientes descargas no ejecutan la función
+        "Vercel-CDN-Cache-Control": "max-age=31536000",
       },
     })
   } catch (error: any) {

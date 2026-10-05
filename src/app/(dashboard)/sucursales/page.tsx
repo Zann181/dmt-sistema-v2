@@ -13,7 +13,7 @@ export default async function SucursalesPage() {
   const branchesRaw = session.user.isSuperuser || session.user.isGlobalAdmin
     ? await prisma.branch.findMany({ orderBy: { createdAt: "desc" } })
     : (await prisma.branchMembership.findMany({
-        where: { userId: session.user.id },
+        where: { userId: session.user.id, isActive: true },
         include: { branch: true }
       })).map((m: any) => m.branch)
 
@@ -27,6 +27,8 @@ export default async function SucursalesPage() {
     pageBackgroundColor: b.pageBackgroundColor || "#f8f9fa",
     surfaceColor: b.surfaceColor || "#ffffff",
     panelColor: b.panelColor || "#f0f0f0",
+    textColor: b.textColor || "#ffffff",
+    titleColor: b.titleColor || "#ffffff",
     logoUrl: b.logoUrl,
     logoBgColor: b.logoBgColor || "#f4f4f5",
     logoSize: b.logoSize || 64,

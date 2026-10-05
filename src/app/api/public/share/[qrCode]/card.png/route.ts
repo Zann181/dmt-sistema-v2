@@ -69,6 +69,8 @@ export async function GET(
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=86400",
+        // Cache del CDN de Vercel: las siguientes descargas no ejecutan la función
+        "Vercel-CDN-Cache-Control": "max-age=86400",
       },
     })
   } catch (error: any) {

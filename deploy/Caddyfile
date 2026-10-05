@@ -1,6 +1,0 @@
-# HTTPS automático con Let's Encrypt para el dominio de .env.production (DOMAIN).
-# Sin dominio propio sirve <ip-con-guiones>.sslip.io, p. ej. 129-146-10-20.sslip.io
-{$DOMAIN} {
-	encode zstd gzip
-	reverse_proxy app:3000
-}

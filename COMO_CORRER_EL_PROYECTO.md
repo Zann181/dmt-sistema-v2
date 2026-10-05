@@ -20,27 +20,22 @@ Abre tu terminal en la carpeta del proyecto `dmt-sistema-v2` e instala los paque
 npm install
 ```
 
-### 2. Configurar la Base de Datos Persistente
-Para evitar el uso del almacenamiento simulado en memoria (el cual borra los datos cada vez que editas código), debes conectar una base de datos real.
+### 2. Configurar la Base de Datos (Neon)
+La app ya no tiene base simulada en memoria: sin `DATABASE_URL` las consultas fallan.
 
-1. Abre el archivo `.env` en la raíz del proyecto.
-2. Localiza la sección de base de datos:
-   ```env
-   # ─── Base de Datos (Neon PostgreSQL) ───────────────────
-   DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-   ```
-3. Cambia la URL por tu cadena de conexión real de PostgreSQL.
-   - **Si usas Neon.tech** (Recomendado): Copia la connection string de tu dashboard (ej. `postgresql://usuario:contraseña@ep-pool-name.us-east-2.aws.neon.tech/neondb?sslmode=require`).
-   - **Si usas PostgreSQL local**: Configura los datos locales (ej. `postgresql://postgres:tu_contraseña@localhost:5432/dmt_db`).
-4. (Opcional) Configura `DATABASE_DIRECT_URL` si tu proveedor lo requiere para migraciones directas.
+- **Base de producción (Neon, vía Vercel):** se descarga una vez:
+  ```bash
+  npx vercel login
+  npx vercel link --project dmt69
+  npx vercel env pull .env.local --environment=production
+  ```
+  Cuidado: todo lo que hagas en local modifica los datos reales.
+- **Postgres local** (para probar sin tocar producción): `docker compose up -d` y en `.env.local` pon `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/dmt_sistema_db`.
 
-> [!IMPORTANT]  
-> Al remover la palabra `dummy` de la URL, el sistema automáticamente desactivará la base de datos simulada en memoria y guardará toda la información de forma permanente.
-
-### 3. Sincronizar el Esquema de la Base de Datos
-Una vez configurada la URL real en el `.env`, ejecuta el siguiente comando para crear las tablas en tu base de datos PostgreSQL:
+### 3. Crear las tablas
+Solo en una base nueva o vacía:
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
 ### 4. Poblar la Base de Datos con Datos de Prueba (Seed)
