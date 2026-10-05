@@ -28,10 +28,17 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const activeBranchId = cookieStore.get("activeBranchId")?.value;
 
+  // Solo los colores del tema: la fila completa incluye el logo en base64 y esto
+  // corre en cada render de página.
+  const themeSelect = {
+    primaryColor: true, secondaryColor: true, pageBackgroundColor: true,
+    surfaceColor: true, panelColor: true, textColor: true, titleColor: true,
+  } as const;
+
   let branch = null;
   if (activeBranchId) {
     try {
-      branch = await prisma.branch.findUnique({ where: { id: activeBranchId } });
+      branch = await prisma.branch.findUnique({ where: { id: activeBranchId }, select: themeSelect });
     } catch (e) {
       // ignore
     }
@@ -41,6 +48,7 @@ export default async function RootLayout({
       branch = await prisma.branch.findFirst({
         orderBy: { createdAt: "asc" },
         where: { isActive: true },
+        select: themeSelect,
       });
     } catch (e) {
       // ignore

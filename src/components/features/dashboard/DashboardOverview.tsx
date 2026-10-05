@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { useSession } from "next-auth/react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 import { 
   Users, Banknote, Calendar, ShoppingBag, ArrowUpRight, 
   ArrowDownRight, TrendingUp, Sparkles, Beer, ClipboardList 
@@ -18,8 +17,6 @@ interface DashboardOverviewProps {
 }
 
 export function DashboardOverview({ activeBranchId, activeEventId, activeEventName }: DashboardOverviewProps) {
-  const queryClient = useQueryClient()
-  
   // Check permissions
   const { data: session } = useSession()
   const p = session?.user?.permissions
@@ -41,40 +38,12 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
       return json.data
     },
     enabled: !!activeBranchId && !!activeEventId,
-    refetchInterval: 30000 // Polling fallback every 30s
+    // Sin SSE: refresco cada 60 s solo con la pestaña visible (en serverless un SSE
+    // abierto se cobra por tiempo)
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   })
 
-  // SSE subscription for live sales
-  useEffect(() => {
-    if (!activeBranchId || !activeEventId || !canSeeSales) return
-
-    const sse = new EventSource("/api/realtime/sales")
-    
-    sse.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data)
-        if (payload.type === "sale") {
-          const sales = payload.data as any[]
-          sales.forEach(sale => {
-            toast.success(`Nueva venta registrada: ${sale.product.name} x${sale.quantity}`, {
-              description: `Total: $${Number(sale.total).toLocaleString('es-CO')} | Por ${sale.soldBy.username}`,
-              icon: <Beer className="text-emerald-500" />
-            })
-          })
-          // Invalidate and refetch analytics automatically
-          queryClient.invalidateQueries({
-            queryKey: ["dashboard-analytics", activeBranchId, activeEventId]
-          })
-        }
-      } catch (err) {
-        console.error("Error parsing sale SSE:", err)
-      }
-    }
-
-    return () => {
-      sse.close()
-    }
-  }, [activeBranchId, activeEventId, queryClient, canSeeSales])
 
   if (isLoading) {
     return (
