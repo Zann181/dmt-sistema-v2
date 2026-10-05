@@ -429,6 +429,8 @@ class MockPrisma {
 const isNeon = connectionString.includes("neon.tech")
 const isDummy = connectionString.includes("dummy")
 const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
+// Postgres en la misma red Docker del VPS: sin SSL (se indica con sslmode=disable)
+const sslDisabled = isLocal || connectionString.includes("sslmode=disable")
 
 let cleanConnectionString = connectionString
 if (!isNeon && !isDummy && connectionString) {
@@ -458,8 +460,10 @@ export const prisma =
           adapter: new PrismaPg(
             new PgPool({
               connectionString: cleanConnectionString,
-              max: 1, // Crucial para Vercel Serverless para evitar port exhaustion. Local se deja igual que producción a propósito.
-              ssl: isLocal ? false : { rejectUnauthorized: false },
+              // 1 en serverless (evita port exhaustion). En un servidor persistente (VPS)
+              // se sube con DB_POOL_MAX para no serializar todas las queries.
+              max: Number(process.env.DB_POOL_MAX) || 1,
+              ssl: sslDisabled ? false : { rejectUnauthorized: false },
               connectionTimeoutMillis: 10000, // Falla rápido en vez de colgarse indefinidamente
               keepAlive: true, // Evita que NAT/firewall corte conexiones inactivas en silencio
             })

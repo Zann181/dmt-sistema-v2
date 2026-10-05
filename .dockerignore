@@ -1,0 +1,15 @@
+.git
+node_modules
+.next
+.netlify
+.env*
+!.env.production.example
+backups
+certificates
+*.log
+.claude
+.gemini
+.agents
+docs
+test-db.js
+tsconfig.tsbuildinfo

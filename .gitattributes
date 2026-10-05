@@ -1,2 +1,6 @@
 # Netlify DB checksums applied migrations byte-for-byte; keep LF on every OS.
 netlify/database/migrations/** text eol=lf
+
+# Los .bat necesitan CRLF o cmd.exe se confunde con etiquetas/goto
+*.bat text eol=crlf
+*.sh text eol=lf
