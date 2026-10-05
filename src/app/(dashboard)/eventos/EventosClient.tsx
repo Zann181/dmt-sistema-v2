@@ -719,7 +719,7 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     className="w-full h-full object-cover hover:scale-110 transition-transform cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open(event.flyerUrl || "", "_blank");
+                      window.open(event.flyerUrl || "", "_blank", "noopener,noreferrer");
                     }}
                   />
                 </div>

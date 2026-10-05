@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
 import { z } from "zod"
+import { apiError } from "@/shared/errors/apiError"
+import { hasPermissionAnywhere } from "@/shared/guards/branchAccess"
 
 const qrPreviewSchema = z.object({
   qrPrefix: z.string().optional().default("EVT"),
@@ -14,9 +16,13 @@ const qrPreviewSchema = z.object({
 
 export async function POST(req: Request) {
   const session = await auth()
-  // Any authenticated user might need to preview this if they can manage events
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  // El servidor descarga la URL del logo: limitarlo a quien configura eventos evita
+  // que cualquier cuenta lo use para hacer peticiones arbitrarias (SSRF)
+  if (!(await hasPermissionAnywhere(session, "manageEventsConfig"))) {
+    return NextResponse.json({ error: "Sin permisos suficientes" }, { status: 403 })
   }
 
   try {
@@ -46,7 +52,7 @@ export async function POST(req: Request) {
             logoBuffer = Buffer.from(base64Data, "base64")
           }
         } else {
-          const absoluteUrl = trimmed.startsWith("http") ? trimmed : (() => {
+          const absoluteUrl = /^https?:\/\//i.test(trimmed) ? trimmed : (() => {
             let baseUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000"
             if (baseUrl.includes("localhost")) baseUrl = baseUrl.replace("localhost", "127.0.0.1")
             const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
@@ -58,14 +64,13 @@ export async function POST(req: Request) {
           if (res.ok) {
             logoBuffer = Buffer.from(await res.arrayBuffer())
           } else {
-            const errText = `QR Preview Fetch failed for logo URL: ${absoluteUrl} Status: ${res.status} ${res.statusText}`
-            console.error(errText)
-            return NextResponse.json({ error: errText }, { status: 500 })
+            console.error(`QR Preview Fetch failed for logo URL: ${absoluteUrl} Status: ${res.status} ${res.statusText}`)
+            return NextResponse.json({ error: `No se pudo descargar el logo (HTTP ${res.status})` }, { status: 400 })
           }
         }
       } catch (e: any) {
         console.error("Error loading QR logo buffer for preview:", e)
-        return NextResponse.json({ error: "Exception fetching logo: " + e.message }, { status: 500 })
+        return NextResponse.json({ error: "No se pudo cargar el logo del QR" }, { status: 400 })
       }
 
       if (logoBuffer.length > 0) {
@@ -91,6 +96,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ data: base64Image })
   } catch (error: any) {
     console.error("Error generating QR preview:", error)
-    return NextResponse.json({ error: error.message || "Error al generar vista previa del QR" }, { status: 500 })
+    return apiError(error, 500, "Error al generar vista previa del QR")
   }
 }

@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const cashMovementSchema = z.object({
   branchId: z.string().min(1),
@@ -24,6 +25,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const parsed = cashMovementSchema.parse(body)
+
+    // Caja de entrada => permiso de asistentes; caja de barra => permiso de ventas
+    const access = await requireBranchPermission(session, parsed.branchId, parsed.module === "BAR" ? "accessSales" : "accessAttendees", parsed.eventId)
+    if (access instanceof NextResponse) return access
 
     // Resolve user role in this branch context
     const membership = await prisma.branchMembership.findFirst({
@@ -69,9 +74,6 @@ export async function POST(req: Request) {
       }
     })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }

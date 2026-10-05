@@ -3,7 +3,12 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 
 import { z } from "zod"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
+
+// La contraseña SMTP nunca sale del servidor. En el listado tampoco van los campos
+// pesados (flyer/logos en base64): pesan ~1 MB y se sirven aparte como PNG.
+const LIST_OMIT = { emailPassword: true, flyerUrl: true, logoUrl: true, qrLogoUrl: true } as const
 
 const createEventSchema = z.object({
   branchId: z.string().min(1),
@@ -112,6 +117,7 @@ export async function GET(req: Request) {
 
     const events = await prisma.event.findMany({
       where: whereClause,
+      omit: LIST_OMIT,
       orderBy: { startsAt: "desc" }
     })
     return NextResponse.json({ data: events })
@@ -122,13 +128,16 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.manageEventsConfig) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+  if (!session?.user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
   try {
     const body = await req.json()
     const parsed = createEventSchema.parse(body)
+
+    const access = await requireBranchPermission(session, parsed.branchId, "manageEventsConfig")
+    if (access instanceof NextResponse) return access
 
     const baseSlug = parsed.name
       .toLowerCase()
@@ -155,14 +164,12 @@ export async function POST(req: Request) {
         startsAt: new Date(startsAt),
         endsAt: new Date(endsAt),
         slug,
-      }
+      },
+      omit: { emailPassword: true },
     })
 
     return NextResponse.json({ data: event })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

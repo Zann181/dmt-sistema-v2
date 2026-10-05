@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ slug: string; userId: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -17,6 +19,8 @@ export async function PATCH(
     if (!branch) {
       return NextResponse.json({ error: "Sucursal no encontrada" }, { status: 404 })
     }
+    const access = await requireBranchPermission(session, branch.id, "manageBranchConfig")
+    if (access instanceof NextResponse) return access
 
     const membership = await prisma.branchMembership.findUnique({
       where: { userId_branchId: { userId, branchId: branch.id } },
@@ -42,7 +46,7 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; userId: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -52,6 +56,8 @@ export async function DELETE(
     if (!branch) {
       return NextResponse.json({ error: "Sucursal no encontrada" }, { status: 404 })
     }
+    const access = await requireBranchPermission(session, branch.id, "manageBranchConfig")
+    if (access instanceof NextResponse) return access
 
     const membership = await prisma.branchMembership.findUnique({
       where: { userId_branchId: { userId, branchId: branch.id } },

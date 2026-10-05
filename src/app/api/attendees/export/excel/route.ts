@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 export const dynamic = "force-dynamic"
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -17,6 +19,9 @@ export async function GET(req: Request) {
   if (!branchId || !eventId) {
     return NextResponse.json({ error: "Sucursal o evento no seleccionado" }, { status: 400 })
   }
+
+  const access = await requireBranchPermission(session, branchId, "accessAttendees", eventId)
+  if (access instanceof NextResponse) return access
 
   try {
     const attendees = await prisma.attendee.findMany({
@@ -49,6 +54,6 @@ export async function GET(req: Request) {
       }
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

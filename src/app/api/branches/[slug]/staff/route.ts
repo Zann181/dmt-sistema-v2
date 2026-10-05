@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { z } from "zod"
 
 const staffSchema = z.object({
@@ -17,7 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -27,6 +29,8 @@ export async function GET(
     if (!branch) {
       return NextResponse.json({ error: "Sucursal no encontrada" }, { status: 404 })
     }
+    const access = await requireBranchPermission(session, branch.id, "manageBranchConfig")
+    if (access instanceof NextResponse) return access
 
     const memberships = await prisma.branchMembership.findMany({
       where: { branchId: branch.id },
@@ -55,7 +59,7 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -65,6 +69,8 @@ export async function POST(
     if (!branch) {
       return NextResponse.json({ error: "Sucursal no encontrada" }, { status: 404 })
     }
+    const access = await requireBranchPermission(session, branch.id, "manageBranchConfig")
+    if (access instanceof NextResponse) return access
 
     const body = await req.json()
     const parsed = staffSchema.parse(body)
@@ -72,8 +78,12 @@ export async function POST(
     // Find or create user
     let user = await prisma.user.findUnique({ where: { username: parsed.username } })
     if (!user) {
+      // Sin contraseña por defecto: una clave fija y pública permitiría tomar la cuenta
+      if (!parsed.password) {
+        return NextResponse.json({ error: "La contraseña es obligatoria para un usuario nuevo (mínimo 6 caracteres)" }, { status: 400 })
+      }
       const bcrypt = require("bcryptjs")
-      const passwordHash = await bcrypt.hash(parsed.password || "CambiarEstaContraseña123!", 10)
+      const passwordHash = await bcrypt.hash(parsed.password, 10)
       user = await prisma.user.create({
         data: {
           username: parsed.username,
@@ -100,6 +110,6 @@ export async function POST(
 
     return NextResponse.json({ data: membership })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

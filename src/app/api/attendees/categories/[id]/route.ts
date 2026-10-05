@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const updateCategorySchema = z.object({
   name: z.string().min(1).max(80).optional(),
@@ -12,16 +13,21 @@ const updateCategorySchema = z.object({
   description: z.string().optional(),
 })
 
+async function authorizeCategory(id: string) {
+  const session = await auth()
+  const category = await prisma.attendeeCategory.findUnique({ where: { id }, select: { branchId: true } })
+  if (!category) return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 })
+  return requireBranchPermission(session, category.branchId, "manageCategories")
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session?.user?.permissions.manageCategories) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await authorizeCategory(id)
+  if (access instanceof NextResponse) return access
+
   try {
     const body = await req.json()
     const parsed = updateCategorySchema.parse(body)
@@ -39,23 +45,21 @@ export async function PATCH(
 
     return NextResponse.json({ data: { ...updated, price: Number(updated.price) } })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }
+
+// La pantalla de sucursales edita con PUT; mismo comportamiento que PATCH
+export const PUT = PATCH
 
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session?.user?.permissions.manageCategories) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await authorizeCategory(id)
+  if (access instanceof NextResponse) return access
+
   try {
     // Soft-deactivate to preserve historical attendee assignments
     const updated = await prisma.attendeeCategory.update({
@@ -64,9 +68,6 @@ export async function DELETE(
     })
     return NextResponse.json({ data: updated })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

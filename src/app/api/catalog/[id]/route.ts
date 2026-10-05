@@ -4,7 +4,8 @@ import { CatalogService } from "@/domains/catalog/services/CatalogService"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const updateProductSchema = z.object({
   name: z.string().min(1).max(150).optional(),
@@ -12,16 +13,20 @@ const updateProductSchema = z.object({
   price: z.number().positive().or(z.string().regex(/^\d+(\.\d{1,2})?$/)).optional(),
 })
 
+async function authorizeProduct(id: string) {
+  const session = await auth()
+  const product = await prisma.product.findUnique({ where: { id }, select: { branchId: true } })
+  if (!product) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 })
+  return requireBranchPermission(session, product.branchId, "accessCatalog")
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session?.user?.permissions.accessCatalog) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await authorizeProduct(id)
+  if (access instanceof NextResponse) return access
   try {
     const body = await req.json()
     const parsed = updateProductSchema.parse(body)
@@ -38,10 +43,7 @@ export async function PATCH(
 
     return NextResponse.json({ data: updated })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }
 
@@ -49,19 +51,13 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth()
-  if (!session?.user?.permissions.accessCatalog) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await authorizeProduct(id)
+  if (access instanceof NextResponse) return access
   try {
     const retired = await CatalogService.retireProduct(id)
     return NextResponse.json({ data: retired })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

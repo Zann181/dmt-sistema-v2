@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { apiError } from "@/shared/errors/apiError"
 import { prisma } from "@/infrastructure/database/prisma"
 import { hashPassword } from "@/infrastructure/crypto"
 import { z } from "zod"
@@ -54,6 +55,6 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
     }
-    return NextResponse.json({ error: error.message || "Error al registrar usuario" }, { status: 400 })
+    return apiError(error, 400, "Error al registrar usuario")
   }
 }

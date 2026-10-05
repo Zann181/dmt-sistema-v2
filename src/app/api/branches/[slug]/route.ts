@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { z } from "zod"
 
 import { formatZodError } from "@/shared/utils/zod"
@@ -24,11 +26,10 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { slug: branchId } = await params
+  const access = await requireBranchPermission(session, branchId, "manageBranchConfig")
+  if (access instanceof NextResponse) return access
+
   try {
     const body = await req.json()
     const parsed = updateBranchSchema.parse(body)
@@ -52,10 +53,7 @@ export async function PUT(
 
     return NextResponse.json({ data: updated })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }
 
@@ -64,8 +62,9 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageBranchConfig) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  // Borrar una sucursal elimina en cascada eventos, asistentes y ventas: solo admin global
+  if (!session?.user?.isSuperuser && !session?.user?.isGlobalAdmin) {
+    return NextResponse.json({ error: "Solo un administrador global puede eliminar sucursales" }, { status: 403 })
   }
 
   const { slug: branchId } = await params
@@ -75,6 +74,6 @@ export async function DELETE(
     })
     return NextResponse.json({ data: deleted })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

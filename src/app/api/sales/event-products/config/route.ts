@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
 
@@ -15,7 +17,7 @@ const configSchema = z.object({
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.manageEventsConfig) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
@@ -31,6 +33,8 @@ export async function POST(req: Request) {
     }
 
     const branchId = event.branchId
+    const access = await requireBranchPermission(session, branchId, "manageEventsConfig", event.id)
+    if (access instanceof NextResponse) return access
 
     await prisma.$transaction(async (tx: any) => {
       for (const p of parsed.products) {
@@ -66,6 +70,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }

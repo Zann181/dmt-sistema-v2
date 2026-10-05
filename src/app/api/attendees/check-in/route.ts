@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { AttendeeService } from "@/domains/attendee/services/AttendeeService"
 import { z } from "zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireEventPermission } from "@/shared/guards/branchAccess"
 
 const checkInSchema = z.object({
   qrCodeOrCc: z.string().min(1),
@@ -10,13 +12,16 @@ const checkInSchema = z.object({
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
   try {
     const body = await req.json()
     const { qrCodeOrCc, eventId } = checkInSchema.parse(body)
+
+    const access = await requireEventPermission(session, eventId, "accessAttendees")
+    if (access instanceof NextResponse) return access
 
     const attendee = await AttendeeService.findByQrOrCc(qrCodeOrCc, eventId)
     if (!attendee) {
@@ -51,6 +56,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data: updatedAttendee })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

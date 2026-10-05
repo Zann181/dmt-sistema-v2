@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { apiError } from "@/shared/errors/apiError"
 import { prisma } from "@/infrastructure/database/prisma"
 import sharp from "sharp"
 
@@ -69,6 +70,6 @@ export async function GET(
       },
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return apiError(error, 500)
   }
 }

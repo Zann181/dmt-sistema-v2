@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
 import { EmailService } from "@/infrastructure/email/EmailService"
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -30,6 +32,9 @@ export async function POST(req: Request) {
     if (!attendee) {
       return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
     }
+    const access = await requireBranchPermission(session, attendee.branchId, "accessAttendees", attendee.eventId)
+    if (access instanceof NextResponse) return access
+
     if (!attendee.email) {
       return NextResponse.json({ error: "El asistente no tiene un correo electrónico registrado" }, { status: 400 })
     }
@@ -125,6 +130,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Correo reenviado con éxito" })
   } catch (error: any) {
     console.error("❌ Error al reenviar correo de ticket:", error)
-    return NextResponse.json({ error: error.message || "Error al reenviar el correo" }, { status: 500 })
+    return apiError(error, 500, "Error al reenviar el correo")
   }
 }

@@ -4,7 +4,7 @@ import { CatalogService } from "@/domains/catalog/services/CatalogService"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
 
 const createProductSchema = z.object({
   name: z.string().min(1).max(150),
@@ -52,9 +52,6 @@ export async function POST(req: Request) {
     })
     return NextResponse.json({ data: product })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }

@@ -26,8 +26,14 @@ async function getCachedSessionUser(userId: string) {
   return dbUser
 }
 
+// Sin respaldo en producción: con un secreto conocido (el repo es público) cualquiera
+// podría firmar su propia sesión. Auth.js falla con MissingSecret si no está definido.
+const authSecret =
+  process.env.AUTH_SECRET ??
+  (process.env.NODE_ENV === "production" ? undefined : "dev-only-insecure-secret-not-for-production")
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET || "development-fallback-secret-at-least-32-characters-long-key-dmt",
+  secret: authSecret,
   trustHost: true,
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID 

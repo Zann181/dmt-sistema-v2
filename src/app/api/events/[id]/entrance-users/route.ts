@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireEventPermission } from "@/shared/guards/branchAccess"
 
 const createEntranceUserSchema = z.object({
   username: z.string().min(1).max(50),
@@ -20,12 +21,9 @@ export async function POST(
   const session = await auth()
   const { id } = await params
 
-  // User must have accessAttendees and be creating for their active event
-  const isAuthorized = session?.user?.activeEventId === id && session?.user?.permissions.accessAttendees;
-
-  if (!isAuthorized) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
+  // Crear cuentas de staff para el evento: solo administradores del evento o sucursal
+  const access = await requireEventPermission(session, id, "manageEventsConfig")
+  if (access instanceof NextResponse) return access
 
   try {
     const body = await req.json()
@@ -47,7 +45,7 @@ export async function POST(
     const passwordHash = await bcrypt.hash(parsed.password, 10)
     
     // Create User, BranchMembership, and EventAssignment in a transaction
-    const branchId = session.user.activeBranchId!
+    const branchId = access.branchId
     
     const user = await prisma.$transaction(async (tx: any) => {
       const newUser = await tx.user.create({
@@ -83,9 +81,6 @@ export async function POST(
 
     return NextResponse.json({ data: user })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

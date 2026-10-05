@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const eventDaySchema = z.object({
   branchId: z.string().min(1),
@@ -20,13 +21,16 @@ const eventDaySchema = z.object({
 // para que el dinero quede reflejado en la caja de Entrada.
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
   try {
     const body = await req.json()
     const parsed = eventDaySchema.parse(body)
+
+    const access = await requireBranchPermission(session, parsed.branchId, "accessAttendees", parsed.eventId)
+    if (access instanceof NextResponse) return access
 
     const category = await prisma.attendeeCategory.findUnique({ where: { id: parsed.categoryId } })
     if (!category || category.branchId !== parsed.branchId) {
@@ -94,9 +98,6 @@ export async function POST(req: Request) {
       }
     })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 })
+    return apiError(err, 500)
   }
 }

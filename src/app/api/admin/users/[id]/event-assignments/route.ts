@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { apiError } from "@/shared/errors/apiError"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
@@ -37,6 +38,6 @@ export async function POST(
 
     return NextResponse.json({ data: assignment })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

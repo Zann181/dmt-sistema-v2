@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/infrastructure/database/prisma"
+import { timingSafeEqual } from "node:crypto"
+
+function secretMatches(given: string | null, expected: string | undefined) {
+  if (!given || !expected) return false
+  const a = Buffer.from(given)
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
 
 // Endpoint de un solo uso para promover el primer usuario a admin global
 // tras una migración de base de datos. Gateado por env var, nunca por login,
 // porque en ese punto todavía no existe ningún admin.
 export async function POST(req: Request) {
   const secret = req.headers.get("x-bootstrap-secret")
-  if (!process.env.BOOTSTRAP_ADMIN_SECRET || secret !== process.env.BOOTSTRAP_ADMIN_SECRET) {
+  if (!secretMatches(secret, process.env.BOOTSTRAP_ADMIN_SECRET)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 

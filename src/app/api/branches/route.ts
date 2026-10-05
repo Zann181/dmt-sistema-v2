@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { BranchService } from "@/domains/branch/services/BranchService"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
 import { z } from "zod"
 
 import { formatZodError } from "@/shared/utils/zod"
@@ -77,6 +78,6 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
     }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

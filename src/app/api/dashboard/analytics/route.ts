@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 export const dynamic = "force-dynamic"
 
@@ -17,6 +19,10 @@ export async function GET(req: Request) {
   if (!branchId || !eventId) {
     return NextResponse.json({ error: "Sucursal o evento no seleccionado" }, { status: 400 })
   }
+
+  // Totales de dinero del evento: solo administradores del evento o sucursal
+  const access = await requireBranchPermission(session, branchId, "manageEventsConfig", eventId)
+  if (access instanceof NextResponse) return access
 
   try {
     // 1. ENTRADA & TAQUILLA METRICS
@@ -174,6 +180,6 @@ export async function GET(req: Request) {
       }
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireEventPermission } from "@/shared/guards/branchAccess"
 
 const updateEventSchema = z.object({
   name: z.string().min(1).max(150).optional(),
@@ -79,19 +80,19 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await requireEventPermission(session, id, null)
+  if (access instanceof NextResponse) return access
+
   try {
-    const event = await prisma.event.findUnique({ where: { id } })
+    // La contraseña SMTP nunca sale del servidor
+    const event = await prisma.event.findUnique({ where: { id }, omit: { emailPassword: true } })
     if (!event) {
       return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 })
     }
     return NextResponse.json({ data: event })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }
 
@@ -101,13 +102,8 @@ export async function PATCH(
 ) {
   const session = await auth()
   const { id } = await params
-
-  const isAuthorized = session?.user?.permissions.manageEventsConfig || 
-    (session?.user?.activeEventId === id && session?.user?.permissions.accessAttendees);
-
-  if (!isAuthorized) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
+  const access = await requireEventPermission(session, id, "manageEventsConfig")
+  if (access instanceof NextResponse) return access
 
   try {
     const body = await req.json()
@@ -120,14 +116,12 @@ export async function PATCH(
     const updated = await prisma.event.update({
       where: { id },
       data: updateData,
+      omit: { emailPassword: true },
     })
 
     return NextResponse.json({ data: updated })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }
 
@@ -136,17 +130,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.permissions.manageEventsConfig) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-  }
-
   const { id } = await params
+  const access = await requireEventPermission(session, id, "manageEventsConfig")
+  if (access instanceof NextResponse) return access
+
   try {
     const deleted = await prisma.event.delete({
       where: { id },
+      omit: { emailPassword: true },
     })
     return NextResponse.json({ data: deleted })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

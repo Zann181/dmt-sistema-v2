@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
+import { randomBytes } from "node:crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
 import { EmailService } from "@/infrastructure/email/EmailService"
 
@@ -18,7 +20,7 @@ const attendeeSchema = z.object({
 
 export async function GET(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const url = new URL(req.url)
@@ -26,6 +28,9 @@ export async function GET(req: Request) {
     const eventId = url.searchParams.get("eventId") || session.user.activeEventId
 
     if (!branchId || !eventId) return NextResponse.json({ data: [] })
+
+    const access = await requireBranchPermission(session, branchId, "accessAttendees", eventId)
+    if (access instanceof NextResponse) return access
 
     const q = url.searchParams.get("q") || ""
     const categoryId = url.searchParams.get("categoryId") || ""
@@ -174,7 +179,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const body = await req.json()
@@ -184,6 +189,12 @@ export async function POST(req: Request) {
     const eventId = body.eventId || session.user.activeEventId
 
     if (!branchId || !eventId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
+
+    const access = await requireBranchPermission(session, branchId, "accessAttendees", eventId)
+    if (access instanceof NextResponse) return access
+
+    const categoryOk = await prisma.attendeeCategory.findFirst({ where: { id: parsed.categoryId, branchId }, select: { id: true } })
+    if (!categoryOk) return NextResponse.json({ error: "Categoría no válida para esta sucursal" }, { status: 400 })
 
     const existingAttendee = await prisma.attendee.findUnique({
       where: {
@@ -207,7 +218,8 @@ export async function POST(req: Request) {
     const event = await prisma.event.findUnique({ where: { id: eventId }, include: { branch: true } })
     if (!branch || !event) return NextResponse.json({ error: "Error de contexto" }, { status: 400 })
 
-    const uniqueId = Math.random().toString(36).substring(2, 12)
+    // Aleatoriedad criptográfica: el código QR da acceso a la tarjeta pública del asistente
+    const uniqueId = randomBytes(5).toString("hex")
     const qrCode = `${branch.codePrefix}-${event.slug.substring(0, 5).toUpperCase()}-${uniqueId}`
 
     const userExists = session.user.id
@@ -323,16 +335,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data: attendee, mailError })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }
 
 export async function PUT(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const url = new URL(req.url)
@@ -342,10 +351,17 @@ export async function PUT(req: Request) {
     const body = await req.json()
     const parsed = attendeeSchema.partial().parse(body)
 
-    if (parsed.cc) {
-      const attendee = await prisma.attendee.findUnique({ where: { id } })
-      if (!attendee) return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
+    const attendee = await prisma.attendee.findUnique({ where: { id } })
+    if (!attendee) return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
+    const access = await requireBranchPermission(session, attendee.branchId, "accessAttendees", attendee.eventId)
+    if (access instanceof NextResponse) return access
 
+    if (parsed.categoryId) {
+      const categoryOk = await prisma.attendeeCategory.findFirst({ where: { id: parsed.categoryId, branchId: attendee.branchId }, select: { id: true } })
+      if (!categoryOk) return NextResponse.json({ error: "Categoría no válida para esta sucursal" }, { status: 400 })
+    }
+
+    if (parsed.cc) {
       const existingAttendee = await prisma.attendee.findFirst({
         where: {
           eventId: attendee.eventId,
@@ -365,21 +381,23 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ data: updated })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 })
+    return apiError(err, 500)
   }
 }
 
 export async function DELETE(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const url = new URL(req.url)
     const id = url.searchParams.get("id")
     if (!id) return NextResponse.json({ error: "Falta ID del asistente" }, { status: 400 })
+
+    const attendee = await prisma.attendee.findUnique({ where: { id }, select: { branchId: true, eventId: true } })
+    if (!attendee) return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
+    const access = await requireBranchPermission(session, attendee.branchId, "accessAttendees", attendee.eventId)
+    if (access instanceof NextResponse) return access
 
     await prisma.attendee.delete({
       where: { id }
@@ -387,6 +405,6 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ message: "Asistente eliminado con éxito" })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 })
+    return apiError(err, 500)
   }
 }

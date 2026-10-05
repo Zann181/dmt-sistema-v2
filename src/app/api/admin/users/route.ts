@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { apiError } from "@/shared/errors/apiError"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import bcrypt from "bcryptjs"
@@ -83,9 +84,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data: user })
   } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(error) }, { status: 400 })
-    }
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

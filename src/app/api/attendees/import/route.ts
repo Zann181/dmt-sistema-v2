@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
+import { randomBytes } from "node:crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
 import { EmailService } from "@/infrastructure/email/EmailService"
 
@@ -43,7 +45,7 @@ async function loadQrLogoBuffer(qrLogoUrl: string) {
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessAttendees) {
+  if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -53,11 +55,11 @@ export async function POST(req: Request) {
     body = await req.json()
     parsed = importSchema.parse(body)
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
+
+  const access = await requireBranchPermission(session, parsed.branchId, "accessAttendees", parsed.eventId)
+  if (access instanceof NextResponse) return access
 
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
@@ -85,7 +87,7 @@ async function runImport(
   emit: (obj: any) => void
 ) {
   const category = await prisma.attendeeCategory.findUnique({ where: { id: parsed.categoryId } })
-  if (!category) { emit({ type: "error", message: "Categoría no encontrada" }); return }
+  if (!category || category.branchId !== parsed.branchId) { emit({ type: "error", message: "Categoría no encontrada" }); return }
 
   const branch = await prisma.branch.findUnique({ where: { id: parsed.branchId } })
   const event = await prisma.event.findUnique({ where: { id: parsed.eventId }, include: { branch: true } })
@@ -131,7 +133,8 @@ async function runImport(
       continue
     }
 
-    const uniqueId = Math.random().toString(36).substring(2, 12)
+    // Aleatoriedad criptográfica: el código QR da acceso a la tarjeta pública del asistente
+    const uniqueId = randomBytes(5).toString("hex")
     const qrCode = `${branch.codePrefix}-${event.slug.substring(0, 5).toUpperCase()}-${uniqueId}`
     const attendee = await prisma.attendee.create({
       data: {

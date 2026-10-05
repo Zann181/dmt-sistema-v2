@@ -2,10 +2,12 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { SalesService } from "@/domains/sales/services/SalesService"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission, getBranchAccess } from "@/shared/guards/branchAccess"
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.accessSales) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
     const body = await req.json()
@@ -15,6 +17,9 @@ export async function POST(req: Request) {
     if (!branchId || !eventId) {
       return NextResponse.json({ error: "Contexto incompleto (se requiere sucursal y evento activo)" }, { status: 400 })
     }
+
+    const access = await requireBranchPermission(session, branchId, "accessSales", eventId)
+    if (access instanceof NextResponse) return access
 
     const result = await SalesService.processSale(
       branchId,
@@ -26,6 +31,6 @@ export async function POST(req: Request) {
     )
     return NextResponse.json({ data: result })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }

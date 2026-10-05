@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission, getBranchAccess } from "@/shared/guards/branchAccess"
 import { SalesService } from "@/domains/sales/services/SalesService"
 
 export async function GET(req: Request) {
@@ -18,6 +20,12 @@ export async function GET(req: Request) {
 
   if (!branchId || !eventId) {
     return NextResponse.json({ error: "Contexto incompleto (branchId o eventId faltantes)" }, { status: 400 })
+  }
+
+  // Barra (ventas) o administradores del evento (configuración de productos)
+  const access = await getBranchAccess(session, branchId, eventId)
+  if (!access || !(access.permissions.accessSales || access.permissions.manageEventsConfig)) {
+    return NextResponse.json({ error: "Sin permiso para esta sucursal o evento" }, { status: 403 })
   }
 
   try {
@@ -64,6 +72,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ data })
     }
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return apiError(err, 500)
   }
 }

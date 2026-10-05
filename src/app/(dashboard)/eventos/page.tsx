@@ -25,14 +25,14 @@ export default async function EventosPage() {
   } else {
     // 1. Get branches where user has membership
     const memberships = await prisma.branchMembership.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, isActive: true },
       select: { branchId: true }
     })
     const memberBranchIds = memberships.map((m: any) => m.branchId)
 
     // 2. Get events where user has assignment
     const assignments = await prisma.eventAssignment.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, isActive: true },
       select: { eventId: true }
     })
     const assignedEventIds = assignments.map((a: any) => a.eventId)

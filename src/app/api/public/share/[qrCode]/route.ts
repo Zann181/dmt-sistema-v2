@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { apiError } from "@/shared/errors/apiError"
 import { prisma } from "@/infrastructure/database/prisma"
 
 export const dynamic = "force-dynamic"
@@ -30,6 +31,6 @@ export async function GET(
       },
     })
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return apiError(error)
   }
 }

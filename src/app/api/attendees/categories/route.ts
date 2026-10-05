@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { Prisma } from "@prisma/client"
-import { formatZodError } from "@/shared/utils/zod"
+import { apiError } from "@/shared/errors/apiError"
+import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 const createCategorySchema = z.object({
   branchId: z.string().min(1),
@@ -26,6 +27,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Contexto incompleto (se requiere branchId)" }, { status: 400 })
   }
 
+  // Cualquier rol de la sucursal puede listar categorías (entrada, barra, admins)
+  const access = await requireBranchPermission(session, branchId, null)
+  if (access instanceof NextResponse) return access
+
   try {
     const categories = await prisma.attendeeCategory.findMany({
       where: { branchId, isActive: true },
@@ -40,19 +45,22 @@ export async function GET(req: Request) {
     
     return NextResponse.json({ data })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return apiError(err, 500)
   }
 }
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user?.permissions.manageCategories) {
+  if (!session?.user) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
 
   try {
     const body = await req.json()
     const parsed = createCategorySchema.parse(body)
+
+    const access = await requireBranchPermission(session, parsed.branchId, "manageCategories")
+    if (access instanceof NextResponse) return access
 
     const category = await prisma.attendeeCategory.create({
       data: {
@@ -67,9 +75,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ data: { ...category, price: Number(category.price) } })
   } catch (err: any) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: formatZodError(err) }, { status: 400 })
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 })
+    return apiError(err)
   }
 }
