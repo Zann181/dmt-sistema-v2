@@ -3,9 +3,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 
 export function BranchLogoHeader() {
   const [mounted, setMounted] = useState(false)
+  // Sin sesión (p. ej. en /login) /api/branches responde 401: no pedirlo
+  const { status } = useSession()
   const { activeBranchId } = useContextStore()
 
   useEffect(() => {
@@ -20,7 +23,7 @@ export function BranchLogoHeader() {
       const json = await res.json()
       return json.data as { id: string; name: string; logoUrl?: string | null; logoBgColor?: string | null }[]
     },
-    enabled: mounted
+    enabled: mounted && status === "authenticated"
   })
 
   if (!mounted) {

@@ -3,9 +3,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 
 export function BranchThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
+  // Sin sesión (p. ej. en /login) /api/branches responde 401: no pedirlo
+  const { status } = useSession()
   const { activeBranchId } = useContextStore()
 
   useEffect(() => {
@@ -36,7 +39,7 @@ export function BranchThemeProvider({ children }: { children: React.ReactNode })
         titleColor: string
       }[]
     },
-    enabled: mounted
+    enabled: mounted && status === "authenticated"
   })
 
   const activeBranch = branches?.find(b => b.id === activeBranchId)
