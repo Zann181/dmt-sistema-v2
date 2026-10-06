@@ -5,13 +5,14 @@ import { prisma } from "@/infrastructure/database/prisma"
 import { verifyPassword } from "@/infrastructure/crypto"
 import { IdentityService } from "@/domains/identity/services/IdentityService"
 
-// auth() se llama muchas veces por request (cada página + cada ruta de API llamada
-// en paralelo por el cliente). Sin esto, cada llamada repite la misma consulta pesada
-// a la base de datos. TTL corto para no perder frescura de permisos.
+// auth() se llama en cada página y en cada ruta de API. Sin esto, cada llamada repite
+// la misma consulta a la base (y despierta Neon). Las instancias de Vercel se reutilizan,
+// así que 60 s de caché ahorran la mayoría de consultas; un cambio de rol o de estado
+// del usuario tarda como máximo eso en aplicarse.
 const sessionUserCache = new Map<string, { data: any; expires: number }>()
-const SESSION_CACHE_TTL_MS = 5000
+const SESSION_CACHE_TTL_MS = 60_000
 
-async function getCachedSessionUser(userId: string) {
+export async function getCachedSessionUser(userId: string) {
   const cached = sessionUserCache.get(userId)
   if (cached && cached.expires > Date.now()) return cached.data
 

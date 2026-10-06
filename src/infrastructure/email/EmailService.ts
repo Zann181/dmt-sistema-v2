@@ -3,6 +3,59 @@ import nodemailer from "nodemailer"
 import sharp from "sharp"
 import { formatThousands } from "@/shared/utils/price"
 
+type EmailAttachment = {
+  content: Buffer
+  filename: string
+  cid: string
+  contentId: string
+  contentType: string
+}
+
+type EventMedia = {
+  attachments: EmailAttachment[]
+  logoHtml: string
+  branchLogoWatermarkUrl: string
+  flyerHtml: string
+}
+
+// Caché por instancia (Fluid compute reutiliza instancias): clave = evento + última
+// edición, así un cambio en el evento invalida la entrada automáticamente.
+const eventMediaCache = new Map<string, Promise<EventMedia>>()
+
+// Una conexión SMTP reutilizable por cuenta (pool): en una importación o una tanda
+// de la cola se evita repetir el handshake TLS + login por cada correo.
+const transporterCache = new Map<string, nodemailer.Transporter>()
+
+function getTransporter(cfg: { host: string; port: number; secure: boolean; user: string; pass: string }) {
+  const key = `${cfg.host}:${cfg.port}:${cfg.user}:${cfg.pass}`
+  let transporter = transporterCache.get(key)
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      pool: true,
+      maxConnections: 1,
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: { user: cfg.user, pass: cfg.pass },
+    })
+    transporterCache.set(key, transporter)
+  }
+  return transporter
+}
+
+function getEventMedia(event: any, build: () => Promise<EventMedia>): Promise<EventMedia> {
+  const updatedAt = event.updatedAt ? new Date(event.updatedAt).getTime() : 0
+  const key = `${event.id ?? "preview"}:${updatedAt}`
+  if (!event.id) return build() // vista previa sin guardar: no cachear
+  let cached = eventMediaCache.get(key)
+  if (!cached) {
+    if (eventMediaCache.size >= 20) eventMediaCache.delete(eventMediaCache.keys().next().value!)
+    cached = build().catch((err) => { eventMediaCache.delete(key); throw err })
+    eventMediaCache.set(key, cached)
+  }
+  return cached
+}
+
 export class EmailService {
   private static getClient() {
     const apiKey = process.env.RESEND_API_KEY
@@ -50,14 +103,12 @@ export class EmailService {
     // Si se especifican credenciales SMTP, enviar vía nodemailer
     if (smtpConfig && smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
       try {
-        const transporter = nodemailer.createTransport({
+        const transporter = getTransporter({
           host: smtpConfig.host,
           port: smtpConfig.port || 587,
           secure: smtpConfig.secure ?? false,
-          auth: {
-            user: smtpConfig.user,
-            pass: smtpConfig.pass,
-          },
+          user: smtpConfig.user,
+          pass: smtpConfig.pass,
         })
 
         const mailOptions = {
@@ -199,248 +250,254 @@ export class EmailService {
     const sectionBg = event.emailSectionBackgroundColor || "#060608"
     const warningBg = event.emailWarningBackgroundColor || "#1c0d0d"
 
-    const attachments: Array<{
-      content: Buffer
-      filename: string
-      cid: string
-      contentId: string
-      contentType: string
-    }> = []
+    // Logo, marca de agua y flyer solo dependen del evento: se procesan con sharp una
+    // vez y se reutilizan para cada asistente (antes se recalculaban en cada correo).
+    const { attachments, logoHtml, branchLogoWatermarkUrl, flyerHtml } = await getEventMedia(event, async () => {
+      const attachments: Array<{
+        content: Buffer
+        filename: string
+        cid: string
+        contentId: string
+        contentType: string
+      }> = []
 
-    let logoHtml = ""
-    const logoUrl = event.logoUrl || event.branch?.logoUrl || ""
-    if (logoUrl) {
-      const trimmed = logoUrl.trim()
-      const size = event.emailLogoSize || 80
-      if (trimmed.startsWith("data:")) {
-        const parsed = this.parseDataUri(trimmed)
-        if (parsed) {
-          const cid = "logo_image"
-          let logoBuffer = parsed.buffer
-          let logoContentType = parsed.contentType
-          let logoExtension = parsed.extension
+      let logoHtml = ""
+      const logoUrl = event.logoUrl || event.branch?.logoUrl || ""
+      if (logoUrl) {
+        const trimmed = logoUrl.trim()
+        const size = event.emailLogoSize || 80
+        if (trimmed.startsWith("data:")) {
+          const parsed = this.parseDataUri(trimmed)
+          if (parsed) {
+            const cid = "logo_image"
+            let logoBuffer = parsed.buffer
+            let logoContentType = parsed.contentType
+            let logoExtension = parsed.extension
+            try {
+              // Igual que con el logo envuelto en SVG: reescalar con buen
+              // remuestreo evita que un logo subido en baja resolución se vea
+              // pixelado al estirarlo por CSS en el cliente de correo.
+              logoBuffer = await sharp(parsed.buffer)
+                .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
+                .png()
+                .toBuffer()
+              logoContentType = "image/png"
+              logoExtension = "png"
+            } catch (e) {
+              // Si sharp no puede procesarla (ej. SVG dentro de un data URI), se usa tal cual
+            }
+            attachments.push({
+              content: logoBuffer,
+              filename: `logo.${logoExtension}`,
+              cid,
+              contentId: cid,
+              contentType: logoContentType,
+            })
+            logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
+          } else {
+            logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
+          }
+        } else if (trimmed.startsWith("http")) {
+          logoHtml = `<img src="${trimmed}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
+        } else if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
           try {
-            // Igual que con el logo envuelto en SVG: reescalar con buen
-            // remuestreo evita que un logo subido en baja resolución se vea
-            // pixelado al estirarlo por CSS en el cliente de correo.
-            logoBuffer = await sharp(parsed.buffer)
-              .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
-              .png()
-              .toBuffer()
-            logoContentType = "image/png"
-            logoExtension = "png"
+            let cleanSvg = trimmed.replace(/^<\?xml[^>]*\?>/i, "").trim()
+            if (!cleanSvg.includes("xmlns=")) {
+              cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+            }
+            const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                          cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+            if (match && match[3]) {
+              const base64 = match[3]
+              const rawBuffer = Buffer.from(base64, "base64")
+              // La imagen incrustada puede venir en baja resolución (recorte/preview
+              // pequeño); se reescala con buen remuestreo al doble del tamaño de
+              // visualización (retina) en vez de mandar los bytes crudos y dejar
+              // que el cliente de correo la estire por CSS (eso pixela).
+              const pngBuffer = await sharp(rawBuffer)
+                .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
+                .png()
+                .toBuffer()
+              const cid = "logo_image"
+              attachments.push({
+                content: pngBuffer,
+                filename: "logo.png",
+                cid,
+                contentId: cid,
+                contentType: "image/png",
+              })
+              logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
+            } else {
+              const pngBuffer = await sharp(Buffer.from(cleanSvg))
+                .resize({ height: size * 2 })
+                .png()
+                .toBuffer()
+              const cid = "logo_image"
+              attachments.push({
+                content: pngBuffer,
+                filename: "logo.png",
+                cid,
+                contentId: cid,
+                contentType: "image/png",
+              })
+              logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
+            }
           } catch (e) {
-            // Si sharp no puede procesarla (ej. SVG dentro de un data URI), se usa tal cual
+            logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
           }
-          attachments.push({
-            content: logoBuffer,
-            filename: `logo.${logoExtension}`,
-            cid,
-            contentId: cid,
-            contentType: logoContentType,
-          })
-          logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
         } else {
-          logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
-        }
-      } else if (trimmed.startsWith("http")) {
-        logoHtml = `<img src="${trimmed}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
-      } else if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
-        try {
-          let cleanSvg = trimmed.replace(/^<\?xml[^>]*\?>/i, "").trim()
-          if (!cleanSvg.includes("xmlns=")) {
-            cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
-          }
-          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
-                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
-          if (match && match[3]) {
-            const base64 = match[3]
-            const rawBuffer = Buffer.from(base64, "base64")
-            // La imagen incrustada puede venir en baja resolución (recorte/preview
-            // pequeño); se reescala con buen remuestreo al doble del tamaño de
-            // visualización (retina) en vez de mandar los bytes crudos y dejar
-            // que el cliente de correo la estire por CSS (eso pixela).
-            const pngBuffer = await sharp(rawBuffer)
-              .resize({ height: size * 2, withoutEnlargement: false, kernel: "lanczos3" })
-              .png()
-              .toBuffer()
-            const cid = "logo_image"
-            attachments.push({
-              content: pngBuffer,
-              filename: "logo.png",
-              cid,
-              contentId: cid,
-              contentType: "image/png",
-            })
-            logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
-          } else {
-            const pngBuffer = await sharp(Buffer.from(cleanSvg))
-              .resize({ height: size * 2 })
-              .png()
-              .toBuffer()
-            const cid = "logo_image"
-            attachments.push({
-              content: pngBuffer,
-              filename: "logo.png",
-              cid,
-              contentId: cid,
-              contentType: "image/png",
-            })
-            logoHtml = `<img src="cid:${cid}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
-          }
-        } catch (e) {
-          logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
+          const absoluteLogoUrl = this.getAbsoluteUrl(trimmed)
+          logoHtml = `<img src="${absoluteLogoUrl}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
         }
       } else {
-        const absoluteLogoUrl = this.getAbsoluteUrl(trimmed)
-        logoHtml = `<img src="${absoluteLogoUrl}" alt="Logo" style="height: ${size}px; max-width: 100%; object-fit: contain; display: block; margin: 0 auto;" />`
+        logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
       }
-    } else {
-      logoHtml = `<span style="color: #ffffff; font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${event.name}</span>`
-    }
 
-    // Branch watermark logo helper
-    const branchLogoUrl = event.branch?.logoUrl || ""
-    let branchLogoWatermarkUrl = ""
-    if (branchLogoUrl) {
-      const trimmed = branchLogoUrl.trim()
-      if (trimmed.startsWith("data:")) {
-        const parsed = this.parseDataUri(trimmed)
-        if (parsed) {
-          const cid = "watermark_image"
-          attachments.push({
-            content: parsed.buffer,
-            filename: `watermark.${parsed.extension}`,
-            cid,
-            contentId: cid,
-            contentType: parsed.contentType,
-          })
-          branchLogoWatermarkUrl = `cid:${cid}`
-        }
-      } else if (trimmed.startsWith("http")) {
-        branchLogoWatermarkUrl = trimmed
-      } else if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
-        try {
-          let cleanSvg = trimmed.replace(/^<\?xml[^>]*\?>/i, "").trim()
-          if (!cleanSvg.includes("xmlns=")) {
-            cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
-          }
-          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
-                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
-          if (match && match[3]) {
-            const contentType = match[2]
-            const base64 = match[3]
-            const buffer = Buffer.from(base64, "base64")
-            const ext = contentType.split("/")[1] || "webp"
+      // Branch watermark logo helper
+      const branchLogoUrl = event.branch?.logoUrl || ""
+      let branchLogoWatermarkUrl = ""
+      if (branchLogoUrl) {
+        const trimmed = branchLogoUrl.trim()
+        if (trimmed.startsWith("data:")) {
+          const parsed = this.parseDataUri(trimmed)
+          if (parsed) {
             const cid = "watermark_image"
             attachments.push({
-              content: buffer,
-              filename: `watermark.${ext}`,
+              content: parsed.buffer,
+              filename: `watermark.${parsed.extension}`,
               cid,
               contentId: cid,
-              contentType,
-            })
-            branchLogoWatermarkUrl = `cid:${cid}`
-          } else {
-            const pngBuffer = await sharp(Buffer.from(cleanSvg))
-              .resize({ width: 400 })
-              .png()
-              .toBuffer()
-            const cid = "watermark_image"
-            attachments.push({
-              content: pngBuffer,
-              filename: "watermark.png",
-              cid,
-              contentId: cid,
-              contentType: "image/png",
+              contentType: parsed.contentType,
             })
             branchLogoWatermarkUrl = `cid:${cid}`
           }
-        } catch (e) {
-          branchLogoWatermarkUrl = ""
+        } else if (trimmed.startsWith("http")) {
+          branchLogoWatermarkUrl = trimmed
+        } else if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
+          try {
+            let cleanSvg = trimmed.replace(/^<\?xml[^>]*\?>/i, "").trim()
+            if (!cleanSvg.includes("xmlns=")) {
+              cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+            }
+            const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                          cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+            if (match && match[3]) {
+              const contentType = match[2]
+              const base64 = match[3]
+              const buffer = Buffer.from(base64, "base64")
+              const ext = contentType.split("/")[1] || "webp"
+              const cid = "watermark_image"
+              attachments.push({
+                content: buffer,
+                filename: `watermark.${ext}`,
+                cid,
+                contentId: cid,
+                contentType,
+              })
+              branchLogoWatermarkUrl = `cid:${cid}`
+            } else {
+              const pngBuffer = await sharp(Buffer.from(cleanSvg))
+                .resize({ width: 400 })
+                .png()
+                .toBuffer()
+              const cid = "watermark_image"
+              attachments.push({
+                content: pngBuffer,
+                filename: "watermark.png",
+                cid,
+                contentId: cid,
+                contentType: "image/png",
+              })
+              branchLogoWatermarkUrl = `cid:${cid}`
+            }
+          } catch (e) {
+            branchLogoWatermarkUrl = ""
+          }
+        } else {
+          branchLogoWatermarkUrl = this.getAbsoluteUrl(trimmed)
         }
-      } else {
-        branchLogoWatermarkUrl = this.getAbsoluteUrl(trimmed)
       }
-    }
 
-    let flyerHtml = ""
-    if (event.flyerUrl) {
-      const trimmedFlyer = event.flyerUrl.trim()
-      if (trimmedFlyer.startsWith("data:")) {
-        const parsed = this.parseDataUri(trimmedFlyer)
-        if (parsed) {
-          const cid = "flyer_image"
-          attachments.push({
-            content: parsed.buffer,
-            filename: `flyer.${parsed.extension}`,
-            cid,
-            contentId: cid,
-            contentType: parsed.contentType,
-          })
+      let flyerHtml = ""
+      if (event.flyerUrl) {
+        const trimmedFlyer = event.flyerUrl.trim()
+        if (trimmedFlyer.startsWith("data:")) {
+          const parsed = this.parseDataUri(trimmedFlyer)
+          if (parsed) {
+            const cid = "flyer_image"
+            attachments.push({
+              content: parsed.buffer,
+              filename: `flyer.${parsed.extension}`,
+              cid,
+              contentId: cid,
+              contentType: parsed.contentType,
+            })
+            flyerHtml = `
+              <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
+                <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+              </div>
+            `
+          }
+        } else if (trimmedFlyer.startsWith("<svg") || trimmedFlyer.startsWith("<?xml")) {
+          try {
+            let cleanSvg = trimmedFlyer.replace(/^<\?xml[^>]*\?>/i, "").trim()
+            if (!cleanSvg.includes("xmlns=")) {
+              cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+            }
+            const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
+                          cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
+            if (match && match[3]) {
+              const contentType = match[2]
+              const base64 = match[3]
+              const buffer = Buffer.from(base64, "base64")
+              const ext = contentType.split("/")[1] || "webp"
+              const cid = "flyer_image"
+              attachments.push({
+                content: buffer,
+                filename: `flyer.${ext}`,
+                cid,
+                contentId: cid,
+                contentType,
+              })
+              flyerHtml = `
+                <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
+                  <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+                </div>
+              `
+            } else {
+              const pngBuffer = await sharp(Buffer.from(cleanSvg))
+                .resize({ width: 600 })
+                .png()
+                .toBuffer()
+              const cid = "flyer_image"
+              attachments.push({
+                content: pngBuffer,
+                filename: "flyer.png",
+                cid,
+                contentId: cid,
+                contentType: "image/png",
+              })
+              flyerHtml = `
+                <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
+                  <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+                </div>
+              `
+            }
+          } catch (e) {
+            flyerHtml = ""
+          }
+        } else {
+          const absoluteFlyerUrl = this.getAbsoluteUrl(trimmedFlyer)
           flyerHtml = `
             <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
-              <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
+              <img src="${absoluteFlyerUrl}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
             </div>
           `
         }
-      } else if (trimmedFlyer.startsWith("<svg") || trimmedFlyer.startsWith("<?xml")) {
-        try {
-          let cleanSvg = trimmedFlyer.replace(/^<\?xml[^>]*\?>/i, "").trim()
-          if (!cleanSvg.includes("xmlns=")) {
-            cleanSvg = cleanSvg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
-          }
-          const match = cleanSvg.match(/<image\s+[^>]*href=["'](data:([^"';]+);base64,([^"']+))["']/i) || 
-                        cleanSvg.match(/<image\s+[^>]*xlink:href=["'](data:([^"';]+);base64,([^"']+))["']/i)
-          if (match && match[3]) {
-            const contentType = match[2]
-            const base64 = match[3]
-            const buffer = Buffer.from(base64, "base64")
-            const ext = contentType.split("/")[1] || "webp"
-            const cid = "flyer_image"
-            attachments.push({
-              content: buffer,
-              filename: `flyer.${ext}`,
-              cid,
-              contentId: cid,
-              contentType,
-            })
-            flyerHtml = `
-              <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
-                <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
-              </div>
-            `
-          } else {
-            const pngBuffer = await sharp(Buffer.from(cleanSvg))
-              .resize({ width: 600 })
-              .png()
-              .toBuffer()
-            const cid = "flyer_image"
-            attachments.push({
-              content: pngBuffer,
-              filename: "flyer.png",
-              cid,
-              contentId: cid,
-              contentType: "image/png",
-            })
-            flyerHtml = `
-              <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
-                <img src="cid:${cid}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
-              </div>
-            `
-          }
-        } catch (e) {
-          flyerHtml = ""
-        }
-      } else {
-        const absoluteFlyerUrl = this.getAbsoluteUrl(trimmedFlyer)
-        flyerHtml = `
-          <div style="margin-top: 24px; margin-bottom: 24px; text-align: center;">
-            <img src="${absoluteFlyerUrl}" alt="Flyer del Evento" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid ${borderColor}; display: block; margin: 0 auto; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);" />
-          </div>
-        `
       }
-    }
+
+      return { attachments, logoHtml, branchLogoWatermarkUrl, flyerHtml }
+    })
 
     const replaceTemplates = (text: string) => {
       if (!text) return ""

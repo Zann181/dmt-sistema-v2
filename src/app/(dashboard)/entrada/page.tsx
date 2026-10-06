@@ -521,6 +521,30 @@ export default function EntradaPage() {
         }
       }
 
+      // Correos que no alcanzaron en la importación: despacharlos de la cola en tandas
+      if (summary?.pendingEmails > 0) {
+        const skipIds: string[] = [...(summary.failedIds ?? [])]
+        let pending = summary.pendingEmails
+        toast.info(`Enviando ${pending} correos pendientes en segundo plano…`)
+        while (pending > 0) {
+          const qres = await fetch("/api/attendees/email-queue", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ branchId: activeBranchId, eventId: activeEventId, skipIds }),
+          })
+          if (!qres.ok) { toast.warning("La cola de correos se detuvo; puedes reenviar los pendientes luego."); break }
+          const { data } = await qres.json()
+          summary.emailsSent += data.sent
+          summary.emailFailedCount += data.failed.length
+          skipIds.push(...data.failed.map((f: any) => f.id))
+          data.failed.forEach((f: any) => toast.warning(`No se pudo enviar correo a ${f.name}`, { description: f.error }))
+          if (data.sent === 0 && data.failed.length === 0) break
+          pending = data.remaining
+          if (pending > 0) toast.info(`Correos pendientes: ${pending}`)
+        }
+        summary.pendingEmails = pending
+      }
+
       return summary
     },
     onSuccess: (summary) => {

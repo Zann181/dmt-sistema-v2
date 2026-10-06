@@ -4,6 +4,21 @@ import type { BranchRole } from "@prisma/client"
 import { prisma } from "@/infrastructure/database/prisma"
 import { IdentityService } from "@/domains/identity/services/IdentityService"
 import type { PermissionFlags } from "@/types/next-auth"
+import { getCachedSessionUser } from "@/lib/auth"
+
+// evento -> sucursal no cambia nunca: se guarda en memoria de la instancia
+const eventBranchCache = new Map<string, string | null>()
+
+async function getEventBranchId(eventId: string): Promise<string | null> {
+  if (eventBranchCache.has(eventId)) return eventBranchCache.get(eventId)!
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { branchId: true } })
+  const branchId = event?.branchId ?? null
+  if (branchId) {
+    if (eventBranchCache.size > 500) eventBranchCache.clear()
+    eventBranchCache.set(eventId, branchId)
+  }
+  return branchId
+}
 
 export type Permission = keyof PermissionFlags
 
@@ -31,26 +46,20 @@ export async function getBranchAccess(
   const userId = session?.user?.id
   if (!userId || !branchId) return null
 
-  if (eventId) {
-    const event = await prisma.event.findFirst({ where: { id: eventId, branchId }, select: { id: true } })
-    if (!event) return null
-  }
+  if (eventId && (await getEventBranchId(eventId)) !== branchId) return null
 
   if (session.user.isSuperuser || session.user.isGlobalAdmin) {
     return { branchId, eventId: eventId ?? null, role: null, isGlobal: true, permissions: IdentityService.buildPermissionFlags(null, true) }
   }
 
-  const membership = await prisma.branchMembership.findFirst({
-    where: { userId, branchId, isActive: true },
-    select: { role: true },
-  })
+  // Membresías y asignaciones activas ya cargadas (y cacheadas) por la sesión
+  const user = await getCachedSessionUser(userId)
+  if (!user?.isActive) return null
+  const membership = user.branchMemberships.find((m: any) => m.branchId === branchId)
   // Staff asignado solo a eventos: su rol sale de la asignación (del evento pedido, si hay)
   const assignment = membership
     ? null
-    : await prisma.eventAssignment.findFirst({
-        where: { userId, branchId, isActive: true, ...(eventId ? { eventId } : {}) },
-        select: { role: true },
-      })
+    : user.eventAssignments.find((a: any) => a.branchId === branchId && (!eventId || a.eventId === eventId))
 
   const role = membership?.role ?? assignment?.role
   if (!role) return null
@@ -87,9 +96,9 @@ export async function requireEventPermission(
   permission: Permission | null,
 ): Promise<BranchAccess | NextResponse> {
   if (!session?.user?.id || !eventId) return denied(session)
-  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { branchId: true } })
-  if (!event) return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 })
-  return requireBranchPermission(session, event.branchId, permission, eventId)
+  const branchId = await getEventBranchId(eventId)
+  if (!branchId) return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 })
+  return requireBranchPermission(session, branchId, permission, eventId)
 }
 
 /** ¿Tiene `permission` en al menos una de sus sucursales/eventos? (para acciones sin sucursal) */
@@ -97,9 +106,7 @@ export async function hasPermissionAnywhere(session: Session | null, permission:
   const userId = session?.user?.id
   if (!userId) return false
   if (session.user.isSuperuser || session.user.isGlobalAdmin) return true
-  const [memberships, assignments] = await Promise.all([
-    prisma.branchMembership.findMany({ where: { userId, isActive: true }, select: { role: true } }),
-    prisma.eventAssignment.findMany({ where: { userId, isActive: true }, select: { role: true } }),
-  ])
-  return [...memberships, ...assignments].some((m) => IdentityService.buildPermissionFlags(m.role, false)[permission])
+  const user = await getCachedSessionUser(userId)
+  if (!user?.isActive) return false
+  return [...user.branchMemberships, ...user.eventAssignments].some((m: any) => IdentityService.buildPermissionFlags(m.role, false)[permission])
 }
