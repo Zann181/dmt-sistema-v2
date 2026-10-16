@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useCheckInStream } from "@/components/features/attendees/useCheckInStream"
@@ -315,7 +315,8 @@ export default function EntradaPage() {
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Correo de ticket reenviado con éxito")
+      toast.success("Correo de ticket en cola para reenvío")
+      drainEmailQueue()
     },
     onError: (err: any) => {
       toast.error(err.message)
@@ -382,6 +383,50 @@ export default function EntradaPage() {
     enabled: !!activeBranchId && !!activeEventId && activeTab === "dashboard"
   })
 
+  // Cola de correos: se envían de a uno, despacio, para no gastar CPU/memoria. Un solo
+  // ciclo a la vez; lo que quede pendiente se retoma solo al abrir la página.
+  const draining = useRef(false)
+  const drainEmailQueue = useCallback(async () => {
+    if (draining.current || !activeBranchId || !activeEventId) return
+    draining.current = true
+    const skipIds: string[] = []
+    let sent = 0
+    try {
+      while (true) {
+        const res = await fetch("/api/attendees/email-queue", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ branchId: activeBranchId, eventId: activeEventId, skipIds }),
+        })
+        if (!res.ok) { toast.warning("La cola de correos se detuvo; se retomará al reabrir la página.", { id: "email-queue" }); break }
+        const { data } = await res.json()
+        sent += data.sent
+        skipIds.push(...data.failed.map((f: any) => f.id))
+        data.failed.forEach((f: any) => toast.warning(`No se pudo enviar correo a ${f.name}`, { description: f.error }))
+        queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
+        if (data.remaining === 0 || (data.sent === 0 && data.failed.length === 0)) break
+        toast.info(`Correos en cola: ${data.remaining}`, { id: "email-queue", duration: Infinity })
+      }
+      if (sent > 0) toast.success(`${sent} correos enviados`, { id: "email-queue", duration: 4000 })
+      else toast.dismiss("email-queue")
+    } catch {
+      toast.warning("La cola de correos se detuvo; se retomará al reabrir la página.", { id: "email-queue" })
+    } finally {
+      draining.current = false
+    }
+  }, [activeBranchId, activeEventId, queryClient])
+
+  // Al abrir la página, si quedaron correos en cola (cierre del navegador, error), se retoman.
+  useEffect(() => {
+    if (!activeBranchId || !activeEventId) return
+    let cancelled = false
+    fetch(`/api/attendees/email-queue?branchId=${activeBranchId}&eventId=${activeEventId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j?.data?.pending > 0) drainEmailQueue() })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [activeBranchId, activeEventId, drainEmailQueue])
+
   // Add attendee mutation
   const addAttendeeMutation = useMutation({
     mutationFn: async (data: typeof addForm) => {
@@ -407,12 +452,9 @@ export default function EntradaPage() {
       setAddError("")
       setAddFormErrors({ name: false, cc: false, categoryId: false, paidAmount: false })
       
-      if (resData?.mailError) {
-        toast.warning(`Asistente registrado, pero falló el envío de correo: ${resData.mailError}`, {
-          duration: 6000
-        })
-      } else if (resData?.data?.email) {
-        toast.success("Asistente registrado y ticket enviado con éxito")
+      if (resData?.queued) {
+        toast.success("Asistente registrado; el ticket quedó en cola de envío")
+        drainEmailQueue()
       } else {
         toast.success("Asistente registrado con éxito (sin correo)")
       }
@@ -521,28 +563,10 @@ export default function EntradaPage() {
         }
       }
 
-      // Correos que no alcanzaron en la importación: despacharlos de la cola en tandas
+      // Los correos quedaron en cola: se envían de a uno, despacio, en segundo plano
       if (summary?.pendingEmails > 0) {
-        const skipIds: string[] = [...(summary.failedIds ?? [])]
-        let pending = summary.pendingEmails
-        toast.info(`Enviando ${pending} correos pendientes en segundo plano…`)
-        while (pending > 0) {
-          const qres = await fetch("/api/attendees/email-queue", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ branchId: activeBranchId, eventId: activeEventId, skipIds }),
-          })
-          if (!qres.ok) { toast.warning("La cola de correos se detuvo; puedes reenviar los pendientes luego."); break }
-          const { data } = await qres.json()
-          summary.emailsSent += data.sent
-          summary.emailFailedCount += data.failed.length
-          skipIds.push(...data.failed.map((f: any) => f.id))
-          data.failed.forEach((f: any) => toast.warning(`No se pudo enviar correo a ${f.name}`, { description: f.error }))
-          if (data.sent === 0 && data.failed.length === 0) break
-          pending = data.remaining
-          if (pending > 0) toast.info(`Correos pendientes: ${pending}`)
-        }
-        summary.pendingEmails = pending
+        toast.info(`${summary.pendingEmails} correos en cola de envío`, { id: "email-queue", duration: Infinity })
+        void drainEmailQueue()
       }
 
       return summary
@@ -552,7 +576,7 @@ export default function EntradaPage() {
       setImportResult(summary)
       queryClient.invalidateQueries({ queryKey: ["attendees", activeBranchId, activeEventId] })
       queryClient.invalidateQueries({ queryKey: ["attendees-stats", activeBranchId, activeEventId] })
-      toast.success(`Importación completa: ${summary.created} nuevos, ${summary.skipped} ya existían (ignorados), ${summary.emailsSent} correos enviados`)
+      toast.success(`Importación completa: ${summary.created} nuevos, ${summary.skipped} ya existían (ignorados), ${summary.pendingEmails} correos en cola`)
     },
     onError: (err: any) => {
       toast.error("Error al importar: " + err.message)
@@ -2151,7 +2175,7 @@ export default function EntradaPage() {
             {importResult && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs space-y-1">
                 <p>✅ {importResult.created} nuevos registrados, {importResult.skipped} ya existían (ignorados)</p>
-                <p>📧 {importResult.emailsSent} correos enviados{importResult.emailFailedCount > 0 ? `, ${importResult.emailFailedCount} fallaron` : ""}</p>
+                <p>📧 {importResult.pendingEmails} correos en cola (se envían de a uno, en segundo plano)</p>
                 <p>⚠️ {importResult.noEmailCount} sin correo (necesitan seguimiento)</p>
               </div>
             )}

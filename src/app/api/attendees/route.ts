@@ -6,8 +6,6 @@ import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { apiError } from "@/shared/errors/apiError"
 import { requireBranchPermission } from "@/shared/guards/branchAccess"
-import { QrCodeService } from "@/infrastructure/qr/QrCodeService"
-import { EmailService } from "@/infrastructure/email/EmailService"
 
 const attendeeSchema = z.object({
   name: z.string().min(1).max(120),
@@ -241,99 +239,9 @@ export async function POST(req: Request) {
       }
     })
 
-    let mailError: string | null = null
-    if (parsed.email) {
-      try {
-        const fillColor = event.qrFillColor || "#102542"
-        const backgroundColor = event.qrBackgroundColor || "#f8f9fa"
-        const logoBackgroundColor = event.qrLogoBackgroundColor || "#ffffff"
-        const logoScale = event.qrLogoScale || 4
-        const qrLogoUrl = event.qrLogoUrl || branch.logoUrl
-
-        const qrOptions = {
-          color: {
-            dark: fillColor,
-            light: backgroundColor,
-          }
-        }
-
-        let qrBuffer: Buffer
-
-        if (qrLogoUrl) {
-  let logoBuffer: Buffer = Buffer.from("")
-  const trimmed = qrLogoUrl.trim()
-  try {
-    if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) {
-      logoBuffer = Buffer.from(trimmed)
-    } else if (trimmed.startsWith("data:")) {
-      const base64Data = trimmed.split(",")[1]
-      logoBuffer = Buffer.from(base64Data, "base64")
-    } else {
-      const absoluteUrl = trimmed.startsWith("http") ? trimmed : (() => {
-        let baseUrl = process.env.NEXT_PUBLIC_MEDIA_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000"
-        if (baseUrl.includes("localhost")) baseUrl = baseUrl.replace("localhost", "127.0.0.1")
-        const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl
-        const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`
-        return `${cleanBase}${cleanPath}`
-      })()
-      const res = await fetch(absoluteUrl)
-      if (res.ok) {
-        logoBuffer = Buffer.from(await res.arrayBuffer())
-      }
-    }
-  } catch (e) {
-    console.error("Error loading QR logo buffer:", e)
-  }
-
-  if (logoBuffer.length > 0) {
-    const processedLogo = QrCodeService.preprocessLogoBuffer(logoBuffer)
-    qrBuffer = await QrCodeService.generateWithLogo(
-      qrCode,
-      processedLogo,
-      {
-        scale: logoScale,
-        backgroundColor: logoBackgroundColor,
-      },
-      qrOptions
-    )
-  } else {
-    qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
-  }
-} else {
-  qrBuffer = await QrCodeService.generateBuffer(qrCode, qrOptions)
-}
-
-        const { html: htmlContent, attachments: extraAttachments } = await EmailService.compileTemplate(event, parsed.name, qrCode, category.name, parsed.paidAmount)
-        const subject = (event.emailSubject || "Tu acceso está listo: {nombre_evento}")
-          .replace(/{nombre_evento}/g, event.name)
-          .replace(/{nombre_sucursal}/g, event.branch?.name || "")
-        await EmailService.sendTicketEmail(
-          parsed.email!,
-          subject,
-          htmlContent,
-          qrBuffer,
-          "acceso_qr.png",
-          {
-            host: event.emailHost,
-            port: event.emailPort,
-            secure: event.emailSecure,
-            user: event.emailUser,
-            pass: event.emailPassword,
-            from: event.emailFrom,
-          },
-          extraAttachments
-        )
-        await prisma.attendee.update({
-          where: { id: attendee.id },
-          data: { emailSentAt: new Date() }
-        })
-      } catch (err: any) {
-        console.error("⚠️ Error en el envío del correo del ticket:", err)
-        mailError = err.message || "Error al enviar correo electrónico"
-      }
-    }
-
-    return NextResponse.json({ data: attendee, mailError })
+    // El ticket por correo no se envía aquí: el asistente con email y emailSentAt vacío
+    // ya está en la cola, y el navegador la despacha de a uno con /api/attendees/email-queue.
+    return NextResponse.json({ data: attendee, queued: !!parsed.email })
   } catch (err: any) {
     return apiError(err)
   }

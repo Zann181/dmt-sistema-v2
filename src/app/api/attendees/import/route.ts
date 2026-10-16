@@ -5,7 +5,7 @@ import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { apiError } from "@/shared/errors/apiError"
 import { requireBranchPermission } from "@/shared/guards/branchAccess"
-import { processPendingTicketEmails } from "@/domains/attendee/services/TicketEmailQueue"
+import { countPendingTicketEmails } from "@/domains/attendee/services/TicketEmailQueue"
 
 const importRowSchema = z.object({
   name: z.string().min(1).max(120),
@@ -21,10 +21,9 @@ const importSchema = z.object({
   rows: z.array(importRowSchema).min(1).max(2000),
 })
 
-// Los correos que no alcancen en este tope quedan en cola y el navegador los
-// despacha en tandas cortas: ninguna función corre minutos.
+// Los correos NO se envían aquí: quedan en cola (emailSentAt vacío) y el navegador los
+// despacha de a uno, lento, con /api/attendees/email-queue.
 export const maxDuration = 60
-const IMPORT_EMAIL_BUDGET_MS = 40_000
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -126,26 +125,19 @@ async function runImport(
     emit({ type: "progress", processed, total, cc: r.cc, name: r.name, email: r.email, status: "created", emailStatus: r.email ? "queued" : "no_email" })
   }
 
-  // 2) Correos: lo que alcance en este tope; el resto queda en la cola (emailSentAt
-  //    vacío) y el navegador lo despacha en tandas con /api/attendees/email-queue.
-  const { sent, failed, remaining } = await processPendingTicketEmails({
-    branchId: parsed.branchId,
-    eventId: parsed.eventId,
-    deadline: Date.now() + IMPORT_EMAIL_BUDGET_MS,
-    max: toCreate.length,
-    onProgress: (p) => emit({ type: "progress", processed, total, cc: p.cc, name: p.name, email: p.email, status: "created", emailStatus: p.status, error: p.error }),
-  })
+  // 2) Correos: solo se encolan. El envío lo hace /api/attendees/email-queue, uno a uno.
+  const pendingEmails = await countPendingTicketEmails(parsed.branchId, parsed.eventId)
 
   emit({
     type: "summary",
     summary: {
       created: toCreate.length,
       skipped,
-      emailsSent: sent,
+      emailsSent: 0,
       noEmailCount,
-      emailFailedCount: failed.length,
-      failedIds: failed.map((f) => f.id),
-      pendingEmails: remaining,
+      emailFailedCount: 0,
+      failedIds: [],
+      pendingEmails,
       total,
     }
   })

@@ -6,6 +6,11 @@ import { EmailService } from "@/infrastructure/email/EmailService"
 // sin emailSentAt (ni entrega manual) está pendiente. Cada llamada envía lo que
 // alcanza dentro de un tope de tiempo y deja el resto para la siguiente, así ninguna
 // función corre minutos ni se repite trabajo: lo enviado queda marcado.
+// El ritmo es lento a propósito: se genera y envía UN correo a la vez y se espera
+// EMAIL_SEND_DELAY_MS entre uno y otro, así el consumo de CPU/memoria es bajo y parejo.
+
+export const EMAIL_SEND_DELAY_MS = Number(process.env.EMAIL_SEND_DELAY_MS) || 3000
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export interface QueueProgress {
   attendeeId: string
@@ -42,21 +47,12 @@ async function prepareEventMailer(eventId: string) {
     .replace(/{nombre_evento}/g, event.name)
     .replace(/{nombre_sucursal}/g, event.branch?.name || "")
 
-  const smtp = {
-    host: event.emailHost,
-    port: event.emailPort,
-    secure: event.emailSecure,
-    user: event.emailUser,
-    pass: event.emailPassword,
-    from: event.emailFrom,
-  }
-
   return async function send(a: { qrCode: string; name: string; email: string; paidAmount: unknown; categoryName: string }) {
     const qrBuffer = qrLogo
       ? await QrCodeService.generateWithLogo(a.qrCode, qrLogo, { scale: event.qrLogoScale || 4, backgroundColor: event.qrLogoBackgroundColor || "#ffffff" }, qrOptions)
       : await QrCodeService.generateBuffer(a.qrCode, qrOptions)
     const { html, attachments } = await EmailService.compileTemplate(event, a.name, a.qrCode, a.categoryName, String(a.paidAmount))
-    await EmailService.sendTicketEmail(a.email, subject, html, qrBuffer, "acceso_qr.png", smtp, attachments)
+    await EmailService.sendTicketEmail(a.email, subject, html, qrBuffer, "acceso_qr.png", undefined, attachments)
   }
 }
 
@@ -94,8 +90,11 @@ export async function processPendingTicketEmails(opts: {
 
   if (pending.length > 0) {
     const send = await prepareEventMailer(opts.eventId)
+    let first = true
     for (const a of pending) {
-      if (Date.now() > opts.deadline) break
+      if (Date.now() + EMAIL_SEND_DELAY_MS > opts.deadline && !first) break
+      if (!first) await sleep(EMAIL_SEND_DELAY_MS)
+      first = false
       try {
         await send({ qrCode: a.qrCode, name: a.name, email: a.email!, paidAmount: a.paidAmount, categoryName: a.category.name })
         await prisma.attendee.update({ where: { id: a.id }, data: { emailSentAt: new Date() } })
@@ -115,4 +114,11 @@ export async function processPendingTicketEmails(opts: {
   })
 
   return { sent, failed, remaining }
+}
+
+/** Cuántos correos de tickets siguen en cola para el evento. */
+export function countPendingTicketEmails(branchId: string, eventId: string) {
+  return prisma.attendee.count({
+    where: { branchId, eventId, origin: "MANUAL", email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null },
+  })
 }
