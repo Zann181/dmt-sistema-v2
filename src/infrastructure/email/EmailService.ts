@@ -88,31 +88,30 @@ export class EmailService {
       contentType: string
     }>
   ): Promise<any> {
-    // Campos SMTP vacíos en el evento caen a las variables de entorno (SMTP_*),
-    // así la contraseña no tiene que vivir en el código ni en cada evento.
-    if (smtpConfig) {
-      smtpConfig = {
-        ...smtpConfig,
-        host: smtpConfig.host || process.env.SMTP_HOST || "smtp.gmail.com",
-        user: smtpConfig.user || process.env.SMTP_USER,
-        pass: smtpConfig.pass || process.env.SMTP_PASSWORD,
-        from: smtpConfig.from || process.env.SMTP_FROM,
-      }
+    // Una sola cuenta de envío para todo el sistema: variables de entorno SMTP_*.
+    // El parámetro smtpConfig (campos SMTP guardados por evento) se ignora a propósito.
+    const smtp = {
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === "true",
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+      from: process.env.SMTP_FROM,
     }
 
-    // Si se especifican credenciales SMTP, enviar vía nodemailer
-    if (smtpConfig && smtpConfig.host && smtpConfig.user && smtpConfig.pass) {
+    // Si hay credenciales SMTP, enviar vía nodemailer
+    if (smtp.user && smtp.pass) {
       try {
         const transporter = getTransporter({
-          host: smtpConfig.host,
-          port: smtpConfig.port || 587,
-          secure: smtpConfig.secure ?? false,
-          user: smtpConfig.user,
-          pass: smtpConfig.pass,
+          host: smtp.host,
+          port: smtp.port,
+          secure: smtp.secure,
+          user: smtp.user,
+          pass: smtp.pass,
         })
 
         const mailOptions = {
-          from: smtpConfig.from || smtpConfig.user,
+          from: smtp.from || smtp.user,
           to,
           subject,
           html: htmlContent,
@@ -142,7 +141,7 @@ export class EmailService {
       } catch (error: any) {
         console.error("❌ Error al enviar correo via SMTP:", error)
         // Incluir la cuenta usada para saber qué credenciales rechazó el servidor
-        if (error?.message) error.message = `[${smtpConfig.user}] ${error.message}`
+        if (error?.message) error.message = `[${smtp.user}] ${error.message}`
         throw error
       }
     }

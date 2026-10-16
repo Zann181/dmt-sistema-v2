@@ -949,70 +949,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     </div>
                   </div>
 
-                  {/* Servidor SMTP */}
-                  <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
+                  <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Servidor SMTP</label>
-                        <input
-                          type="text"
-                          value={createForm.emailHost}
-                          onChange={(e) => setCreateForm({ ...createForm, emailHost: e.target.value })}
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Puerto</label>
-                        <input
-                          type="number"
-                          value={createForm.emailPort}
-                          onChange={(e) => setCreateForm({ ...createForm, emailPort: parseInt(e.target.value) || 587 })}
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Usuario SMTP (Correo)</label>
-                        <input
-                          type="text"
-                          value={createForm.emailUser}
-                          onChange={(e) => setCreateForm({ ...createForm, emailUser: e.target.value })}
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Contraseña (App Password)</label>
-                        <input
-                          type="password"
-                          value={createForm.emailPassword}
-                          onChange={(e) => setCreateForm({ ...createForm, emailPassword: e.target.value })}
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-emerald-500 block mb-1">Remitente Personalizado (From)</label>
-                      <input
-                        type="text"
-                        value={createForm.emailFrom}
-                        onChange={(e) => setCreateForm({ ...createForm, emailFrom: e.target.value })}
-                        className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        type="checkbox"
-                        id="createEmailSecureCheckbox"
-                        checked={createForm.emailSecure}
-                        onChange={(e) => setCreateForm({ ...createForm, emailSecure: e.target.checked })}
-                        className="rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label htmlFor="createEmailSecureCheckbox" className="text-xs text-emerald-500 select-none">
-                        Usar Conexión Segura (SSL/TLS nativo)
-                      </label>
-                    </div>
+                    <p className="text-xs text-zinc-500 mt-1">El correo de envío es único para todo el sistema y se configura con las variables SMTP_USER, SMTP_PASSWORD y SMTP_FROM del servidor.</p>
                   </div>
 
                   {/* Contenido Plantilla */}
@@ -1772,74 +1711,9 @@ export function EventosClient({ initialEvents, branches }: { initialEvents: Even
                     />
                   </div>
 
-                  <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800 space-y-3">
+                  <div className="border-t pt-3 border-zinc-100 dark:border-zinc-800">
                     <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Servidor de Correo (SMTP)</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Servidor SMTP</label>
-                        <input
-                          type="text"
-                          value={configForm.emailHost || ""}
-                          onChange={(e) => setConfigForm({ ...configForm, emailHost: e.target.value })}
-                          placeholder="smtp.gmail.com"
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Puerto</label>
-                        <input
-                          type="number"
-                          value={configForm.emailPort ?? 587}
-                          onChange={(e) => setConfigForm({ ...configForm, emailPort: parseInt(e.target.value) || 587 })}
-                          placeholder="587"
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Usuario SMTP (Correo)</label>
-                        <input
-                          type="text"
-                          value={configForm.emailUser || ""}
-                          onChange={(e) => setConfigForm({ ...configForm, emailUser: e.target.value })}
-                          placeholder="tu-correo@gmail.com"
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-emerald-500 block mb-1">Contraseña (o App Password)</label>
-                        <input
-                          type="password"
-                          value={configForm.emailPassword || ""}
-                          onChange={(e) => setConfigForm({ ...configForm, emailPassword: e.target.value })}
-                          placeholder="Vacío = mantener la actual"
-                          className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-emerald-500 block mb-1">Remitente Personalizado (From)</label>
-                      <input
-                        type="text"
-                        value={configForm.emailFrom || ""}
-                        onChange={(e) => setConfigForm({ ...configForm, emailFrom: e.target.value })}
-                        placeholder="EVENT <tu-correo@gmail.com>"
-                        className="w-full px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 pt-1">
-                      <input
-                        type="checkbox"
-                        id="emailSecureCheckbox"
-                        checked={configForm.emailSecure || false}
-                        onChange={(e) => setConfigForm({ ...configForm, emailSecure: e.target.checked })}
-                        className="rounded border-zinc-300 dark:border-zinc-700 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label htmlFor="emailSecureCheckbox" className="text-xs text-emerald-500 select-none">
-                        Usar Conexión Segura (SSL/TLS nativo en puerto 465)
-                      </label>
-                    </div>
+                    <p className="text-xs text-zinc-500 mt-1">El correo de envío es único para todo el sistema y se configura con las variables SMTP_USER, SMTP_PASSWORD y SMTP_FROM del servidor.</p>
                   </div>
                 </div>
               )}
