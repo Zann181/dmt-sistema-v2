@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextResponse, after } from "next/server"
 import { randomBytes } from "node:crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
@@ -6,6 +6,7 @@ import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { apiError } from "@/shared/errors/apiError"
 import { requireBranchPermission } from "@/shared/guards/branchAccess"
+import { kickEmailWorker } from "@/domains/attendee/services/TicketEmailQueue"
 
 const attendeeSchema = z.object({
   name: z.string().min(1).max(120),
@@ -241,6 +242,7 @@ export async function POST(req: Request) {
 
     // El ticket por correo no se envía aquí: el asistente con email y emailSentAt vacío
     // ya está en la cola, y el navegador la despacha de a uno con /api/attendees/email-queue.
+    if (parsed.email) after(() => kickEmailWorker())
     return NextResponse.json({ data: attendee, queued: !!parsed.email })
   } catch (err: any) {
     return apiError(err)

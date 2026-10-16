@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server"
+import { NextResponse, after } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { apiError } from "@/shared/errors/apiError"
 import { requireBranchPermission } from "@/shared/guards/branchAccess"
+import { kickEmailWorker } from "@/domains/attendee/services/TicketEmailQueue"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       data: { emailSentAt: null, qrDeliveredManuallyAt: null },
     })
 
+    after(() => kickEmailWorker())
     return NextResponse.json({ message: "Correo en cola para reenvío", queued: true })
   } catch (error: any) {
     console.error("❌ Error al reenviar correo de ticket:", error)

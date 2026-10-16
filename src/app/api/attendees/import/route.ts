@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server"
+import { NextResponse, after } from "next/server"
 import { randomBytes } from "node:crypto"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/infrastructure/database/prisma"
 import { z } from "zod"
 import { apiError } from "@/shared/errors/apiError"
 import { requireBranchPermission } from "@/shared/guards/branchAccess"
-import { countPendingTicketEmails } from "@/domains/attendee/services/TicketEmailQueue"
+import { countPendingTicketEmails, kickEmailWorker } from "@/domains/attendee/services/TicketEmailQueue"
 
 const importRowSchema = z.object({
   name: z.string().min(1).max(120),
@@ -42,6 +42,9 @@ export async function POST(req: Request) {
 
   const access = await requireBranchPermission(session, parsed.branchId, "accessAttendees", parsed.eventId)
   if (access instanceof NextResponse) return access
+
+  // Con la importación ya respondida, el worker del servidor arranca solo la cola de correos.
+  after(() => kickEmailWorker())
 
   const encoder = new TextEncoder()
   const stream = new ReadableStream({

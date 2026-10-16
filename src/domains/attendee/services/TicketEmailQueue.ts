@@ -56,9 +56,19 @@ async function prepareEventMailer(eventId: string) {
   }
 }
 
+// Errores del servidor SMTP que indican que seguir intentando es inútil (límite diario de
+// Gmail, credenciales rechazadas): se corta la tanda para no gastar CPU en QR que no saldrán.
+const FATAL_SMTP = /5.4.5|sending limit|535|Invalid login|Username and Password not accepted/i
+
+function pendingWhere(branchId: string, eventId: string) {
+  return { branchId, eventId, origin: "MANUAL" as const, email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null }
+}
+
 /**
  * Envía correos pendientes del evento hasta `deadline` (epoch ms) o `max` envíos.
  * `skipIds`: asistentes que ya fallaron en esta sesión de cola (no reintentar en bucle).
+ * Solo corre un envío a la vez por evento (candado de Postgres): si otro proceso — el
+ * navegador o el worker del servidor — ya está enviando, devuelve `busy: true`.
  */
 export async function processPendingTicketEmails(opts: {
   branchId: string
@@ -69,56 +79,89 @@ export async function processPendingTicketEmails(opts: {
   onProgress?: (p: QueueProgress) => void
 }) {
   const where = {
-    branchId: opts.branchId,
-    eventId: opts.eventId,
-    origin: "MANUAL" as const,
-    email: { not: null },
-    emailSentAt: null,
-    qrDeliveredManuallyAt: null,
+    ...pendingWhere(opts.branchId, opts.eventId),
     ...(opts.skipIds?.length ? { id: { notIn: opts.skipIds } } : {}),
   }
 
-  const pending = await prisma.attendee.findMany({
-    where,
-    select: { id: true, name: true, cc: true, email: true, qrCode: true, paidAmount: true, category: { select: { name: true } } },
-    orderBy: { createdAt: "asc" },
-    take: opts.max ?? 50,
-  })
+  type Result = { sent: number; failed: { id: string; name: string; error: string }[]; remaining: number; busy: boolean; fatal: boolean }
+  return prisma.$transaction<Result>(async (tx) => {
+    const [{ locked }] = await tx.$queryRaw<{ locked: boolean }[]>`SELECT pg_try_advisory_xact_lock(hashtext(${"ticket-email-queue:" + opts.eventId})) AS locked`
+    if (!locked) {
+      return { sent: 0, failed: [] as { id: string; name: string; error: string }[], remaining: await tx.attendee.count({ where }), busy: true, fatal: false }
+    }
 
-  let sent = 0
-  const failed: { id: string; name: string; error: string }[] = []
+    // Los que fallaron en esta cadena llegan en skipIds, así no bloquean a los demás.
+    const pending = await tx.attendee.findMany({
+      where,
+      select: { id: true, name: true, cc: true, email: true, qrCode: true, paidAmount: true, category: { select: { name: true } } },
+      orderBy: { createdAt: "asc" },
+      take: opts.max ?? 50,
+    })
 
-  if (pending.length > 0) {
-    const send = await prepareEventMailer(opts.eventId)
-    let first = true
-    for (const a of pending) {
-      if (Date.now() + EMAIL_SEND_DELAY_MS > opts.deadline && !first) break
-      if (!first) await sleep(EMAIL_SEND_DELAY_MS)
-      first = false
-      try {
-        await send({ qrCode: a.qrCode, name: a.name, email: a.email!, paidAmount: a.paidAmount, categoryName: a.category.name })
-        await prisma.attendee.update({ where: { id: a.id }, data: { emailSentAt: new Date() } })
-        sent++
-        opts.onProgress?.({ attendeeId: a.id, name: a.name, cc: a.cc, email: a.email!, status: "sent" })
-      } catch (err: any) {
-        console.error(`⚠️ Error enviando ticket a ${a.email}:`, err)
-        failed.push({ id: a.id, name: a.name, error: err?.message || "Error de envío" })
-        opts.onProgress?.({ attendeeId: a.id, name: a.name, cc: a.cc, email: a.email!, status: "failed", error: err?.message })
+    let sent = 0
+    let fatal = false
+    const failed: { id: string; name: string; error: string }[] = []
+
+    if (pending.length > 0) {
+      const send = await prepareEventMailer(opts.eventId)
+      let first = true
+      for (const a of pending) {
+        if (Date.now() + EMAIL_SEND_DELAY_MS > opts.deadline && !first) break
+        if (!first) await sleep(EMAIL_SEND_DELAY_MS)
+        first = false
+        try {
+          await send({ qrCode: a.qrCode, name: a.name, email: a.email!, paidAmount: a.paidAmount, categoryName: a.category.name })
+          await tx.attendee.update({ where: { id: a.id }, data: { emailSentAt: new Date() } })
+          sent++
+          opts.onProgress?.({ attendeeId: a.id, name: a.name, cc: a.cc, email: a.email!, status: "sent" })
+        } catch (err: any) {
+          console.error(`⚠️ Error enviando ticket a ${a.email}:`, err)
+          const message = err?.message || "Error de envío"
+          failed.push({ id: a.id, name: a.name, error: message })
+          opts.onProgress?.({ attendeeId: a.id, name: a.name, cc: a.cc, email: a.email!, status: "failed", error: message })
+          if (FATAL_SMTP.test(message)) { fatal = true; break }
+        }
       }
     }
-  }
 
-  const skip = [...(opts.skipIds ?? []), ...failed.map((f) => f.id)]
-  const remaining = await prisma.attendee.count({
-    where: { ...where, ...(skip.length ? { id: { notIn: skip } } : {}) },
-  })
+    const skip = [...(opts.skipIds ?? []), ...failed.map((f) => f.id)]
+    const remaining = await tx.attendee.count({
+      where: { ...where, ...(skip.length ? { id: { notIn: skip } } : {}) },
+    })
 
-  return { sent, failed, remaining }
+    return { sent, failed, remaining, busy: false, fatal }
+  }, { timeout: 120_000, maxWait: 5_000 })
 }
 
 /** Cuántos correos de tickets siguen en cola para el evento. */
 export function countPendingTicketEmails(branchId: string, eventId: string) {
-  return prisma.attendee.count({
-    where: { branchId, eventId, origin: "MANUAL", email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null },
+  return prisma.attendee.count({ where: pendingWhere(branchId, eventId) })
+}
+
+/** Eventos con correos pendientes (para el worker del servidor). */
+export async function listPendingEventQueues() {
+  const groups = await prisma.attendee.groupBy({
+    by: ["branchId", "eventId"],
+    where: { origin: "MANUAL", email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null },
   })
+  return groups.map((g) => ({ branchId: g.branchId, eventId: g.eventId }))
+}
+
+/**
+ * Despierta al worker del servidor (fire-and-forget). Llamar dentro de `after()` para
+ * que la respuesta al usuario no espere. El worker se encadena solo hasta vaciar la cola.
+ */
+export async function kickEmailWorker(skipIds: string[] = []) {
+  const secret = process.env.CRON_SECRET
+  const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "")
+  if (!secret || !base) return
+  try {
+    await fetch(`${base}/api/internal/email-worker`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ skipIds }),
+    })
+  } catch (err) {
+    console.error("⚠️ No se pudo despertar el worker de correos:", err)
+  }
 }
