@@ -148,11 +148,11 @@ export async function POST(req: Request) {
       where: { branchId: parsed.branchId },
       select: { slug: true }
     })
-    const slugList = existingEvents.map((e: any) => e.slug)
+    const takenSlugs = new Set(existingEvents.map((e: any) => e.slug))
 
     let slug = baseSlug
     let counter = 1
-    while (slugList.includes(slug)) {
+    while (takenSlugs.has(slug)) {
       slug = `${baseSlug}-${counter}`
       counter++
     }

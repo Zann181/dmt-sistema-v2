@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   try {
     // 1. ENTRADA & TAQUILLA METRICS
     const attendees = await prisma.attendee.findMany({
-      where: { branchId, eventId },
+      where: { branchId, eventId, inactiveAt: null },
       select: {
         id: true,
         paidAmount: true,

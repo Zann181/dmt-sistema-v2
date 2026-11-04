@@ -13,7 +13,8 @@ export class BranchService {
     const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
     let slug = baseSlug
     let counter = 1
-    while (existingSlugs.includes(slug)) {
+    const takenSlugs = new Set(existingSlugs)
+    while (takenSlugs.has(slug)) {
       slug = `${baseSlug}-${counter}`
       counter++
     }
@@ -33,14 +34,14 @@ export class BranchService {
       include: { branch: true },
     })
     const memberBranches = memberships.map((m: any) => m.branch).filter((b: any) => b && b.isActive)
-    const memberBranchIds = memberBranches.map((b: any) => b.id)
+    const memberBranchIds = new Set(memberBranches.map((b: any) => b.id))
 
     const assignments = await prisma.eventAssignment.findMany({
       where: { userId },
       select: { branchId: true }
     })
     const assignedBranchIds = assignments.map((a: any) => a.branchId)
-    const extraBranchIds = assignedBranchIds.filter((id: string) => !memberBranchIds.includes(id))
+    const extraBranchIds = assignedBranchIds.filter((id: string) => !memberBranchIds.has(id))
 
     if (extraBranchIds.length > 0) {
       const extraBranches = await prisma.branch.findMany({

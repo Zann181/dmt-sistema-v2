@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useRef, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 export interface CheckInEvent {
@@ -24,24 +24,45 @@ const POLL_INTERVAL_MS = 30_000
 // invocaciones de Vercel; al volver a tocarla se reanuda al instante.
 const IDLE_AFTER_MS = 10 * 60_000
 
-function useUserIdle(timeoutMs: number) {
+const ACTIVITY_EVENTS = ["pointerdown", "keydown", "touchstart", "visibilitychange"] as const
+
+/** Avisa solo en las transiciones activo/inactivo. Devuelve la función que libera timer y listeners. */
+function subscribeUserIdle(timeoutMs: number, onChange: (isIdle: boolean) => void) {
+  let isIdle = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const setIdle = (next: boolean) => {
+    if (next === isIdle) return
+    isIdle = next
+    onChange(next)
+  }
+  const reset = () => {
+    setIdle(false)
+    clearTimeout(timer)
+    timer = setTimeout(() => setIdle(true), timeoutMs)
+  }
+  ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, reset, { passive: true }))
+  reset()
+  return () => {
+    clearTimeout(timer)
+    ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, reset))
+  }
+}
+
+function useUserIdle(timeoutMs: number, onWake: () => void) {
   const [isIdle, setIsIdle] = useState(false)
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>
-    const reset = () => {
-      setIsIdle(false)
-      clearTimeout(timer)
-      timer = setTimeout(() => setIsIdle(true), timeoutMs)
-    }
-    const events = ["pointerdown", "keydown", "touchstart", "visibilitychange"] as const
-    events.forEach((e) => window.addEventListener(e, reset, { passive: true }))
-    reset()
-    return () => {
-      clearTimeout(timer)
-      events.forEach((e) => window.removeEventListener(e, reset))
-    }
-  }, [timeoutMs])
+  const handleChange = useEffectEvent((next: boolean) => {
+    setIsIdle(next)
+    if (!next) onWake()
+  })
+  useEffect(() => subscribeUserIdle(timeoutMs, handleChange), [timeoutMs])
   return isIdle
+}
+
+interface CheckInPoll {
+  data: CheckInEvent[]
+  cursor: string
+  /** Check-ins acumulados desde que se abrió esta sucursal/evento */
+  total: number
 }
 
 /**
@@ -51,28 +72,29 @@ function useUserIdle(timeoutMs: number) {
  */
 export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStreamOptions = {}) {
   const queryClient = useQueryClient()
-  const isIdle = useUserIdle(IDLE_AFTER_MS)
-  const [checkInCount, setCheckInCount] = useState(0)
-  const cursorRef = useRef<string | null>(null)
+  const queryKey = ["check-in-stream", branchId, eventId]
+  // Al volver de la inactividad (solo en esa transición), ponerse al día de inmediato.
+  // refetchQueries omite la consulta si está deshabilitada (sin sucursal/evento).
+  const isIdle = useUserIdle(IDLE_AFTER_MS, () => {
+    queryClient.refetchQueries({ queryKey, exact: true })
+  })
   const onCheckInRef = useRef(onCheckIn)
   useEffect(() => {
     onCheckInRef.current = onCheckIn
   }, [onCheckIn])
 
-  // Al cambiar de sucursal/evento se empieza de cero
-  useEffect(() => {
-    cursorRef.current = null
-    setCheckInCount(0)
-  }, [branchId, eventId])
-
-  const { data, isError, isSuccess, refetch } = useQuery({
-    queryKey: ["check-in-stream", branchId, eventId],
-    queryFn: async () => {
+  const { data, isError, isSuccess } = useQuery({
+    queryKey,
+    // Cursor y contador viven en la caché de esta clave: al cambiar de sucursal/evento
+    // se empieza de cero (gcTime: 0 descarta la entrada anterior).
+    queryFn: async (): Promise<CheckInPoll> => {
+      const previous = queryClient.getQueryData<CheckInPoll>(queryKey)
       const params = new URLSearchParams({ branchId: branchId!, eventId: eventId! })
-      if (cursorRef.current) params.set("since", cursorRef.current)
+      if (previous) params.set("since", previous.cursor)
       const res = await fetch(`/api/attendees/check-ins?${params}`)
       if (!res.ok) throw new Error("No se pudieron consultar los check-ins")
-      return (await res.json()) as { data: CheckInEvent[]; cursor: string }
+      const poll = (await res.json()) as { data: CheckInEvent[]; cursor: string }
+      return { ...poll, total: (previous?.total ?? 0) + poll.data.length }
     },
     enabled: !!branchId && !!eventId,
     refetchInterval: isIdle ? false : POLL_INTERVAL_MS,
@@ -81,24 +103,14 @@ export function useCheckInStream({ onCheckIn, branchId, eventId }: UseCheckInStr
     gcTime: 0,
   })
 
-  // Al volver de la inactividad (solo en esa transición), ponerse al día de inmediato
-  const wasIdleRef = useRef(false)
   useEffect(() => {
-    if (wasIdleRef.current && !isIdle && branchId && eventId) refetch()
-    wasIdleRef.current = isIdle
-  }, [isIdle, branchId, eventId, refetch])
+    if (!data || data.data.length === 0) return
 
-  useEffect(() => {
-    if (!data) return
-    cursorRef.current = data.cursor
-    if (data.data.length === 0) return
-
-    setCheckInCount((prev) => prev + data.data.length)
     data.data.forEach((event) => onCheckInRef.current?.(event))
     // Refrescar lista y estadísticas con los ingresos hechos en otros dispositivos
     queryClient.invalidateQueries({ queryKey: ["attendees", branchId, eventId] })
     queryClient.invalidateQueries({ queryKey: ["attendees-stats", branchId, eventId] })
   }, [data, queryClient, branchId, eventId])
 
-  return { isConnected: isSuccess && !isError && !isIdle, checkInCount }
+  return { isConnected: isSuccess && !isError && !isIdle, checkInCount: data?.total ?? 0 }
 }

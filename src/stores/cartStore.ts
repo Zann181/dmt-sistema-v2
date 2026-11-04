@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 
-interface CartItem {
+export interface CartItem {
   eventProductId: string
   name: string
   price: number

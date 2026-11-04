@@ -25,7 +25,7 @@ export async function GET(req: Request) {
 
   try {
     const attendees = await prisma.attendee.findMany({
-      where: { branchId, eventId },
+      where: { branchId, eventId, inactiveAt: null },
       include: {
         category: { select: { name: true } }
       },

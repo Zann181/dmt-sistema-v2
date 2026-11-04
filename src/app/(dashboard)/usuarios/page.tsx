@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { UserCheck, ShieldAlert, UserPlus, UserCog, ToggleLeft, ToggleRight, Trash2, Edit2, Plus, Store, Calendar } from "lucide-react"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { Dispatch, SetStateAction } from "react"
 
 export default function UsuariosPage() {
   const queryClient = useQueryClient()
@@ -286,7 +288,20 @@ export default function UsuariosPage() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+      <UsersTable isSuper={isSuper} usersLoading={usersLoading} users={users} handleOpenEdit={handleOpenEdit} deleteUserMutation={deleteUserMutation} />
+
+      {/* CREATE MODAL */}
+      <CreateUserModal showCreateModal={showCreateModal} errorMsg={errorMsg} createUserMutation={createUserMutation} createForm={createForm} setCreateForm={setCreateForm} isSuper={isSuper} setShowCreateModal={setShowCreateModal} />
+
+      {/* EDIT MODAL */}
+      <EditUserModal showEditModal={showEditModal} selectedUser={selectedUser} setShowEditModal={setShowEditModal} setSelectedUser={setSelectedUser} setActiveEditTab={setActiveEditTab} activeEditTab={activeEditTab} editUserMutation={editUserMutation} editForm={editForm} errorMsg={errorMsg} setEditForm={setEditForm} isSuper={isSuper} membershipForm={membershipForm} setMembershipForm={setMembershipForm} branches={branches} addMembershipMutation={addMembershipMutation} removeMembershipMutation={removeMembershipMutation} eventForm={eventForm} setEventForm={setEventForm} formEventsLoading={formEventsLoading} formEvents={formEvents} addEventAssignmentMutation={addEventAssignmentMutation} removeEventAssignmentMutation={removeEventAssignmentMutation} />
+    </div>
+  )
+}
+
+function UsersTable({ isSuper, usersLoading, users, handleOpenEdit, deleteUserMutation }: { isSuper: any; usersLoading: boolean; users: NoInfer<any[]> | undefined; handleOpenEdit: (user: any) => void; deleteUserMutation: UseMutationResult<any, any, any, any> }) {
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-200 dark:border-zinc-800">
@@ -361,13 +376,13 @@ export default function UsuariosPage() {
                     </td>
                     {isSuper && (
                       <td className="px-6 py-4 text-right space-x-2">
-                        <button
+                        <button aria-label="Editar usuario"
                           onClick={() => handleOpenEdit(u)}
                           className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                         >
                           <Edit2 size={14} />
                         </button>
-                        <button
+                        <button aria-label="Eliminar usuario"
                           onClick={() => { if(confirm("¿Eliminar usuario?")) deleteUserMutation.mutate(u.id) }}
                           className="p-1.5 border border-zinc-200 dark:border-zinc-800 text-emerald-500 hover:text-red-600 hover:border-red-200 dark:hover:text-red-400 dark:hover:border-red-900 rounded transition-colors"
                         >
@@ -382,9 +397,12 @@ export default function UsuariosPage() {
           </table>
         </div>
       </div>
+  )
+}
 
-      {/* CREATE MODAL */}
-      {showCreateModal && (
+function CreateUserModal({ showCreateModal, errorMsg, createUserMutation, createForm, setCreateForm, isSuper, setShowCreateModal }: { showCreateModal: boolean; errorMsg: string; createUserMutation: UseMutationResult<any, any, any, any>; createForm: { username: string; email: string; firstName: string; lastName: string; password: string; isSuperuser: boolean; isGlobalAdmin: boolean; }; setCreateForm: Dispatch<SetStateAction<any>>; isSuper: any; setShowCreateModal: Dispatch<SetStateAction<boolean>> }) {
+  return (
+    <>{showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
@@ -399,8 +417,8 @@ export default function UsuariosPage() {
 
             <form onSubmit={(e) => { e.preventDefault(); createUserMutation.mutate(createForm) }} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre de Usuario</label>
-                <input 
+                <label htmlFor="usuarios-nombre-de-usuario" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre de Usuario</label>
+                <input id="usuarios-nombre-de-usuario" 
                   type="text" 
                   value={createForm.username}
                   onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
@@ -411,8 +429,8 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Correo Electrónico</label>
-                <input 
+                <label htmlFor="usuarios-correo-electronico" className="text-xs font-semibold text-emerald-500 block mb-1">Correo Electrónico</label>
+                <input id="usuarios-correo-electronico" 
                   type="email" 
                   value={createForm.email}
                   onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
@@ -424,8 +442,8 @@ export default function UsuariosPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
-                  <input 
+                  <label htmlFor="usuarios-nombre" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
+                  <input id="usuarios-nombre" 
                     type="text" 
                     value={createForm.firstName}
                     onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
@@ -434,8 +452,8 @@ export default function UsuariosPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Apellido</label>
-                  <input 
+                  <label htmlFor="usuarios-apellido" className="text-xs font-semibold text-emerald-500 block mb-1">Apellido</label>
+                  <input id="usuarios-apellido" 
                     type="text" 
                     value={createForm.lastName}
                     onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
@@ -446,8 +464,8 @@ export default function UsuariosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Contraseña</label>
-                <input 
+                <label htmlFor="usuarios-contrasena" className="text-xs font-semibold text-emerald-500 block mb-1">Contraseña</label>
+                <input id="usuarios-contrasena" 
                   type="password" 
                   value={createForm.password}
                   onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
@@ -461,33 +479,9 @@ export default function UsuariosPage() {
                 <div className="border-t pt-4 space-y-3">
                   <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Permisos y Roles Globales</p>
                   
-                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">Superusuario</p>
-                      <p className="text-xs text-emerald-500">Acceso total absoluto al sistema</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setCreateForm({ ...createForm, isSuperuser: !createForm.isSuperuser })}
-                      className="text-emerald-500 hover:text-indigo-600 transition-colors"
-                    >
-                      {createForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
-                    </button>
-                  </label>
+                  <PermissionSwitch checked={createForm.isSuperuser} onToggle={() => setCreateForm({ ...createForm, isSuperuser: !createForm.isSuperuser })} title="Superusuario" description="Acceso total absoluto al sistema" />
 
-                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">Administrador Global</p>
-                      <p className="text-xs text-emerald-500">Permisos de gestión sin límite de sucursal</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setCreateForm({ ...createForm, isGlobalAdmin: !createForm.isGlobalAdmin })}
-                      className="text-emerald-500 hover:text-indigo-600 transition-colors"
-                    >
-                      {createForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
-                    </button>
-                  </label>
+                  <PermissionSwitch checked={createForm.isGlobalAdmin} onToggle={() => setCreateForm({ ...createForm, isGlobalAdmin: !createForm.isGlobalAdmin })} title="Administrador Global" description="Permisos de gestión sin límite de sucursal" />
                 </div>
               )}
 
@@ -507,17 +501,20 @@ export default function UsuariosPage() {
             </form>
           </div>
         </div>
-      )}
+      )}</>
+  )
+}
 
-      {/* EDIT MODAL */}
-      {showEditModal && selectedUser && (
+function EditUserModal({ showEditModal, selectedUser, setShowEditModal, setSelectedUser, setActiveEditTab, activeEditTab, editUserMutation, editForm, errorMsg, setEditForm, isSuper, membershipForm, setMembershipForm, branches, addMembershipMutation, removeMembershipMutation, eventForm, setEventForm, formEventsLoading, formEvents, addEventAssignmentMutation, removeEventAssignmentMutation }: { showEditModal: boolean; selectedUser: any; setShowEditModal: Dispatch<SetStateAction<boolean>>; setSelectedUser: Dispatch<any>; setActiveEditTab: Dispatch<SetStateAction<"profile" | "branches" | "events">>; activeEditTab: "profile" | "branches" | "events"; editUserMutation: UseMutationResult<any, any, any, any>; editForm: { email: string; firstName: string; lastName: string; password: string; isSuperuser: boolean; isGlobalAdmin: boolean; isActive: boolean; }; errorMsg: string; setEditForm: Dispatch<SetStateAction<any>>; isSuper: any; membershipForm: { branchId: string; role: "BAR"; }; setMembershipForm: Dispatch<SetStateAction<{ branchId: string; role: "BAR"; }>>; branches: NoInfer<any[]> | undefined; addMembershipMutation: UseMutationResult<any, any, any, any>; removeMembershipMutation: UseMutationResult<any, any, any, any>; eventForm: { branchId: string; eventId: string; role: "BAR"; }; setEventForm: Dispatch<SetStateAction<{ branchId: string; eventId: string; role: "BAR"; }>>; formEventsLoading: boolean; formEvents: NoInfer<any[]> | undefined; addEventAssignmentMutation: UseMutationResult<any, any, any, any>; removeEventAssignmentMutation: UseMutationResult<any, any, any, any> }) {
+  return (
+    <>{showEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <UserCog className="text-indigo-600" /> @{selectedUser.username}
               </h3>
-              <button onClick={() => { setShowEditModal(false); setSelectedUser(null) }} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold">✕</button>
+              <button aria-label="Cerrar" onClick={() => { setShowEditModal(false); setSelectedUser(null) }} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold">✕</button>
             </div>
 
             {/* Tab navigation */}
@@ -546,7 +543,23 @@ export default function UsuariosPage() {
             </div>
 
             {/* TAB CONTENT: PROFILE */}
-            {activeEditTab === "profile" && (
+            <ProfileTab activeEditTab={activeEditTab} editUserMutation={editUserMutation} editForm={editForm} errorMsg={errorMsg} setEditForm={setEditForm} isSuper={isSuper} setShowEditModal={setShowEditModal} setSelectedUser={setSelectedUser} />
+
+            {/* TAB CONTENT: BRANCHES */}
+            <BranchesTab activeEditTab={activeEditTab} membershipForm={membershipForm} setMembershipForm={setMembershipForm} branches={branches} addMembershipMutation={addMembershipMutation} selectedUser={selectedUser} removeMembershipMutation={removeMembershipMutation} />
+
+            {/* TAB CONTENT: EVENTS */}
+            <EventsTab activeEditTab={activeEditTab} eventForm={eventForm} setEventForm={setEventForm} branches={branches} formEventsLoading={formEventsLoading} formEvents={formEvents} addEventAssignmentMutation={addEventAssignmentMutation} selectedUser={selectedUser} removeEventAssignmentMutation={removeEventAssignmentMutation} />
+
+          </div>
+        </div>
+      )}</>
+  )
+}
+
+function ProfileTab({ activeEditTab, editUserMutation, editForm, errorMsg, setEditForm, isSuper, setShowEditModal, setSelectedUser }: { activeEditTab: "profile" | "branches" | "events"; editUserMutation: UseMutationResult<any, any, any, any>; editForm: { email: string; firstName: string; lastName: string; password: string; isSuperuser: boolean; isGlobalAdmin: boolean; isActive: boolean; }; errorMsg: string; setEditForm: Dispatch<any>; isSuper: any; setShowEditModal: Dispatch<SetStateAction<boolean>>; setSelectedUser: Dispatch<any> }) {
+  return (
+    <>{activeEditTab === "profile" && (
               <form onSubmit={(e) => { e.preventDefault(); editUserMutation.mutate(editForm) }} className="space-y-4 pt-2">
                 {errorMsg && (
                   <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
@@ -554,8 +567,8 @@ export default function UsuariosPage() {
                   </div>
                 )}
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Correo Electrónico</label>
-                  <input 
+                  <label htmlFor="usuarios-correo-electronico-2" className="text-xs font-semibold text-emerald-500 block mb-1">Correo Electrónico</label>
+                  <input id="usuarios-correo-electronico-2" 
                     type="email" 
                     value={editForm.email}
                     onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
@@ -566,8 +579,8 @@ export default function UsuariosPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
-                    <input 
+                    <label htmlFor="usuarios-nombre-2" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
+                    <input id="usuarios-nombre-2" 
                       type="text" 
                       value={editForm.firstName}
                       onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
@@ -575,8 +588,8 @@ export default function UsuariosPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Apellido</label>
-                    <input 
+                    <label htmlFor="usuarios-apellido-2" className="text-xs font-semibold text-emerald-500 block mb-1">Apellido</label>
+                    <input id="usuarios-apellido-2" 
                       type="text" 
                       value={editForm.lastName}
                       onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
@@ -586,8 +599,8 @@ export default function UsuariosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Cambiar Contraseña</label>
-                  <input 
+                  <label htmlFor="usuarios-cambiar-contrasena" className="text-xs font-semibold text-emerald-500 block mb-1">Cambiar Contraseña</label>
+                  <input id="usuarios-cambiar-contrasena" 
                     type="password" 
                     value={editForm.password}
                     onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
@@ -599,49 +612,13 @@ export default function UsuariosPage() {
                 <div className="pt-2 space-y-2 border-t border-zinc-200 dark:border-zinc-800">
                   <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-2">Estado y Roles Globales</p>
 
-                  <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <div>
-                      <p className="text-sm font-semibold">Usuario Activo</p>
-                      <p className="text-xs text-emerald-500">Permite o niega el login</p>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => setEditForm({ ...editForm, isActive: !editForm.isActive })}
-                      className="text-emerald-500 hover:text-indigo-600 transition-colors"
-                    >
-                      {editForm.isActive ? <ToggleRight size={28} className="text-green-600" /> : <ToggleLeft size={28} />}
-                    </button>
-                  </label>
+                  <PermissionSwitch checked={editForm.isActive} onToggle={() => setEditForm({ ...editForm, isActive: !editForm.isActive })} title="Usuario Activo" description="Permite o niega el login" />
                   
                   {isSuper && (
                     <>
-                      <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                        <div>
-                          <p className="text-sm font-semibold">Superusuario</p>
-                          <p className="text-xs text-emerald-500">Acceso total absoluto al sistema</p>
-                        </div>
-                        <button 
-                          type="button"
-                          onClick={() => setEditForm({ ...editForm, isSuperuser: !editForm.isSuperuser })}
-                          className="text-emerald-500 hover:text-indigo-600 transition-colors"
-                        >
-                          {editForm.isSuperuser ? <ToggleRight size={28} className="text-red-600" /> : <ToggleLeft size={28} />}
-                        </button>
-                      </label>
+                      <PermissionSwitch checked={editForm.isSuperuser} onToggle={() => setEditForm({ ...editForm, isSuperuser: !editForm.isSuperuser })} title="Superusuario" description="Acceso total absoluto al sistema" />
 
-                      <label className="flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                        <div>
-                          <p className="text-sm font-semibold">Administrador Global</p>
-                          <p className="text-xs text-emerald-500">Permisos globales de gestión</p>
-                        </div>
-                        <button 
-                          type="button"
-                          onClick={() => setEditForm({ ...editForm, isGlobalAdmin: !editForm.isGlobalAdmin })}
-                          className="text-emerald-500 hover:text-indigo-600 transition-colors"
-                        >
-                          {editForm.isGlobalAdmin ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
-                        </button>
-                      </label>
+                      <PermissionSwitch checked={editForm.isGlobalAdmin} onToggle={() => setEditForm({ ...editForm, isGlobalAdmin: !editForm.isGlobalAdmin })} title="Administrador Global" description="Permisos globales de gestión" />
                     </>
                   )}
                 </div>
@@ -663,10 +640,13 @@ export default function UsuariosPage() {
                   </button>
                 </div>
               </form>
-            )}
+            )}</>
+  )
+}
 
-            {/* TAB CONTENT: BRANCHES */}
-            {activeEditTab === "branches" && (
+function BranchesTab({ activeEditTab, membershipForm, setMembershipForm, branches, addMembershipMutation, selectedUser, removeMembershipMutation }: { activeEditTab: "profile" | "branches" | "events"; membershipForm: { branchId: string; role: "BAR"; }; setMembershipForm: Dispatch<SetStateAction<{ branchId: string; role: "BAR"; }>>; branches: NoInfer<any[]> | undefined; addMembershipMutation: UseMutationResult<any, any, any, any>; selectedUser: any; removeMembershipMutation: UseMutationResult<any, any, any, any> }) {
+  return (
+    <>{activeEditTab === "branches" && (
               <div className="space-y-4 pt-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2">
                   <Store size={18} className="text-emerald-500" /> Asignar a Sucursales
@@ -674,8 +654,8 @@ export default function UsuariosPage() {
 
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Sucursal</label>
-                    <select 
+                    <label htmlFor="usuarios-sucursal" className="text-xs font-semibold text-emerald-500 block mb-1">Sucursal</label>
+                    <select id="usuarios-sucursal" 
                       value={membershipForm.branchId}
                       onChange={(e) => setMembershipForm({ ...membershipForm, branchId: e.target.value })}
                       className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -688,8 +668,8 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Rol en Sucursal</label>
-                    <select 
+                    <label htmlFor="usuarios-rol-en-sucursal" className="text-xs font-semibold text-emerald-500 block mb-1">Rol en Sucursal</label>
+                    <select id="usuarios-rol-en-sucursal" 
                       value={membershipForm.role}
                       onChange={(e) => setMembershipForm({ ...membershipForm, role: e.target.value as any })}
                       className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -716,13 +696,13 @@ export default function UsuariosPage() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Sucursales Activas</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {selectedUser.branchMemberships?.map((m: any, idx: number) => (
-                      <div key={`${m.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    {selectedUser.branchMemberships?.map((m: any) => (
+                      <div key={m.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{m.branch.name}</p>
                           <p className="text-xs text-emerald-500">{m.role}</p>
                         </div>
-                        <button 
+                        <button aria-label="Quitar sucursal" 
                           onClick={() => removeMembershipMutation.mutate(m.id)}
                           className="p-1 text-emerald-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
@@ -736,10 +716,13 @@ export default function UsuariosPage() {
                   </div>
                 </div>
               </div>
-            )}
+            )}</>
+  )
+}
 
-            {/* TAB CONTENT: EVENTS */}
-            {activeEditTab === "events" && (
+function EventsTab({ activeEditTab, eventForm, setEventForm, branches, formEventsLoading, formEvents, addEventAssignmentMutation, selectedUser, removeEventAssignmentMutation }: { activeEditTab: "profile" | "branches" | "events"; eventForm: { branchId: string; eventId: string; role: "BAR"; }; setEventForm: Dispatch<SetStateAction<{ branchId: string; eventId: string; role: "BAR"; }>>; branches: NoInfer<any[]> | undefined; formEventsLoading: boolean; formEvents: NoInfer<any[]> | undefined; addEventAssignmentMutation: UseMutationResult<any, any, any, any>; selectedUser: any; removeEventAssignmentMutation: UseMutationResult<any, any, any, any> }) {
+  return (
+    <>{activeEditTab === "events" && (
               <div className="space-y-4 pt-2">
                 <h4 className="font-semibold text-sm flex items-center gap-2">
                   <Calendar size={18} className="text-emerald-500" /> Asignar a Eventos
@@ -747,8 +730,8 @@ export default function UsuariosPage() {
 
                 <div className="bg-zinc-50 dark:bg-zinc-950 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg space-y-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Sucursal</label>
-                    <select 
+                    <label htmlFor="usuarios-sucursal-2" className="text-xs font-semibold text-emerald-500 block mb-1">Sucursal</label>
+                    <select id="usuarios-sucursal-2" 
                       value={eventForm.branchId}
                       onChange={(e) => setEventForm({ ...eventForm, branchId: e.target.value, eventId: "" })}
                       className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -761,8 +744,8 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Evento</label>
-                    <select 
+                    <label htmlFor="usuarios-evento" className="text-xs font-semibold text-emerald-500 block mb-1">Evento</label>
+                    <select id="usuarios-evento" 
                       value={eventForm.eventId}
                       onChange={(e) => setEventForm({ ...eventForm, eventId: e.target.value })}
                       disabled={!eventForm.branchId || formEventsLoading}
@@ -778,8 +761,8 @@ export default function UsuariosPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">Rol en Evento</label>
-                    <select 
+                    <label htmlFor="usuarios-rol-en-evento" className="text-xs font-semibold text-emerald-500 block mb-1">Rol en Evento</label>
+                    <select id="usuarios-rol-en-evento" 
                       value={eventForm.role}
                       onChange={(e) => setEventForm({ ...eventForm, role: e.target.value as any })}
                       className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -807,13 +790,13 @@ export default function UsuariosPage() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Eventos Activos</p>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {selectedUser.eventAssignments?.map((a: any, idx: number) => (
-                      <div key={`${a.id}-${idx}`} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    {selectedUser.eventAssignments?.map((a: any) => (
+                      <div key={a.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                         <div>
                           <p className="font-semibold text-sm">{a.event?.name || "Evento"}</p>
                           <p className="text-xs text-emerald-500">{a.role}</p>
                         </div>
-                        <button 
+                        <button aria-label="Quitar evento" 
                           onClick={() => removeEventAssignmentMutation.mutate(a.id)}
                           className="p-1 text-emerald-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
@@ -827,16 +810,20 @@ export default function UsuariosPage() {
                   </div>
                 </div>
               </div>
-            )}
-
-          </div>
-        </div>
-      )}
-    </div>
+            )}</>
   )
 }
 
-
-
-
-
+function PermissionSwitch({ checked, onToggle, title, description }: { checked: boolean; onToggle: () => void; title: string; description: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={checked} onClick={onToggle} className="w-full text-left flex items-center justify-between p-2 border rounded-md cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="block text-xs text-emerald-500">{description}</span>
+      </span>
+      <span className="text-emerald-500 hover:text-indigo-600 transition-colors">
+        {checked ? <ToggleRight size={28} className="text-blue-600" /> : <ToggleLeft size={28} />}
+      </span>
+    </button>
+  )
+}

@@ -16,6 +16,22 @@ interface DashboardOverviewProps {
   activeEventName: string
 }
 
+const DASHBOARD_TABS: { id: "combined" | "entrance" | "bar"; label: string }[] = [
+  { id: "combined", label: "Vista General" },
+  { id: "entrance", label: "Entrada & Taquilla" },
+  { id: "bar", label: "Barra & POS" },
+]
+
+// Parse pie chart data for payments
+function buildPaymentPieData(bar: any) {
+  return [
+    { name: "Efectivo", value: bar?.byPaymentMethod?.cash || 0, color: "#10b981" },
+    { name: "Tarjeta", value: bar?.byPaymentMethod?.card || 0, color: "#3b82f6" },
+    { name: "Transferencia", value: bar?.byPaymentMethod?.transfer || 0, color: "#f59e0b" },
+    { name: "Código QR", value: bar?.byPaymentMethod?.qr || 0, color: "#6366f1" }
+  ].filter(p => p.value > 0)
+}
+
 export function DashboardOverview({ activeBranchId, activeEventId, activeEventName }: DashboardOverviewProps) {
   // Check permissions
   const { data: session } = useSession()
@@ -67,56 +83,31 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
   }
 
   const { entrance, bar, combined } = analytics || {}
+  const barPaymentPieData = buildPaymentPieData(bar)
 
-  // Parse pie chart data for payments
-  const barPaymentPieData = [
-    { name: "Efectivo", value: bar?.byPaymentMethod?.cash || 0, color: "#10b981" },
-    { name: "Tarjeta", value: bar?.byPaymentMethod?.card || 0, color: "#3b82f6" },
-    { name: "Transferencia", value: bar?.byPaymentMethod?.transfer || 0, color: "#f59e0b" },
-    { name: "Código QR", value: bar?.byPaymentMethod?.qr || 0, color: "#6366f1" }
-  ].filter(p => p.value > 0)
+  // Only the tabs this user's permissions allow
+  const visibleTabs = DASHBOARD_TABS.filter(
+    (tab) => (tab.id === "combined" && canSeeBoth) || (tab.id === "entrance" && canSeeEntrance) || (tab.id === "bar" && canSeeSales)
+  )
 
   return (
     <div className="space-y-6">
       {/* Upper Navigation Tabs */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
-          {canSeeBoth && (
+          {visibleTabs.map((tab) => (
             <button
-              onClick={() => setActiveTab("combined")}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "combined"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-colors ${
+                activeTab === tab.id
                   ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
                   : "text-emerald-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              Vista General
+              {tab.label}
             </button>
-          )}
-          {canSeeEntrance && (
-            <button
-              onClick={() => setActiveTab("entrance")}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "entrance"
-                  ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                  : "text-emerald-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-              }`}
-            >
-              Entrada & Taquilla
-            </button>
-          )}
-          {canSeeSales && (
-            <button
-              onClick={() => setActiveTab("bar")}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "bar"
-                  ? "bg-white dark:bg-zinc-950 shadow-sm text-zinc-900 dark:text-white"
-                  : "text-emerald-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-              }`}
-            >
-              Barra & POS
-            </button>
-          )}
+          ))}
         </div>
 
         <div className="flex items-center gap-2">
@@ -131,7 +122,20 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
       </div>
 
       {/* COMBINED VIEW */}
-      {activeTab === "combined" && (
+      <CombinedTab activeTab={activeTab} combined={combined} entrance={entrance} bar={bar} />
+
+      {/* ENTRANCE VIEW */}
+      <EntranceTab activeTab={activeTab} entrance={entrance} />
+
+      {/* BAR VIEW */}
+      <BarTab activeTab={activeTab} bar={bar} barPaymentPieData={barPaymentPieData} />
+    </div>
+  )
+}
+
+function CombinedTab({ activeTab, combined, entrance, bar }: { activeTab: "combined" | "entrance" | "bar"; combined: any; entrance: any; bar: any }) {
+  return (
+    <>{activeTab === "combined" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
@@ -224,10 +228,13 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
             </div>
           </div>
         </div>
-      )}
+      )}</>
+  )
+}
 
-      {/* ENTRANCE VIEW */}
-      {activeTab === "entrance" && (
+function EntranceTab({ activeTab, entrance }: { activeTab: "combined" | "entrance" | "bar"; entrance: any }) {
+  return (
+    <>{activeTab === "entrance" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
@@ -280,10 +287,13 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
             </div>
           </div>
         </div>
-      )}
+      )}</>
+  )
+}
 
-      {/* BAR VIEW */}
-      {activeTab === "bar" && (
+function BarTab({ activeTab, bar, barPaymentPieData }: { activeTab: "combined" | "entrance" | "bar"; bar: any; barPaymentPieData: { name: string; value: any; color: string; }[] }) {
+  return (
+    <>{activeTab === "bar" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <MetricCard
@@ -318,7 +328,7 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
               
               <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
                 {bar?.topProducts?.map((prod: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
+                  <div key={prod.name} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-xs font-bold font-mono">
                         {idx + 1}
@@ -350,10 +360,6 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
             </div>
           </div>
         </div>
-      )}
-    </div>
+      )}</>
   )
 }
-
-
-

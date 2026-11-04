@@ -240,6 +240,7 @@ model Attendee {
   includedBalance  Int      @default(0)
   emailSentAt      DateTime?
   qrDeliveredManuallyAt DateTime?
+  inactiveAt            DateTime?
 
   createdAt DateTime @default(now())
 

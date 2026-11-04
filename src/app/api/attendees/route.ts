@@ -46,7 +46,7 @@ export async function GET(req: Request) {
       })
 
       const attendees = await prisma.attendee.findMany({
-        where: { branchId, eventId },
+        where: { branchId, eventId, inactiveAt: null },
         select: {
           id: true,
           categoryId: true,
@@ -98,9 +98,14 @@ export async function GET(req: Request) {
       })
     }
     
+    // Los inactivos ("eliminados") solo los ve el super admin, con el filtro Inactivos.
+    const canSeeInactive = !!session.user.isSuperuser
+    const showInactive = canSeeInactive && status === "inactive"
+
     const where = {
       branchId,
       eventId,
+      inactiveAt: showInactive ? { not: null } : null,
       ...(q ? {
         OR: [
           { name: { contains: q, mode: "insensitive" as const } },
@@ -130,7 +135,8 @@ export async function GET(req: Request) {
     if (typeof (prisma as any).$queryRaw === "function") {
       const conditions: Prisma.Sql[] = [
         Prisma.sql`"branchId" = ${branchId}`,
-        Prisma.sql`"eventId" = ${eventId}`
+        Prisma.sql`"eventId" = ${eventId}`,
+        showInactive ? Prisma.sql`"inactiveAt" IS NOT NULL` : Prisma.sql`"inactiveAt" IS NULL`
       ]
       if (q) conditions.push(Prisma.sql`(name ILIKE ${`%${q}%`} OR cc ILIKE ${`%${q}%`})`)
       if (categoryId) conditions.push(Prisma.sql`"categoryId" = ${categoryId}`)
@@ -205,7 +211,7 @@ export async function POST(req: Request) {
     })
     if (existingAttendee) {
       return NextResponse.json(
-        { error: `La cédula ${parsed.cc} ya está registrada para este evento` },
+        { error: existingAttendee.inactiveAt ? `La cédula ${parsed.cc} está inactiva en este evento; pide al super admin que la reactive` : `La cédula ${parsed.cc} ya está registrada para este evento` },
         { status: 400 }
       )
     }
@@ -309,11 +315,33 @@ export async function DELETE(req: Request) {
     const access = await requireBranchPermission(session, attendee.branchId, "accessAttendees", attendee.eventId)
     if (access instanceof NextResponse) return access
 
-    await prisma.attendee.delete({
-      where: { id }
+    // Soft delete: no se borra, queda inactivo (solo visible para el super admin)
+    await prisma.attendee.update({
+      where: { id },
+      data: { inactiveAt: new Date() }
     })
 
-    return NextResponse.json({ message: "Asistente eliminado con éxito" })
+    return NextResponse.json({ message: "Asistente desactivado con éxito" })
+  } catch (err: any) {
+    return apiError(err, 500)
+  }
+}
+
+// Reactivar un asistente inactivo: solo super admin
+export async function PATCH(req: Request) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session.user.isSuperuser) return NextResponse.json({ error: "Solo el super admin puede reactivar asistentes" }, { status: 403 })
+
+  try {
+    const id = new URL(req.url).searchParams.get("id")
+    if (!id) return NextResponse.json({ error: "Falta ID del asistente" }, { status: 400 })
+
+    const attendee = await prisma.attendee.findUnique({ where: { id }, select: { id: true } })
+    if (!attendee) return NextResponse.json({ error: "Asistente no encontrado" }, { status: 404 })
+
+    const updated = await prisma.attendee.update({ where: { id }, data: { inactiveAt: null } })
+    return NextResponse.json({ data: updated })
   } catch (err: any) {
     return apiError(err, 500)
   }

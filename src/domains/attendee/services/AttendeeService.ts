@@ -5,6 +5,7 @@ export class AttendeeService {
     return prisma.attendee.findFirst({
       where: {
         eventId,
+        inactiveAt: null,
         OR: [{ cc: value }, { qrCode: value }]
       },
       include: {

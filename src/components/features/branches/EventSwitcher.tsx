@@ -2,18 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Calendar, ChevronDown } from "lucide-react"
 import { useDropdown } from "./useDropdown"
+import { useHasMounted } from "@/shared/hooks/useHasMounted"
 
 export function EventSwitcher() {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useHasMounted()
   const { activeBranchId, activeEventId, activeEventName, setActiveEvent } = useContextStore()
   const { open, setOpen, ref, toggle } = useDropdown()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const { data: events, isLoading } = useQuery({
     queryKey: ["events", activeBranchId],

@@ -55,6 +55,30 @@ export default async function RootLayout({
     }
   }
 
+  const { cssVariables, isBgDark } = buildThemeCss(branch);
+
+  return (
+    <html lang="en" className={isBgDark ? "dark" : ""}>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+      </head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+      >
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+
+type ThemeColors = Partial<Record<
+  "primaryColor" | "secondaryColor" | "pageBackgroundColor" | "surfaceColor" | "panelColor" | "textColor" | "titleColor",
+  string | null
+>> | null
+
+function buildThemeCss(branch: ThemeColors) {
   const primaryColorRaw = branch?.primaryColor || "#39ff14";
   const secondaryColorRaw = branch?.secondaryColor || "#e9ffe9";
   const backgroundColorRaw = branch?.pageBackgroundColor || "#000000";
@@ -132,6 +156,11 @@ export default async function RootLayout({
       --color-indigo-700: ${primary} !important;
       --color-indigo-800: ${primary} !important;
       --color-indigo-900: ${primary} !important;
+      --color-emerald-300: ${primary} !important;
+      --color-emerald-400: ${primary} !important;
+      --color-emerald-500: ${primary} !important;
+      --color-emerald-600: ${primary} !important;
+
       --color-indigo-950: ${isBgDark ? `#0a0d0a` : `#f2fcf2`} !important;
 
       --color-zinc-400: ${isBgDark ? `#a1a1aa` : `#a1a1aa`} !important;
@@ -182,18 +211,5 @@ export default async function RootLayout({
     ` : ""}
   `;
 
-  return (
-    <html lang="en" className={isBgDark ? "dark" : ""}>
-      <head>
-        <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
-      >
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
-  );
+  return { cssVariables, isBgDark };
 }

@@ -117,8 +117,8 @@ export default function StaffPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre de Usuario</label>
-                <input 
+                <label htmlFor="staff-nombre-de-usuario" className="text-xs font-semibold text-zinc-500 block mb-1">Nombre de Usuario</label>
+                <input id="staff-nombre-de-usuario" 
                   type="text" 
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
@@ -129,8 +129,8 @@ export default function StaffPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Email</label>
-                <input 
+                <label htmlFor="staff-email" className="text-xs font-semibold text-zinc-500 block mb-1">Email</label>
+                <input id="staff-email" 
                   type="email" 
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -142,8 +142,8 @@ export default function StaffPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Nombre</label>
-                  <input 
+                  <label htmlFor="staff-nombre" className="text-xs font-semibold text-zinc-500 block mb-1">Nombre</label>
+                  <input id="staff-nombre" 
                     type="text" 
                     value={form.firstName}
                     onChange={(e) => setForm({ ...form, firstName: e.target.value })}
@@ -152,8 +152,8 @@ export default function StaffPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-zinc-500 block mb-1">Apellido</label>
-                  <input 
+                  <label htmlFor="staff-apellido" className="text-xs font-semibold text-zinc-500 block mb-1">Apellido</label>
+                  <input id="staff-apellido" 
                     type="text" 
                     value={form.lastName}
                     onChange={(e) => setForm({ ...form, lastName: e.target.value })}
@@ -164,8 +164,8 @@ export default function StaffPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Contraseña (Si es nuevo)</label>
-                <input 
+                <label htmlFor="staff-contrasena-si-es-nuevo" className="text-xs font-semibold text-zinc-500 block mb-1">Contraseña (Si es nuevo)</label>
+                <input id="staff-contrasena-si-es-nuevo" 
                   type="password" 
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -175,8 +175,8 @@ export default function StaffPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-zinc-500 block mb-1">Rol en Sucursal</label>
-                <select 
+                <label htmlFor="staff-rol-en-sucursal" className="text-xs font-semibold text-zinc-500 block mb-1">Rol en Sucursal</label>
+                <select id="staff-rol-en-sucursal" 
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                   className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -239,7 +239,7 @@ export default function StaffPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button 
+                          <button role="switch" aria-checked={membership.isActive} aria-label="Miembro activo" 
                             onClick={() => toggleMutation.mutate(membership.userId)}
                             className="flex items-center text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                           >
@@ -251,7 +251,7 @@ export default function StaffPage() {
                           </button>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button 
+                          <button aria-label="Quitar de la sucursal" 
                             onClick={() => removeMutation.mutate(membership.userId)}
                             className="p-2 text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                           >

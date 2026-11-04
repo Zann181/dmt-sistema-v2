@@ -74,8 +74,10 @@ async function runImport(
   const category = await prisma.attendeeCategory.findUnique({ where: { id: parsed.categoryId } })
   if (!category || category.branchId !== parsed.branchId) { emit({ type: "error", message: "Categoría no encontrada" }); return }
 
-  const branch = await prisma.branch.findUnique({ where: { id: parsed.branchId }, select: { codePrefix: true } })
-  const event = await prisma.event.findUnique({ where: { id: parsed.eventId }, select: { slug: true } })
+  const [branch, event] = await Promise.all([
+    prisma.branch.findUnique({ where: { id: parsed.branchId }, select: { codePrefix: true } }),
+    prisma.event.findUnique({ where: { id: parsed.eventId }, select: { slug: true } }),
+  ])
   if (!branch || !event) { emit({ type: "error", message: "Error de contexto" }); return }
 
   const total = parsed.rows.length

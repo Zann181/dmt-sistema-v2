@@ -2,18 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
-import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useHasMounted } from "@/shared/hooks/useHasMounted"
 
 export function BranchLogoHeader() {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useHasMounted()
   // Sin sesión (p. ej. en /login) /api/branches responde 401: no pedirlo
   const { status } = useSession()
   const { activeBranchId } = useContextStore()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const { data: branches } = useQuery({
     queryKey: ["branches"],

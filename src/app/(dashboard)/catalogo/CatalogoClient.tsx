@@ -4,6 +4,8 @@ import { useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Plus, Edit2, Trash2, Search, ShoppingBag, ShieldAlert, X } from "lucide-react"
 import { formatThousands, parseThousands } from "@/shared/utils/price"
+import type { Dispatch, SetStateAction } from "react"
+import type { UseMutationResult } from "@tanstack/react-query"
 
 interface Product {
   id: string
@@ -145,7 +147,7 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
 
       <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 w-full max-w-md shadow-sm">
         <Search className="text-emerald-500" size={18} />
-        <input
+        <input aria-label="Buscar productos"
           type="text"
           placeholder="Buscar productos..."
           value={search}
@@ -214,14 +216,24 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
       </div>
 
       {/* CREATE MODAL */}
-      {showCreateModal && (
+      <CreateProductModal showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} errorMsg={errorMsg} createProductMutation={createProductMutation} form={form} setForm={setForm} />
+
+      {/* EDIT MODAL */}
+      <EditProductModal showEditModal={showEditModal} selectedProduct={selectedProduct} setShowEditModal={setShowEditModal} setSelectedProduct={setSelectedProduct} errorMsg={errorMsg} updateProductMutation={updateProductMutation} form={form} setForm={setForm} />
+    </div>
+  )
+}
+
+function CreateProductModal({ showCreateModal, setShowCreateModal, errorMsg, createProductMutation, form, setForm }: { showCreateModal: boolean; setShowCreateModal: Dispatch<SetStateAction<boolean>>; errorMsg: string; createProductMutation: UseMutationResult<any, any, any, any>; form: { name: string; description: string; price: string | number; }; setForm: Dispatch<SetStateAction<{ name: string; description: string; price: string | number; }>> }) {
+  return (
+    <>{showCreateModal && (
         <div className="fixed inset-0 bg-black/55 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Plus className="text-indigo-600" size={20} /> Nuevo Producto Base
               </h3>
-              <button
+              <button aria-label="Cerrar"
                 onClick={() => setShowCreateModal(false)}
                 className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200"
               >
@@ -243,8 +255,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
-                <input
+                <label htmlFor="catalogo-nombre" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
+                <input id="catalogo-nombre"
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -254,8 +266,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
-                <textarea
+                <label htmlFor="catalogo-descripcion" className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
+                <textarea id="catalogo-descripcion"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -264,8 +276,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
-                <input
+                <label htmlFor="catalogo-precio-base" className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
+                <input id="catalogo-precio-base"
                   type="text"
                   placeholder="0"
                   value={form.price}
@@ -291,17 +303,20 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
             </form>
           </div>
         </div>
-      )}
+      )}</>
+  )
+}
 
-      {/* EDIT MODAL */}
-      {showEditModal && selectedProduct && (
+function EditProductModal({ showEditModal, selectedProduct, setShowEditModal, setSelectedProduct, errorMsg, updateProductMutation, form, setForm }: { showEditModal: boolean; selectedProduct: Product | null; setShowEditModal: Dispatch<SetStateAction<boolean>>; setSelectedProduct: Dispatch<SetStateAction<Product | null>>; errorMsg: string; updateProductMutation: UseMutationResult<any, any, any, any>; form: { name: string; description: string; price: string | number; }; setForm: Dispatch<SetStateAction<{ name: string; description: string; price: string | number; }>> }) {
+  return (
+    <>{showEditModal && selectedProduct && (
         <div className="fixed inset-0 bg-black/55 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Edit2 className="text-indigo-600" size={18} /> Editar Producto
               </h3>
-              <button
+              <button aria-label="Cerrar"
                 onClick={() => {
                   setShowEditModal(false)
                   setSelectedProduct(null)
@@ -326,8 +341,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
-                <input
+                <label htmlFor="catalogo-nombre-2" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre</label>
+                <input id="catalogo-nombre-2"
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -337,8 +352,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
-                <textarea
+                <label htmlFor="catalogo-descripcion-2" className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
+                <textarea id="catalogo-descripcion-2"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -347,8 +362,8 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
-                <input
+                <label htmlFor="catalogo-precio-base-2" className="text-xs font-semibold text-emerald-500 block mb-1">Precio Base</label>
+                <input id="catalogo-precio-base-2"
                   type="text"
                   placeholder="0"
                   value={form.price}
@@ -380,12 +395,6 @@ export function CatalogoClient({ initialProducts }: { initialProducts: Product[]
             </form>
           </div>
         </div>
-      )}
-    </div>
+      )}</>
   )
 }
-
-
-
-
-

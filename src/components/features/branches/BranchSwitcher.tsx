@@ -2,18 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Store, ChevronDown } from "lucide-react"
 import { useDropdown } from "./useDropdown"
+import { useHasMounted } from "@/shared/hooks/useHasMounted"
 
 export function BranchSwitcher() {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useHasMounted()
   const { activeBranchId, activeBranchName, setActiveBranch } = useContextStore()
   const { open, setOpen, ref, toggle } = useDropdown()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const { data: branches, isLoading } = useQuery({
     queryKey: ["branches"],

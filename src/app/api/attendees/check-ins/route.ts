@@ -35,7 +35,7 @@ export async function GET(req: Request) {
     }
 
     const checkIns = await prisma.attendee.findMany({
-      where: { branchId, eventId, hasCheckedIn: true, checkedInAt: { gt: sinceDate } },
+      where: { branchId, eventId, inactiveAt: null, hasCheckedIn: true, checkedInAt: { gt: sinceDate } },
       select: {
         id: true, name: true, cc: true,
         category: { select: { name: true } },

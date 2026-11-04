@@ -10,7 +10,7 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, description, icon, gradient }: MetricCardProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.01] group">
+    <div className="relative overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 bg-white dark:bg-zinc-950 shadow-sm transition-[box-shadow,scale] duration-300 hover:shadow-md hover:scale-[1.01] group">
       {/* Decorative gradient glow on hover */}
       <div className={`absolute -right-10 -top-10 w-32 h-32 rounded-full opacity-10 blur-2xl group-hover:scale-150 transition-transform duration-500 ${gradient || "bg-indigo-500"}`} />
       

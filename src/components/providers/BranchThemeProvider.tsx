@@ -2,18 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useContextStore } from "@/stores/contextStore"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useHasMounted } from "@/shared/hooks/useHasMounted"
 
 export function BranchThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useHasMounted()
   // Sin sesión (p. ej. en /login) /api/branches responde 401: no pedirlo
   const { status } = useSession()
   const { activeBranchId } = useContextStore()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   useEffect(() => {
     if (activeBranchId) {
@@ -67,6 +64,22 @@ export function BranchThemeProvider({ children }: { children: React.ReactNode })
     return <>{children}</>
   }
 
+  const cssVariables = buildBranchThemeCss(activeBranch)
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
+      {children}
+    </>
+  )
+}
+
+type ThemeColors = Partial<Record<
+  "primaryColor" | "secondaryColor" | "pageBackgroundColor" | "surfaceColor" | "panelColor" | "textColor" | "titleColor",
+  string | null
+>> | null
+
+function buildBranchThemeCss(activeBranch: NonNullable<ThemeColors>) {
   const primaryColorRaw = activeBranch.primaryColor || "#39ff14"
   const secondaryColorRaw = activeBranch.secondaryColor || "#e9ffe9"
   const backgroundColorRaw = activeBranch.pageBackgroundColor || "#000000"
@@ -195,10 +208,5 @@ export function BranchThemeProvider({ children }: { children: React.ReactNode })
     ` : ""}
   `
 
-  return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: cssVariables }} />
-      {children}
-    </>
-  )
+  return cssVariables
 }

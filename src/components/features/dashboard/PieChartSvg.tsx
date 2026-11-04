@@ -38,7 +38,7 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
             stroke="var(--border, rgba(120,120,120,0.1))"
             strokeWidth="5"
           />
-          {data.map((segment, idx) => {
+          {data.map((segment) => {
             const percent = (segment.value / total) * 100
             if (percent === 0) return null
             
@@ -48,7 +48,7 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
 
             return (
               <circle
-                key={idx}
+                key={segment.name}
                 cx="21"
                 cy="21"
                 r="15.91549430918954"
@@ -57,7 +57,7 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
                 strokeWidth="5.5"
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
-                className="transition-all duration-300 ease-out hover:scale-105 origin-center cursor-pointer"
+                className="transition-[stroke-dasharray,stroke-dashoffset,scale] duration-300 ease-out hover:scale-105 origin-center cursor-pointer"
               />
             )
           })}
@@ -66,10 +66,10 @@ export function PieChartSvg({ data, size = 160 }: PieChartSvgProps) {
 
       {/* Legend */}
       <div className="space-y-2.5 flex-1 min-w-[120px] w-full">
-        {data.map((segment, idx) => {
+        {data.map((segment) => {
           const percent = total > 0 ? ((segment.value / total) * 100) : 0
           return (
-            <div key={idx} className="flex items-center justify-between text-xs border-b border-zinc-50 dark:border-zinc-900/50 pb-1.5 last:border-0 last:pb-0">
+            <div key={segment.name} className="flex items-center justify-between text-xs border-b border-zinc-50 dark:border-zinc-900/50 pb-1.5 last:border-0 last:pb-0">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: segment.color }} />
                 <span className="font-bold text-zinc-600 dark:text-emerald-500">{segment.name}</span>

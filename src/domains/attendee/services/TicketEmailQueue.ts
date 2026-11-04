@@ -61,7 +61,7 @@ async function prepareEventMailer(eventId: string) {
 const FATAL_SMTP = /5.4.5|sending limit|535|Invalid login|Username and Password not accepted/i
 
 function pendingWhere(branchId: string, eventId: string) {
-  return { branchId, eventId, origin: "MANUAL" as const, email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null }
+  return { branchId, eventId, origin: "MANUAL" as const, inactiveAt: null, email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null }
 }
 
 /**
@@ -142,7 +142,7 @@ export function countPendingTicketEmails(branchId: string, eventId: string) {
 export async function listPendingEventQueues() {
   const groups = await prisma.attendee.groupBy({
     by: ["branchId", "eventId"],
-    where: { origin: "MANUAL", email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null },
+    where: { origin: "MANUAL", inactiveAt: null, email: { not: null }, emailSentAt: null, qrDeliveredManuallyAt: null },
   })
   return groups.map((g) => ({ branchId: g.branchId, eventId: g.eventId }))
 }

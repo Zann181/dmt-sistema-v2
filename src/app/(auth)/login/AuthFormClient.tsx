@@ -2,7 +2,10 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
+import { SilkShaderBackground } from "@/components/brand/SilkShaderBackground"
+import { ZamaLogo } from "@/components/brand/ZamaLogo"
 import { ShieldAlert, Sparkles, User, Mail, Lock, ArrowRight, UserPlus, CheckCircle } from "lucide-react"
+import type { Dispatch, SetStateAction } from "react"
 
 const ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Usuario o contraseña incorrectos. Por favor, intenta de nuevo.",
@@ -128,9 +131,8 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
   return (
     <div className="relative flex items-center justify-center min-h-screen bg-black overflow-hidden font-mono text-white px-4 py-8">
-      {/* Background Decorative Glowing Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-500/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-emerald-400/20 blur-[120px] pointer-events-none" />
+      {/* Fondo WebGL Silk (solo en el login; el resto de la app es estatico) */}
+      <SilkShaderBackground interactive />
 
       <div className="relative w-full max-w-md p-1">
         {/* Glow border effect */}
@@ -169,17 +171,30 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
           )}
 
           {/* LOGIN TAB */}
-          {activeTab === "login" ? (
+          <AuthForms activeTab={activeTab} handleLoginSubmit={handleLoginSubmit} loginForm={loginForm} setLoginForm={setLoginForm} isPending={isPending} handleRegisterSubmit={handleRegisterSubmit} registerForm={registerForm} setRegisterForm={setRegisterForm} />
+
+          <div className="border-t border-zinc-900 pt-4 flex justify-center">
+            <ZamaLogo className="h-9 w-auto opacity-60" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AuthForms({ activeTab, handleLoginSubmit, loginForm, setLoginForm, isPending, handleRegisterSubmit, registerForm, setRegisterForm }: { activeTab: "login" | "register"; handleLoginSubmit: (e: React.FormEvent) => Promise<void>; loginForm: { username: string; password: string; }; setLoginForm: Dispatch<SetStateAction<{ username: string; password: string; }>>; isPending: boolean; handleRegisterSubmit: (e: React.FormEvent) => Promise<void>; registerForm: { username: string; email: string; firstName: string; lastName: string; password: string; confirmPassword: string; }; setRegisterForm: Dispatch<SetStateAction<any>> }) {
+  return (
+    <>{activeTab === "login" ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4 animate-in fade-in duration-300">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                <label htmlFor="login-usuario" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                   <User size={12} className="text-emerald-500" /> Usuario
                 </label>
-                <input
+                <input id="login-usuario"
                   type="text"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
+                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors font-semibold text-xs"
                   placeholder="Nombre de usuario"
                   required
                   disabled={isPending}
@@ -187,14 +202,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                <label htmlFor="login-contrasena" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                   <Lock size={12} className="text-emerald-500" /> Contraseña
                 </label>
-                <input
+                <input id="login-contrasena"
                   type="password"
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all font-semibold text-xs"
+                  className="w-full px-4 py-2 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors font-semibold text-xs"
                   placeholder="••••••••"
                   required
                   disabled={isPending}
@@ -204,7 +219,7 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
+                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-[background-color,box-shadow,scale,opacity] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
                 <span>{isPending ? "Procesando..." : "Iniciar Sesión"}</span>
                 <ArrowRight size={14} />
@@ -215,27 +230,27 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5 animate-in fade-in duration-300">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                  <label htmlFor="login-nombre" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Nombre
                   </label>
-                  <input
+                  <input id="login-nombre"
                     type="text"
                     value={registerForm.firstName}
                     onChange={(e) => setRegisterForm({ ...registerForm, firstName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-colors text-xs font-semibold"
                     placeholder="Tu nombre"
                     disabled={isPending}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                  <label htmlFor="login-apellido" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                     Apellido
                   </label>
-                  <input
+                  <input id="login-apellido"
                     type="text"
                     value={registerForm.lastName}
                     onChange={(e) => setRegisterForm({ ...registerForm, lastName: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-850 focus:outline-none transition-colors text-xs font-semibold"
                     placeholder="Tu apellido"
                     disabled={isPending}
                   />
@@ -243,14 +258,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                <label htmlFor="login-usuario-2" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                   <User size={12} className="text-emerald-500" /> Usuario
                 </label>
-                <input
+                <input id="login-usuario-2"
                   type="text"
                   value={registerForm.username}
                   onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors text-xs font-semibold"
                   placeholder="Usuario único"
                   required
                   disabled={isPending}
@@ -258,14 +273,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                <label htmlFor="login-correo-electronico" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                   <Mail size={12} className="text-emerald-500" /> Correo Electrónico
                 </label>
-                <input
+                <input id="login-correo-electronico"
                   type="email"
                   value={registerForm.email}
                   onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                  className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors text-xs font-semibold"
                   placeholder="correo@ejemplo.com"
                   required
                   disabled={isPending}
@@ -274,14 +289,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <label htmlFor="login-contrasena-2" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                     <Lock size={11} className="text-emerald-500" /> Contraseña
                   </label>
-                  <input
+                  <input id="login-contrasena-2"
                     type="password"
                     value={registerForm.password}
                     onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -289,14 +304,14 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
+                  <label htmlFor="login-confirmar" className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center gap-1.5">
                     <Lock size={11} className="text-emerald-500" /> Confirmar
                   </label>
-                  <input
+                  <input id="login-confirmar"
                     type="password"
                     value={registerForm.confirmPassword}
                     onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
-                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-all text-xs font-semibold"
+                    className="w-full px-3 py-1.5 bg-black border border-zinc-900 focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/20 rounded-lg text-white placeholder-zinc-800 focus:outline-none transition-colors text-xs font-semibold"
                     placeholder="Min 6 carac."
                     required
                     minLength={6}
@@ -308,29 +323,12 @@ export function AuthFormClient({ initialError }: { initialError?: string }) {
               <button
                 type="submit"
                 disabled={isPending}
-                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-all duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
+                className="relative w-full py-2.5 bg-emerald-500 text-black font-black hover:bg-emerald-400 text-black rounded-lg font-black text-xs uppercase tracking-widest transition-[background-color,box-shadow,scale,opacity] duration-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 border border-emerald-300/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer"
               >
                 <span>{isPending ? "Registrando..." : "Crear Cuenta"}</span>
                 <UserPlus size={14} />
               </button>
             </form>
-          )}
-
-          <div className="text-center text-[9px] text-zinc-600 border-t border-zinc-900 pt-4 space-y-2 uppercase tracking-widest font-bold">
-            <div className="flex justify-center items-center gap-1.5">
-              <ShieldAlert size={11} className="text-emerald-500 animate-pulse" />
-              <span>ACCESO EXCLUSIVO PERSONAL AUTORIZADO</span>
-            </div>
-            <p className="text-zinc-700 normal-case tracking-normal font-semibold">
-              Desarrollado por ZAMA Soluciones
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+          )}</>
   )
 }
-
-
-
-

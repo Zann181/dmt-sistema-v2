@@ -1,14 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { useCartStore } from "@/stores/cartStore"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useCartStore, type CartItem } from "@/stores/cartStore"
 import { useContextStore } from "@/stores/contextStore"
 import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Banknote, QrCode, ShieldAlert, Check, ShoppingBag, X } from "lucide-react"
 import { formatThousands, parseThousands } from "@/shared/utils/price"
+import type { Dispatch, ReactNode, SetStateAction } from "react"
+import type { UseMutationResult } from "@tanstack/react-query"
 
 export default function BarraPage() {
   const { activeBranchId, activeEventId, activeEventName } = useContextStore()
+  const queryClient = useQueryClient()
 
   const cart = useCartStore(s => s.items)
   const addItem = useCartStore(s => s.addItem)
@@ -59,6 +62,7 @@ export default function BarraPage() {
       return res.json()
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics", activeBranchId, activeEventId] })
       setShowCashModal(false)
       setCashForm({ movementType: "EXPENSE", description: "", totalAmount: "", method: "CASH" })
       setCashError("")
@@ -102,6 +106,7 @@ export default function BarraPage() {
       return res.json()
     },
     onSuccess: (resJson) => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-analytics", activeBranchId, activeEventId] })
       setSuccessDetails({
         saleGroupId: resJson.data.saleGroupId,
         total,
@@ -188,7 +193,26 @@ export default function BarraPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-6 overflow-hidden">
       {/* Product Catalog Grid */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
+      <ProductMenu setShowCashModal={setShowCashModal} activeEventName={activeEventName} isLoading={isLoading} error={error} products={products} addItem={addItem} />
+
+      {/* Cart Sidebar */}
+      <CartPanel clear={clear} cart={cart} updateQty={updateQty} removeItem={removeItem} total={total} handleOpenCheckout={handleOpenCheckout} />
+
+      {/* CHECKOUT MODAL */}
+      <CheckoutModal checkoutType={checkoutType} setCheckoutType={setCheckoutType} checkoutError={checkoutError} handleConfirmCheckout={handleConfirmCheckout} total={total} cashReceived={cashReceived} setCashReceived={setCashReceived} cardReference={cardReference} setCardReference={setCardReference} mixedCash={mixedCash} setMixedCash={setMixedCash} mixedCard={mixedCard} setMixedCard={setMixedCard} remainingMixed={remainingMixed} executeSaleMutation={executeSaleMutation} />
+
+      {/* SUCCESS MODAL */}
+      <SaleSuccessModal showSuccessModal={showSuccessModal} successDetails={successDetails} setShowSuccessModal={setShowSuccessModal} />
+
+      {/* CASH MOVEMENT MODAL */}
+      <CashMovementModal showCashModal={showCashModal} setShowCashModal={setShowCashModal} cashError={cashError} registerCashMovementMutation={registerCashMovementMutation} cashForm={cashForm} setCashForm={setCashForm} />
+    </div>
+  )
+}
+
+function ProductMenu({ setShowCashModal, activeEventName, isLoading, error, products, addItem }: { setShowCashModal: Dispatch<SetStateAction<boolean>>; activeEventName: string | null; isLoading: boolean; error: Error | null; products: NoInfer<any[]> | undefined; addItem: (item: { id: string; name: string; price: number; }) => void }) {
+  return (
+    <div className="flex-1 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-950/20">
           <h2 className="text-lg font-bold">Menú de Barra</h2>
           <div className="flex items-center gap-2">
@@ -216,7 +240,7 @@ export default function BarraPage() {
                 <button 
                   key={p.id}
                   onClick={() => addItem({ id: p.id, name: p.name, price: Number(p.price) })}
-                  className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-left hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/20 transition-all flex flex-col aspect-square justify-between shadow-sm hover:shadow group"
+                  className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-left hover:border-indigo-500 hover:ring-2 hover:ring-indigo-500/20 transition-[border-color,box-shadow] flex flex-col aspect-square justify-between shadow-sm hover:shadow group"
                 >
                   <span className="font-semibold text-sm leading-tight text-zinc-800 dark:text-zinc-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{p.name}</span>
                   <div className="flex flex-col">
@@ -234,12 +258,15 @@ export default function BarraPage() {
           )}
         </div>
       </div>
+  )
+}
 
-      {/* Cart Sidebar */}
-      <div className="w-96 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden shrink-0">
+function CartPanel({ clear, cart, updateQty, removeItem, total, handleOpenCheckout }: { clear: () => void; cart: CartItem[]; updateQty: (id: string, qty: number) => void; removeItem: (id: string) => void; total: number; handleOpenCheckout: (type: "CASH" | "CARD" | "MIXED") => void }) {
+  return (
+    <div className="w-96 flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm overflow-hidden shrink-0">
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-950/20">
           <h2 className="text-lg font-bold flex items-center gap-2"><ShoppingCart size={20}/> Pedido Actual</h2>
-          <button onClick={clear} className="text-emerald-500 hover:text-red-500 transition-colors">
+          <button aria-label="Vaciar pedido" onClick={clear} className="text-emerald-500 hover:text-red-500 transition-colors">
             <Trash2 size={18} />
           </button>
         </div>
@@ -258,14 +285,14 @@ export default function BarraPage() {
                   <p className="text-zinc-900 dark:text-white text-xs font-bold mt-1">${(item.price * item.quantity).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</p>
                 </div>
                 <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 shadow-sm">
-                  <button 
+                  <button aria-label={`Quitar uno de ${item.name}`} 
                     onClick={() => item.quantity > 1 ? updateQty(item.eventProductId, item.quantity - 1) : removeItem(item.eventProductId)}
                     className="p-1 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                   >
                     <Minus size={12} />
                   </button>
                   <span className="w-4 text-center text-sm font-semibold text-zinc-800 dark:text-zinc-200">{item.quantity}</span>
-                  <button 
+                  <button aria-label={`Agregar uno de ${item.name}`} 
                     onClick={() => updateQty(item.eventProductId, item.quantity + 1)}
                     className="p-1 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
                   >
@@ -311,122 +338,145 @@ export default function BarraPage() {
           </div>
         </div>
       </div>
+  )
+}
 
-      {/* CHECKOUT MODAL */}
-      {checkoutType && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                {checkoutType === "CASH" ? <Banknote className="text-emerald-500" /> : checkoutType === "CARD" ? <CreditCard className="text-blue-500" /> : <QrCode className="text-indigo-500 animate-spin" />}
-                Registrar Pago {checkoutType === "CASH" ? "Efectivo" : checkoutType === "CARD" ? "Tarjeta" : "Mixto"}
-              </h3>
-              <button onClick={() => setCheckoutType(null)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
-                <X size={18} />
-              </button>
-            </div>
+const CHECKOUT_HEADERS: Record<"CASH" | "CARD" | "MIXED", { icon: ReactNode; label: string }> = {
+  CASH: { icon: <Banknote className="text-emerald-500" />, label: "Efectivo" },
+  CARD: { icon: <CreditCard className="text-blue-500" />, label: "Tarjeta" },
+  MIXED: { icon: <QrCode className="text-indigo-500 animate-spin" />, label: "Mixto" },
+}
 
-            {checkoutError && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
-                <ShieldAlert size={16} /> {checkoutError}
-              </div>
-            )}
+function CheckoutModal({ checkoutType, setCheckoutType, checkoutError, handleConfirmCheckout, total, cashReceived, setCashReceived, cardReference, setCardReference, mixedCash, setMixedCash, mixedCard, setMixedCard, remainingMixed, executeSaleMutation }: { checkoutType: "CASH" | "CARD" | "MIXED" | null; setCheckoutType: Dispatch<SetStateAction<"CASH" | "CARD" | "MIXED" | null>>; checkoutError: string; handleConfirmCheckout: (e: React.FormEvent) => void; total: number; cashReceived: string; setCashReceived: Dispatch<SetStateAction<string>>; cardReference: string; setCardReference: Dispatch<SetStateAction<string>>; mixedCash: string; setMixedCash: Dispatch<SetStateAction<string>>; mixedCard: string; setMixedCard: Dispatch<SetStateAction<string>>; remainingMixed: number; executeSaleMutation: UseMutationResult<any, any, any, any> }) {
+  if (!checkoutType) return null
+  const header = CHECKOUT_HEADERS[checkoutType]
 
-            <form onSubmit={handleConfirmCheckout} className="space-y-4">
-              <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg flex items-center justify-between">
-                <span className="font-semibold text-emerald-500 text-sm">Total del Pedido:</span>
-                <span className="text-xl font-black">${total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
-              </div>
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
+          <h3 className="text-lg font-bold flex items-center gap-2">
+            {header.icon}
+            Registrar Pago {header.label}
+          </h3>
+          <button aria-label="Cerrar" onClick={() => setCheckoutType(null)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
+            <X size={18} />
+          </button>
+        </div>
 
-              {checkoutType === "CASH" && (
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto Recibido</label>
-                  <input
-                    type="text"
-                    placeholder="0"
-                    value={cashReceived}
-                    onChange={(e) => setCashReceived(formatThousands(e.target.value))}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg text-right"
-                    required
-                  />
-                  {parseThousands(cashReceived) > total && (
-                    <div className="mt-3 flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-500 font-bold">
-                      <span>Cambio a entregar:</span>
-                      <span>${(parseThousands(cashReceived) - total).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {checkoutType === "CARD" && (
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Referencia del Voucher (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: 948271"
-                    value={cardReference}
-                    onChange={(e) => setCardReference(e.target.value)}
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              )}
-
-              {checkoutType === "MIXED" && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Efectivo</label>
-                      <input
-                        type="text"
-                        placeholder="0"
-                        value={mixedCash}
-                        onChange={(e) => setMixedCash(formatThousands(e.target.value))}
-                        className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Tarjeta</label>
-                      <input
-                        type="text"
-                        placeholder="0"
-                        value={mixedCard}
-                        onChange={(e) => setMixedCard(formatThousands(e.target.value))}
-                        className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs font-semibold border-t pt-3 border-zinc-100 dark:border-zinc-800">
-                    <span className="text-emerald-500">Restante por pagar:</span>
-                    <span className={`text-sm font-black ${remainingMixed === 0 ? "text-green-600" : remainingMixed < 0 ? "text-amber-600" : "text-red-500"}`}>
-                      {remainingMixed === 0 ? "Completado" : `$${remainingMixed.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setCheckoutType(null)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={executeSaleMutation.isPending || (checkoutType === "MIXED" && Math.abs(remainingMixed) > 0.01)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {executeSaleMutation.isPending ? "Procesando..." : "Confirmar Venta"}
-                </button>
-              </div>
-            </form>
+        {checkoutError && (
+          <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
+            <ShieldAlert size={16} /> {checkoutError}
           </div>
+        )}
+
+        <form onSubmit={handleConfirmCheckout} className="space-y-4">
+          <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg flex items-center justify-between">
+            <span className="font-semibold text-emerald-500 text-sm">Total del Pedido:</span>
+            <span className="text-xl font-black">${total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          {checkoutType === "CASH" && <CashPaymentFields total={total} cashReceived={cashReceived} setCashReceived={setCashReceived} />}
+          {checkoutType === "CARD" && <CardPaymentFields cardReference={cardReference} setCardReference={setCardReference} />}
+          {checkoutType === "MIXED" && <MixedPaymentFields mixedCash={mixedCash} setMixedCash={setMixedCash} mixedCard={mixedCard} setMixedCard={setMixedCard} remainingMixed={remainingMixed} />}
+
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full border-t pt-4 border-zinc-200 dark:border-zinc-800">
+            <button type="button" onClick={() => setCheckoutType(null)} className="px-4 py-2 border w-full sm:w-auto justify-center border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md font-semibold text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={executeSaleMutation.isPending || (checkoutType === "MIXED" && Math.abs(remainingMixed) > 0.01)}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors shadow-sm disabled:opacity-50"
+            >
+              {executeSaleMutation.isPending ? "Procesando..." : "Confirmar Venta"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function CashPaymentFields({ total, cashReceived, setCashReceived }: { total: number; cashReceived: string; setCashReceived: Dispatch<SetStateAction<string>> }) {
+  return (
+    <div>
+      <label htmlFor="barra-monto-recibido" className="text-xs font-semibold text-emerald-500 block mb-1">Monto Recibido</label>
+      <input id="barra-monto-recibido"
+        type="text"
+        placeholder="0"
+        value={cashReceived}
+        onChange={(e) => setCashReceived(formatThousands(e.target.value))}
+        className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg text-right"
+        required
+      />
+      {parseThousands(cashReceived) > total && (
+        <div className="mt-3 flex items-center justify-between text-sm text-emerald-600 dark:text-emerald-500 font-bold">
+          <span>Cambio a entregar:</span>
+          <span>${(parseThousands(cashReceived) - total).toLocaleString('es-CO', { minimumFractionDigits: 2 })}</span>
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && successDetails && (
+function CardPaymentFields({ cardReference, setCardReference }: { cardReference: string; setCardReference: Dispatch<SetStateAction<string>> }) {
+  return (
+    <div>
+      <label htmlFor="barra-referencia-del-voucher-opcional" className="text-xs font-semibold text-emerald-500 block mb-1">Referencia del Voucher (Opcional)</label>
+      <input id="barra-referencia-del-voucher-opcional"
+        type="text"
+        placeholder="Ej: 948271"
+        value={cardReference}
+        onChange={(e) => setCardReference(e.target.value)}
+        className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      />
+    </div>
+  )
+}
+
+function MixedPaymentFields({ mixedCash, setMixedCash, mixedCard, setMixedCard, remainingMixed }: { mixedCash: string; setMixedCash: Dispatch<SetStateAction<string>>; mixedCard: string; setMixedCard: Dispatch<SetStateAction<string>>; remainingMixed: number }) {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="barra-monto-en-efectivo" className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Efectivo</label>
+          <input id="barra-monto-en-efectivo"
+            type="text"
+            placeholder="0"
+            value={mixedCash}
+            onChange={(e) => setMixedCash(formatThousands(e.target.value))}
+            className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="barra-monto-en-tarjeta" className="text-xs font-semibold text-emerald-500 block mb-1">Monto en Tarjeta</label>
+          <input id="barra-monto-en-tarjeta"
+            type="text"
+            placeholder="0"
+            value={mixedCard}
+            onChange={(e) => setMixedCard(formatThousands(e.target.value))}
+            className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-xs font-semibold border-t pt-3 border-zinc-100 dark:border-zinc-800">
+        <span className="text-emerald-500">Restante por pagar:</span>
+        <span className={`text-sm font-black ${remainingMixed === 0 ? "text-green-600" : remainingMixed < 0 ? "text-amber-600" : "text-red-500"}`}>
+          {remainingMixed === 0 ? "Completado" : `$${remainingMixed.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function SaleSuccessModal({ showSuccessModal, successDetails, setShowSuccessModal }: { showSuccessModal: boolean; successDetails: any; setShowSuccessModal: Dispatch<SetStateAction<boolean>> }) {
+  return (
+    <>{showSuccessModal && successDetails && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in zoom-in-95 duration-150">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5 text-center">
             <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-500 rounded-full flex items-center justify-center mx-auto border-4 border-emerald-100 dark:border-emerald-900/40">
@@ -453,8 +503,8 @@ export default function BarraPage() {
             </div>
 
             <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl text-left space-y-1.5 text-xs text-emerald-500">
-              {successDetails.payments.map((p: any, idx: number) => (
-                <div key={idx} className="flex justify-between">
+              {successDetails.payments.map((p: any) => (
+                <div key={p.method} className="flex justify-between">
                   <span>Pago con {p.method}:</span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-200">
                     ${p.amount.toLocaleString('es-CO', { minimumFractionDigits: 2 })}
@@ -473,17 +523,20 @@ export default function BarraPage() {
             </button>
           </div>
         </div>
-      )}
+      )}</>
+  )
+}
 
-      {/* CASH MOVEMENT MODAL */}
-      {showCashModal && (
+function CashMovementModal({ showCashModal, setShowCashModal, cashError, registerCashMovementMutation, cashForm, setCashForm }: { showCashModal: boolean; setShowCashModal: Dispatch<SetStateAction<boolean>>; cashError: string; registerCashMovementMutation: UseMutationResult<any, any, any, any>; cashForm: { movementType: "EXPENSE" | "CASH_DROP"; description: string; totalAmount: string; method: "CASH" | "TRANSFER" | "QR" | "CARD"; }; setCashForm: Dispatch<SetStateAction<any>> }) {
+  return (
+    <>{showCashModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Banknote className="text-indigo-600" /> Movimiento de Caja (Barra)
               </h3>
-              <button onClick={() => setShowCashModal(false)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
+              <button aria-label="Cerrar" onClick={() => setShowCashModal(false)} className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200">
                 <X size={18} />
               </button>
             </div>
@@ -502,8 +555,8 @@ export default function BarraPage() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Tipo de Movimiento</label>
-                <select
+                <label htmlFor="barra-tipo-de-movimiento" className="text-xs font-semibold text-emerald-500 block mb-1">Tipo de Movimiento</label>
+                <select id="barra-tipo-de-movimiento"
                   value={cashForm.movementType}
                   onChange={(e) => setCashForm({ ...cashForm, movementType: e.target.value as any })}
                   className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
@@ -514,8 +567,8 @@ export default function BarraPage() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
-                <input
+                <label htmlFor="barra-descripcion" className="text-xs font-semibold text-emerald-500 block mb-1">Descripción</label>
+                <input id="barra-descripcion"
                   type="text"
                   placeholder={cashForm.movementType === "EXPENSE" ? "Ej: Compra de hielos" : "Ej: Retiro parcial caja fuerte"}
                   value={cashForm.description}
@@ -527,8 +580,8 @@ export default function BarraPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Monto ($)</label>
-                  <input
+                  <label htmlFor="barra-monto" className="text-xs font-semibold text-emerald-500 block mb-1">Monto ($)</label>
+                  <input id="barra-monto"
                     type="text"
                     placeholder="0"
                     value={cashForm.totalAmount}
@@ -539,8 +592,8 @@ export default function BarraPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
-                  <select
+                  <label htmlFor="barra-metodo-de-pago" className="text-xs font-semibold text-emerald-500 block mb-1">Método de Pago</label>
+                  <select id="barra-metodo-de-pago"
                     value={cashForm.method}
                     onChange={(e) => setCashForm({ ...cashForm, method: e.target.value as any })}
                     className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -569,12 +622,6 @@ export default function BarraPage() {
             </form>
           </div>
         </div>
-      )}
-    </div>
+      )}</>
   )
 }
-
-
-
-
-

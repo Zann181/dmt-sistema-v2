@@ -6,6 +6,9 @@ import { Building2, Plus, Edit2, ShieldAlert, Store, Upload, Trash2 } from "luci
 import Link from "next/link"
 import { formatThousands, parseThousands } from "@/shared/utils/price"
 import { processImageToSvg } from "@/shared/utils/image"
+import type { Dispatch, SetStateAction } from "react"
+import type { UseMutationResult } from "@tanstack/react-query"
+import type { ReactNode } from "react"
 
 interface Branch {
   id: string
@@ -300,15 +303,28 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <BranchGrid branches={branches} renderSvgLogo={renderSvgLogo} handleOpenEdit={handleOpenEdit} setSelectedBranch={setSelectedBranch} updateBranchMutation={updateBranchMutation} selectedBranch={selectedBranch} />
+
+      {/* EDIT CONFIG MODAL */}
+      <EditBranchModal showEditModal={showEditModal} selectedBranch={selectedBranch} setShowEditModal={setShowEditModal} setSelectedBranch={setSelectedBranch} setEditTab={setEditTab} editTab={editTab} errorMsg={errorMsg} updateBranchMutation={updateBranchMutation} form={form} setForm={setForm} handleSvgUpload={handleSvgUpload} renderSvgLogo={renderSvgLogo} deleteBranchMutation={deleteBranchMutation} showCatForm={showCatForm} setEditingCategory={setEditingCategory} setCatForm={setCatForm} setShowCatForm={setShowCatForm} loadingCategories={loadingCategories} categories={categories} handleDeleteCategory={handleDeleteCategory} handleSaveCategory={handleSaveCategory} editingCategory={editingCategory} catForm={catForm} />
+
+      {/* CREATE BRANCH MODAL */}
+      <CreateBranchModal showCreateModal={showCreateModal} setShowCreateModal={setShowCreateModal} errorMsg={errorMsg} createBranchMutation={createBranchMutation} createForm={createForm} setCreateForm={setCreateForm} renderSvgLogo={renderSvgLogo} />
+    </div>
+  )
+}
+
+function BranchGrid({ branches, renderSvgLogo, handleOpenEdit, setSelectedBranch, updateBranchMutation, selectedBranch }: { branches: Branch[]; renderSvgLogo: (logoStr: string | null) => ReactNode; handleOpenEdit: (branch: Branch) => void; setSelectedBranch: Dispatch<SetStateAction<Branch | null>>; updateBranchMutation: UseMutationResult<any, any, any, any>; selectedBranch: Branch | null }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {branches.map((branch) => (
           <div
             key={branch.id}
-            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col transition-all hover:shadow-md"
+            className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm flex flex-col transition-shadow hover:shadow-md"
           >
             <div className="flex items-start justify-between mb-4">
               <div 
-                className="rounded-lg flex items-center justify-center transition-all overflow-hidden shrink-0"
+                className="rounded-lg flex items-center justify-center transition-[width,height,background-color] overflow-hidden shrink-0"
                 style={{ 
                   backgroundColor: branch.logoBgColor || "#f4f4f5", 
                   width: `${branch.logoSize || 64}px`, 
@@ -398,16 +414,19 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
           </div>
         )}
       </div>
+  )
+}
 
-      {/* EDIT CONFIG MODAL */}
-      {showEditModal && selectedBranch && (
+function EditBranchModal({ showEditModal, selectedBranch, setShowEditModal, setSelectedBranch, setEditTab, editTab, errorMsg, updateBranchMutation, form, setForm, handleSvgUpload, renderSvgLogo, deleteBranchMutation, showCatForm, setEditingCategory, setCatForm, setShowCatForm, loadingCategories, categories, handleDeleteCategory, handleSaveCategory, editingCategory, catForm }: { showEditModal: boolean; selectedBranch: Branch | null; setShowEditModal: Dispatch<SetStateAction<boolean>>; setSelectedBranch: Dispatch<SetStateAction<Branch | null>>; setEditTab: Dispatch<SetStateAction<"branding" | "categories">>; editTab: "branding" | "categories"; errorMsg: string; updateBranchMutation: UseMutationResult<any, any, any, any>; form: any; setForm: Dispatch<SetStateAction<any>>; handleSvgUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>; renderSvgLogo: (logoStr: string | null) => ReactNode; deleteBranchMutation: UseMutationResult<any, any, any, any>; showCatForm: boolean; setEditingCategory: Dispatch<any>; setCatForm: Dispatch<SetStateAction<any>>; setShowCatForm: Dispatch<SetStateAction<boolean>>; loadingCategories: boolean; categories: any[]; handleDeleteCategory: (cat: any) => Promise<void>; handleSaveCategory: (e: React.FormEvent) => Promise<void>; editingCategory: any; catForm: { name: string; price: string | number; includedConsumptions: number; description: string; } }) {
+  return (
+    <>{showEditModal && selectedBranch && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold flex items-center gap-2">
                 <Store className="text-indigo-600" /> Configurar Sucursal
               </h3>
-              <button
+              <button aria-label="Cerrar"
                 onClick={() => {
                   setShowEditModal(false)
                   setSelectedBranch(null)
@@ -459,10 +478,10 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 className="space-y-4"
               >
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                  <label htmlFor="sucursal-nombre-de-la-sucursal" className="text-xs font-semibold text-emerald-500 block mb-1">
                     Nombre de la Sucursal
                   </label>
-                  <input
+                  <input id="sucursal-nombre-de-la-sucursal"
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -472,258 +491,10 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 {/* Colors Settings */}
-                <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
-                    Colores de Marca
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color Primario
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.primaryColor}
-                          onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.primaryColor}
-                          onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
-                          className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color Secundario
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.secondaryColor}
-                          onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.secondaryColor}
-                          onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
-                          className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Fondo Degradado 1 (Inicio)
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.pageBackgroundColor}
-                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.pageBackgroundColor}
-                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color Superficie
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.surfaceColor}
-                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.surfaceColor}
-                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Fondo Degradado 2 (Fin)
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.panelColor}
-                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.panelColor}
-                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mb-1 mt-3">
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color de Texto
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.textColor}
-                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.textColor}
-                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color de Títulos
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.titleColor}
-                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.titleColor}
-                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <EditBranchColors form={form} setForm={setForm} />
 
                 {/* Logo SVG Settings */}
-                <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
-                    Logo de la Sucursal
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3 mb-1">
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Color de Fondo del Logo
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="color"
-                          value={form.logoBgColor || "#f4f4f5"}
-                          onChange={(e) => setForm({ ...form, logoBgColor: e.target.value })}
-                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={form.logoBgColor || "#f4f4f5"}
-                          onChange={(e) => setForm({ ...form, logoBgColor: e.target.value })}
-                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
-                          maxLength={7}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Tamaño del Logo: {form.logoSize || 64}px
-                      </label>
-                      <input
-                        type="range"
-                        min="32"
-                        max="160"
-                        step="4"
-                        value={form.logoSize || 64}
-                        onChange={(e) => setForm({ ...form, logoSize: parseInt(e.target.value) || 64 })}
-                        className="w-full accent-indigo-600 mt-2 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                      Cargar imagen de logo
-                    </label>
-                    <label className="flex items-center gap-2 justify-center px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors text-sm font-medium">
-                      <Upload size={16} />
-                      <span>Seleccionar Imagen</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleSvgUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                      Código SVG Inline
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={form.logoUrl}
-                      onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-                      placeholder="Pega el código <svg> aquí..."
-                      className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  {form.logoUrl && (
-                    <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                        Previsualización Logo:
-                      </label>
-                      <div className="p-4 border border-dashed rounded-lg bg-zinc-50 dark:bg-zinc-900/50 flex justify-center items-center min-h-[180px]">
-                        <div 
-                          className="rounded-lg flex items-center justify-center overflow-hidden transition-all shadow-inner"
-                          style={{ 
-                            backgroundColor: form.logoBgColor || "#f4f4f5", 
-                            width: `${form.logoSize || 64}px`, 
-                            height: `${form.logoSize || 64}px` 
-                          }}
-                        >
-                          {renderSvgLogo(form.logoUrl)}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <EditBranchLogo form={form} setForm={setForm} handleSvgUpload={handleSvgUpload} renderSvgLogo={renderSvgLogo} />
 
                   {/* Banner de restauración de tema */}
                   <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 rounded-lg text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono">
@@ -791,7 +562,391 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
               </form>
             ) : (
               /* CATEGORIES CRUD TAB */
-              <div className="space-y-4 animate-in fade-in duration-200">
+              <BranchCategoriesPanel showCatForm={showCatForm} setEditingCategory={setEditingCategory} setCatForm={setCatForm} setShowCatForm={setShowCatForm} loadingCategories={loadingCategories} categories={categories} handleDeleteCategory={handleDeleteCategory} handleSaveCategory={handleSaveCategory} editingCategory={editingCategory} catForm={catForm} setShowEditModal={setShowEditModal} setSelectedBranch={setSelectedBranch} />
+            )}
+          </div>
+              </div>
+      )}</>
+  )
+}
+
+function CreateBranchModal({ showCreateModal, setShowCreateModal, errorMsg, createBranchMutation, createForm, setCreateForm, renderSvgLogo }: { showCreateModal: boolean; setShowCreateModal: Dispatch<SetStateAction<boolean>>; errorMsg: string; createBranchMutation: UseMutationResult<any, any, any, any>; createForm: any; setCreateForm: Dispatch<SetStateAction<any>>; renderSvgLogo: (logoStr: string | null) => ReactNode }) {
+  return (
+    <>{showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Store className="text-indigo-600" /> Nueva Sucursal
+              </h3>
+              <button aria-label="Cerrar"
+                onClick={() => setShowCreateModal(false)}
+                className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
+                <ShieldAlert size={16} /> {errorMsg}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                createBranchMutation.mutate(createForm)
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label htmlFor="sucursal-nombre-de-la-sucursal-2" className="text-xs font-semibold text-emerald-500 block mb-1">
+                    Nombre de la Sucursal
+                  </label>
+                  <input id="sucursal-nombre-de-la-sucursal-2"
+                    type="text"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    placeholder="ej. Sucursal Sur"
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="sucursal-prefijo-codigo-max-12" className="text-xs font-semibold text-emerald-500 block mb-1">
+                    Prefijo Código (Max 12)
+                  </label>
+                  <input id="sucursal-prefijo-codigo-max-12"
+                    type="text"
+                    value={createForm.codePrefix}
+                    onChange={(e) => setCreateForm({ ...createForm, codePrefix: e.target.value.toUpperCase() })}
+                    placeholder="ej. SUR"
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="sucursal-email-de-contacto" className="text-xs font-semibold text-emerald-500 block mb-1">
+                    Email de Contacto
+                  </label>
+                  <input id="sucursal-email-de-contacto"
+                    type="email"
+                    value={createForm.contactEmail}
+                    onChange={(e) => setCreateForm({ ...createForm, contactEmail: e.target.value })}
+                    placeholder="contacto@dmt.com"
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="sucursal-telefono-de-contacto" className="text-xs font-semibold text-emerald-500 block mb-1">
+                    Teléfono de Contacto
+                  </label>
+                  <input id="sucursal-telefono-de-contacto"
+                    type="text"
+                    value={createForm.contactPhone}
+                    onChange={(e) => setCreateForm({ ...createForm, contactPhone: e.target.value })}
+                    placeholder="+57 300..."
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Colors Settings */}
+              <CreateBranchColors createForm={createForm} setCreateForm={setCreateForm} />
+
+              {/* Logo SVG Settings */}
+              <CreateBranchLogo createForm={createForm} setCreateForm={setCreateForm} renderSvgLogo={renderSvgLogo} />
+
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createBranchMutation.isPending}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  Crear Sucursal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}</>
+  )
+}
+
+function EditBranchColors({ form, setForm }: { form: any; setForm: Dispatch<any> }) {
+  return (
+    <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
+                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
+                    Colores de Marca
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="sucursal-color-primario" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color Primario
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-primario"
+                          type="color"
+                          value={form.primaryColor}
+                          onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color Primario (hexadecimal)"
+                          type="text"
+                          value={form.primaryColor}
+                          onChange={(e) => setForm({ ...form, primaryColor: e.target.value })}
+                          className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sucursal-color-secundario" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color Secundario
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-secundario"
+                          type="color"
+                          value={form.secondaryColor}
+                          onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color Secundario (hexadecimal)"
+                          type="text"
+                          value={form.secondaryColor}
+                          onChange={(e) => setForm({ ...form, secondaryColor: e.target.value })}
+                          className="w-full text-sm px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label htmlFor="sucursal-fondo-degradado-1-inicio" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Fondo Degradado 1 (Inicio)
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-fondo-degradado-1-inicio"
+                          type="color"
+                          value={form.pageBackgroundColor}
+                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Fondo Degradado 1 (Inicio) (hexadecimal)"
+                          type="text"
+                          value={form.pageBackgroundColor}
+                          onChange={(e) => setForm({ ...form, pageBackgroundColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sucursal-color-superficie" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color Superficie
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-superficie"
+                          type="color"
+                          value={form.surfaceColor}
+                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color Superficie (hexadecimal)"
+                          type="text"
+                          value={form.surfaceColor}
+                          onChange={(e) => setForm({ ...form, surfaceColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sucursal-fondo-degradado-2-fin" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Fondo Degradado 2 (Fin)
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-fondo-degradado-2-fin"
+                          type="color"
+                          value={form.panelColor}
+                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Fondo Degradado 2 (Fin) (hexadecimal)"
+                          type="text"
+                          value={form.panelColor}
+                          onChange={(e) => setForm({ ...form, panelColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-1 mt-3">
+                    <div>
+                      <label htmlFor="sucursal-color-de-texto" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color de Texto
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-de-texto"
+                          type="color"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color de Texto (hexadecimal)"
+                          type="text"
+                          value={form.textColor}
+                          onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sucursal-color-de-titulos" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color de Títulos
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-de-titulos"
+                          type="color"
+                          value={form.titleColor}
+                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color de Títulos (hexadecimal)"
+                          type="text"
+                          value={form.titleColor}
+                          onChange={(e) => setForm({ ...form, titleColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+  )
+}
+
+function EditBranchLogo({ form, setForm, handleSvgUpload, renderSvgLogo }: { form: any; setForm: Dispatch<any>; handleSvgUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>; renderSvgLogo: (logoStr: string | null) => ReactNode }) {
+  return (
+    <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
+                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
+                    Logo de la Sucursal
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 mb-1">
+                    <div>
+                      <label htmlFor="sucursal-color-de-fondo-del-logo" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Color de Fondo del Logo
+                      </label>
+                      <div className="flex gap-2">
+                        <input id="sucursal-color-de-fondo-del-logo"
+                          type="color"
+                          value={form.logoBgColor || "#f4f4f5"}
+                          onChange={(e) => setForm({ ...form, logoBgColor: e.target.value })}
+                          className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
+                        />
+                        <input aria-label="Color de Fondo del Logo (hexadecimal)"
+                          type="text"
+                          value={form.logoBgColor || "#f4f4f5"}
+                          onChange={(e) => setForm({ ...form, logoBgColor: e.target.value })}
+                          className="w-full text-xs px-2 py-1 border border-zinc-200 dark:border-zinc-800 rounded bg-zinc-50 dark:bg-zinc-950 font-mono"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sucursal-tamano-del-logo-px" className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Tamaño del Logo: {form.logoSize || 64}px
+                      </label>
+                      <input id="sucursal-tamano-del-logo-px"
+                        type="range"
+                        min="32"
+                        max="160"
+                        step="4"
+                        value={form.logoSize || 64}
+                        onChange={(e) => setForm({ ...form, logoSize: parseInt(e.target.value) || 64 })}
+                        className="w-full accent-indigo-600 mt-2 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-xs font-semibold text-emerald-500 block mb-1">
+                      Cargar imagen de logo
+                    </span>
+                    <label className="flex items-center gap-2 justify-center px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors text-sm font-medium">
+                      <Upload size={16} />
+                      <span>Seleccionar Imagen</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleSvgUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  <div>
+                    <label htmlFor="sucursal-codigo-svg-inline" className="text-xs font-semibold text-emerald-500 block mb-1">
+                      Código SVG Inline
+                    </label>
+                    <textarea id="sucursal-codigo-svg-inline"
+                      rows={3}
+                      value={form.logoUrl}
+                      onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+                      placeholder="Pega el código <svg> aquí..."
+                      className="w-full text-xs font-mono px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {form.logoUrl && (
+                    <div>
+                      <span className="text-xs font-semibold text-emerald-500 block mb-1">
+                        Previsualización Logo:
+                      </span>
+                      <div className="p-4 border border-dashed rounded-lg bg-zinc-50 dark:bg-zinc-900/50 flex justify-center items-center min-h-[180px]">
+                        <div 
+                          className="rounded-lg flex items-center justify-center overflow-hidden transition-[width,height,background-color] shadow-inner"
+                          style={{ 
+                            backgroundColor: form.logoBgColor || "#f4f4f5", 
+                            width: `${form.logoSize || 64}px`, 
+                            height: `${form.logoSize || 64}px` 
+                          }}
+                        >
+                          {renderSvgLogo(form.logoUrl)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+  )
+}
+
+function BranchCategoriesPanel({ showCatForm, setEditingCategory, setCatForm, setShowCatForm, loadingCategories, categories, handleDeleteCategory, handleSaveCategory, editingCategory, catForm, setShowEditModal, setSelectedBranch }: { showCatForm: boolean; setEditingCategory: Dispatch<any>; setCatForm: Dispatch<any>; setShowCatForm: Dispatch<SetStateAction<boolean>>; loadingCategories: boolean; categories: any[]; handleDeleteCategory: (cat: any) => Promise<void>; handleSaveCategory: (e: React.FormEvent) => Promise<void>; editingCategory: any; catForm: { name: string; price: string | number; includedConsumptions: number; description: string; }; setShowEditModal: Dispatch<SetStateAction<boolean>>; setSelectedBranch: Dispatch<SetStateAction<Branch | null>> }) {
+  return (
+    <div className="space-y-4 animate-in fade-in duration-200">
                 {!showCatForm ? (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -875,8 +1030,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
-                        <label className="text-xs font-semibold text-emerald-500 block mb-1">Nombre de la Categoría</label>
-                        <input
+                        <label htmlFor="sucursal-nombre-de-la-categoria" className="text-xs font-semibold text-emerald-500 block mb-1">Nombre de la Categoría</label>
+                        <input id="sucursal-nombre-de-la-categoria"
                           type="text"
                           placeholder="Ej: VIP, General, Cortesía"
                           value={catForm.name}
@@ -887,8 +1042,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-emerald-500 block mb-1">Precio de Entrada</label>
-                        <input
+                        <label htmlFor="sucursal-precio-de-entrada" className="text-xs font-semibold text-emerald-500 block mb-1">Precio de Entrada</label>
+                        <input id="sucursal-precio-de-entrada"
                           type="text"
                           placeholder="0"
                           value={catForm.price}
@@ -899,8 +1054,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                       </div>
 
                       <div>
-                        <label className="text-xs font-semibold text-emerald-500 block mb-1">Bebidas Incluidas (Consumos)</label>
-                        <input
+                        <label htmlFor="sucursal-bebidas-incluidas-consumos" className="text-xs font-semibold text-emerald-500 block mb-1">Bebidas Incluidas (Consumos)</label>
+                        <input id="sucursal-bebidas-incluidas-consumos"
                           type="number"
                           min="0"
                           placeholder="0"
@@ -913,8 +1068,8 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                     </div>
 
                     <div>
-                      <label className="text-xs font-semibold text-emerald-500 block mb-1">Descripción corta (Opcional)</label>
-                      <input
+                      <label htmlFor="sucursal-descripcion-corta-opcional" className="text-xs font-semibold text-emerald-500 block mb-1">Descripción corta (Opcional)</label>
+                      <input id="sucursal-descripcion-corta-opcional"
                         type="text"
                         placeholder="Ej: Incluye acceso a zona VIP y backstage"
                         value={catForm.description}
@@ -956,117 +1111,29 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
                 )}
               </div>
-            )}
-          </div>
-              </div>
-      )}
+  )
+}
 
-      {/* CREATE BRANCH MODAL */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between border-b pb-3 border-zinc-200 dark:border-zinc-800">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Store className="text-indigo-600" /> Nueva Sucursal
-              </h3>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-emerald-500 hover:text-zinc-600 dark:hover:text-zinc-200 text-sm font-semibold"
-              >
-                ✕
-              </button>
-            </div>
-
-            {errorMsg && (
-              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg text-sm flex items-center gap-2">
-                <ShieldAlert size={16} /> {errorMsg}
-              </div>
-            )}
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                createBranchMutation.mutate(createForm)
-              }}
-              className="space-y-4"
-            >
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                    Nombre de la Sucursal
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                    placeholder="ej. Sucursal Sur"
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                    Prefijo Código (Max 12)
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.codePrefix}
-                    onChange={(e) => setCreateForm({ ...createForm, codePrefix: e.target.value.toUpperCase() })}
-                    placeholder="ej. SUR"
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                    Email de Contacto
-                  </label>
-                  <input
-                    type="email"
-                    value={createForm.contactEmail}
-                    onChange={(e) => setCreateForm({ ...createForm, contactEmail: e.target.value })}
-                    placeholder="contacto@dmt.com"
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
-                    Teléfono de Contacto
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.contactPhone}
-                    onChange={(e) => setCreateForm({ ...createForm, contactPhone: e.target.value })}
-                    placeholder="+57 300..."
-                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-950 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-
-              {/* Colors Settings */}
-              <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
+function CreateBranchColors({ createForm, setCreateForm }: { createForm: any; setCreateForm: Dispatch<any> }) {
+  return (
+    <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
                 <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
                   Colores de Marca
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-color-primario-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Color Primario
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-color-primario-2"
                         type="color"
                         value={createForm.primaryColor}
                         onChange={(e) => setCreateForm({ ...createForm, primaryColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Color Primario (hexadecimal)"
                         type="text"
                         value={createForm.primaryColor}
                         onChange={(e) => setCreateForm({ ...createForm, primaryColor: e.target.value })}
@@ -1077,17 +1144,17 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-color-secundario-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Color Secundario
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-color-secundario-2"
                         type="color"
                         value={createForm.secondaryColor}
                         onChange={(e) => setCreateForm({ ...createForm, secondaryColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Color Secundario (hexadecimal)"
                         type="text"
                         value={createForm.secondaryColor}
                         onChange={(e) => setCreateForm({ ...createForm, secondaryColor: e.target.value })}
@@ -1100,17 +1167,17 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-fondo-degradado-1-inicio-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Fondo Degradado 1 (Inicio)
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-fondo-degradado-1-inicio-2"
                         type="color"
                         value={createForm.pageBackgroundColor}
                         onChange={(e) => setCreateForm({ ...createForm, pageBackgroundColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Fondo Degradado 1 (Inicio) (hexadecimal)"
                         type="text"
                         value={createForm.pageBackgroundColor}
                         onChange={(e) => setCreateForm({ ...createForm, pageBackgroundColor: e.target.value })}
@@ -1121,17 +1188,17 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-superficie" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Superficie
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-superficie"
                         type="color"
                         value={createForm.surfaceColor}
                         onChange={(e) => setCreateForm({ ...createForm, surfaceColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Superficie (hexadecimal)"
                         type="text"
                         value={createForm.surfaceColor}
                         onChange={(e) => setCreateForm({ ...createForm, surfaceColor: e.target.value })}
@@ -1142,17 +1209,17 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-fondo-degradado-2-fin-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Fondo Degradado 2 (Fin)
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-fondo-degradado-2-fin-2"
                         type="color"
                         value={createForm.panelColor}
                         onChange={(e) => setCreateForm({ ...createForm, panelColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Fondo Degradado 2 (Fin) (hexadecimal)"
                         type="text"
                         value={createForm.panelColor}
                         onChange={(e) => setCreateForm({ ...createForm, panelColor: e.target.value })}
@@ -1163,26 +1230,29 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
                 </div>
               </div>
+  )
+}
 
-              {/* Logo SVG Settings */}
-              <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
+function CreateBranchLogo({ createForm, setCreateForm, renderSvgLogo }: { createForm: any; setCreateForm: Dispatch<any>; renderSvgLogo: (logoStr: string | null) => ReactNode }) {
+  return (
+    <div className="border-t pt-3 border-zinc-200 dark:border-zinc-800 space-y-3">
                 <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
                   Logo de la Sucursal
                 </p>
 
                 <div className="grid grid-cols-2 gap-3 mb-1">
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-color-de-fondo-del-logo-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Color de Fondo del Logo
                     </label>
                     <div className="flex gap-2">
-                      <input
+                      <input id="sucursal-color-de-fondo-del-logo-2"
                         type="color"
                         value={createForm.logoBgColor || "#f4f4f5"}
                         onChange={(e) => setCreateForm({ ...createForm, logoBgColor: e.target.value })}
                         className="w-8 h-8 p-0 border border-zinc-300 rounded cursor-pointer"
                       />
-                      <input
+                      <input aria-label="Color de Fondo del Logo (hexadecimal)"
                         type="text"
                         value={createForm.logoBgColor || "#f4f4f5"}
                         onChange={(e) => setCreateForm({ ...createForm, logoBgColor: e.target.value })}
@@ -1193,10 +1263,10 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <label htmlFor="sucursal-tamano-del-logo-px-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                       Tamaño del Logo: {createForm.logoSize || 64}px
                     </label>
-                    <input
+                    <input id="sucursal-tamano-del-logo-px-2"
                       type="range"
                       min="32"
                       max="160"
@@ -1209,9 +1279,9 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                  <span className="text-xs font-semibold text-emerald-500 block mb-1">
                     Cargar imagen de logo
-                  </label>
+                  </span>
                   <label className="flex items-center gap-2 justify-center px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-md bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors text-sm font-medium">
                     <Upload size={16} />
                     <span>Seleccionar Imagen</span>
@@ -1223,7 +1293,7 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                         if (!file) return
                         try {
                           const resultStr = await processImageToSvg(file, 150)
-                          setCreateForm((prev) => ({ ...prev, logoUrl: resultStr }))
+                          setCreateForm((prev: any) => ({ ...prev, logoUrl: resultStr }))
                         } catch (err: any) {
                           // Ignore
                         }
@@ -1234,10 +1304,10 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                  <label htmlFor="sucursal-codigo-svg-inline-2" className="text-xs font-semibold text-emerald-500 block mb-1">
                     Código SVG Inline
                   </label>
-                  <textarea
+                  <textarea id="sucursal-codigo-svg-inline-2"
                     rows={3}
                     value={createForm.logoUrl}
                     onChange={(e) => setCreateForm({ ...createForm, logoUrl: e.target.value })}
@@ -1248,12 +1318,12 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
 
                 {createForm.logoUrl && (
                   <div>
-                    <label className="text-xs font-semibold text-emerald-500 block mb-1">
+                    <span className="text-xs font-semibold text-emerald-500 block mb-1">
                       Previsualización Logo:
-                    </label>
+                    </span>
                     <div className="p-4 border border-dashed rounded-lg bg-zinc-50 dark:bg-zinc-900/50 flex justify-center items-center min-h-[180px]">
                       <div 
-                        className="rounded-lg flex items-center justify-center overflow-hidden transition-all shadow-inner"
+                        className="rounded-lg flex items-center justify-center overflow-hidden transition-[width,height,background-color] shadow-inner"
                         style={{ 
                           backgroundColor: createForm.logoBgColor || "#f4f4f5", 
                           width: `${createForm.logoSize || 64}px`, 
@@ -1266,29 +1336,5 @@ export function SucursalesClient({ initialBranches }: { initialBranches: Branch[
                   </div>
                 )}
               </div>
-
-              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end w-full pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 border w-full sm:w-auto justify-center rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={createBranchMutation.isPending}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  Crear Sucursal
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
   )
 }
-
-
-
-
-

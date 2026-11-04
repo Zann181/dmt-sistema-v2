@@ -89,19 +89,14 @@ export class SalesService {
       return { saleGroupId, total }
     })
 
-    // Movimientos de inventario: secuenciales a propósito, cada uno calcula el stock
-    // a partir del movimiento anterior del mismo producto
-    for (const l of lines) {
-      await InventoryService.registerMovement(
-        branchId,
-        eventId,
-        l.eventProductId,
-        "SALE",
-        -l.quantity,
-        `Venta en barra. Grupo de venta: ${saleGroupId}`,
-        soldById
-      )
-    }
+    await InventoryService.registerMovements(
+      branchId,
+      eventId,
+      lines.map((l) => ({ productId: l.eventProductId, quantity: -l.quantity })),
+      "SALE",
+      `Venta en barra. Grupo de venta: ${saleGroupId}`,
+      soldById
+    )
 
     return result
   }

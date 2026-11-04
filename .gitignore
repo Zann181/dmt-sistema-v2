@@ -50,3 +50,6 @@ certificates
 # backups locales de DB (datos personales + hashes)
 /backups
 /.dmt-error.log
+
+.vercel
+.env*
