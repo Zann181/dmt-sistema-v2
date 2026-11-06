@@ -54,9 +54,9 @@ export function DashboardOverview({ activeBranchId, activeEventId, activeEventNa
       return json.data
     },
     enabled: !!activeBranchId && !!activeEventId,
-    // Sin SSE: refresco cada 60 s solo con la pestaña visible (en serverless un SSE
+    // Sin SSE: refresco cada 2 min solo con la pestaña visible (en serverless un SSE
     // abierto se cobra por tiempo)
-    refetchInterval: 60_000,
+    refetchInterval: 120_000,
     refetchIntervalInBackground: false,
   })
 

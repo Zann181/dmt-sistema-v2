@@ -6,6 +6,8 @@ import { requireBranchPermission } from "@/shared/guards/branchAccess"
 
 export const dynamic = "force-dynamic"
 
+const num = (v: unknown) => Number(v ?? 0)
+
 export async function GET(req: Request) {
   const session = await auth()
   if (!session?.user) {
@@ -25,117 +27,84 @@ export async function GET(req: Request) {
   if (access instanceof NextResponse) return access
 
   try {
-    // 1. ENTRADA & TAQUILLA METRICS
-    const attendees = await prisma.attendee.findMany({
-      where: { branchId, eventId, inactiveAt: null },
-      select: {
-        id: true,
-        paidAmount: true,
-        hasCheckedIn: true,
-      }
-    })
+    // Todo se agrega en la base (COUNT/SUM/GROUP BY). Antes se descargaban todas las
+    // filas (asistentes, ventas, pagos) en cada refresco y eso consumía la transferencia de Neon.
+    const [attAgg, checkedInCount, cashTotals, cashByMethod, barAgg, salesGroups, barPays, topGroups] =
+      await Promise.all([
+        prisma.attendee.aggregate({
+          where: { branchId, eventId, inactiveAt: null },
+          _count: { _all: true },
+          _sum: { paidAmount: true },
+        }),
+        prisma.attendee.count({ where: { branchId, eventId, inactiveAt: null, hasCheckedIn: true } }),
+        prisma.cashMovement.groupBy({
+          by: ["module", "movementType"],
+          where: { branchId, eventId },
+          _sum: { totalAmount: true },
+        }),
+        prisma.$queryRaw<{ module: string; movementType: string; total: unknown }[]>`
+          SELECT m."module"::text AS module, m."movementType"::text AS "movementType", COALESCE(SUM(p.amount), 0) AS total
+          FROM cash_movement_payments p
+          JOIN cash_movements m ON m.id = p."movementId"
+          WHERE m."branchId" = ${branchId} AND m."eventId" = ${eventId} AND p.method::text = 'CASH'
+          GROUP BY 1, 2`,
+        prisma.barSale.aggregate({ where: { branchId, eventId }, _sum: { total: true } }),
+        prisma.barSale.groupBy({ by: ["saleGroup"], where: { branchId, eventId } }),
+        prisma.barSalePayment.groupBy({
+          by: ["method"],
+          where: { sale: { branchId, eventId } },
+          _sum: { amount: true },
+        }),
+        prisma.barSale.groupBy({
+          by: ["productId"],
+          where: { branchId, eventId },
+          _sum: { quantity: true, total: true },
+          orderBy: { _sum: { quantity: "desc" } },
+          take: 5,
+        }),
+      ])
 
-    const attendeeCount = attendees.length
-    const checkedInCount = attendees.filter((a: any) => a.hasCheckedIn).length
-    const entranceIncome = attendees.reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
+    const attendeeCount = attAgg._count._all
+    const entranceIncome = num(attAgg._sum.paidAmount)
 
-    // 2. CASH MOVEMENTS
-    const cashMovements = await prisma.cashMovement.findMany({
-      where: { branchId, eventId },
-      include: { payments: true }
-    })
+    const cashTotal = (module: string, type: string) =>
+      num(cashTotals.find((m) => m.module === module && m.movementType === type)?._sum.totalAmount)
+    const cashCash = (module: string, type: string) =>
+      num(cashByMethod.find((m) => m.module === module && m.movementType === type)?.total)
 
-    const entranceExpenses = cashMovements
-      .filter((m: any) => m.module === "ENTRANCE" && m.movementType === "EXPENSE")
-      .reduce((sum: number, m: any) => sum + Number(m.totalAmount), 0)
+    const entranceExpenses = cashTotal("ENTRANCE", "EXPENSE")
+    const entranceCashDrops = cashTotal("ENTRANCE", "CASH_DROP")
+    const entranceCashBalance =
+      entranceIncome - cashCash("ENTRANCE", "EXPENSE") - cashCash("ENTRANCE", "CASH_DROP")
 
-    const entranceCashDrops = cashMovements
-      .filter((m: any) => m.module === "ENTRANCE" && m.movementType === "CASH_DROP")
-      .reduce((sum: number, m: any) => sum + Number(m.totalAmount), 0)
+    const barIncome = num(barAgg._sum.total)
+    const salesCount = salesGroups.length
+    const barExpenses = cashTotal("BAR", "EXPENSE")
+    const barCashDrops = cashTotal("BAR", "CASH_DROP")
 
-    // Entrance cash drawer: cash payments (expenses & drops)
-    const entranceCashExpenses = cashMovements
-      .filter((m: any) => m.module === "ENTRANCE" && m.movementType === "EXPENSE")
-      .reduce((sum: number, m: any) => sum + m.payments.filter((p: any) => p.method === "CASH").reduce((s: number, p: any) => s + Number(p.amount), 0), 0)
-
-    const entranceCashDropsVal = cashMovements
-      .filter((m: any) => m.module === "ENTRANCE" && m.movementType === "CASH_DROP")
-      .reduce((sum: number, m: any) => sum + m.payments.filter((p: any) => p.method === "CASH").reduce((s: number, p: any) => s + Number(p.amount), 0), 0)
-
-    const entranceCashBalance = entranceIncome - entranceCashExpenses - entranceCashDropsVal
-
-    // 3. BARRA & POS METRICS
-    const barSales = await prisma.barSale.findMany({
-      where: { branchId, eventId },
-      include: {
-        product: { select: { name: true } },
-        payments: true
-      }
-    })
-
-    const barIncome = barSales.reduce((sum: number, s: any) => sum + Number(s.total), 0)
-    
-    // Group sales by unique saleGroup
-    const uniqueSalesGroups = new Set(barSales.map((s: any) => s.saleGroup))
-    const salesCount = uniqueSalesGroups.size
-
-    const barExpenses = cashMovements
-      .filter((m: any) => m.module === "BAR" && m.movementType === "EXPENSE")
-      .reduce((sum: number, m: any) => sum + Number(m.totalAmount), 0)
-
-    const barCashDrops = cashMovements
-      .filter((m: any) => m.module === "BAR" && m.movementType === "CASH_DROP")
-      .reduce((sum: number, m: any) => sum + Number(m.totalAmount), 0)
-
-    // BarSalePayments split
-    const barSalePayments = await prisma.barSalePayment.findMany({
-      where: {
-        sale: {
-          branchId,
-          eventId
-        }
-      }
-    })
-
-    const barPaymentMethods = {
-      CASH: 0,
-      CARD: 0,
-      TRANSFER: 0,
-      QR: 0
-    }
-    for (const p of barSalePayments) {
+    const barPaymentMethods = { CASH: 0, CARD: 0, TRANSFER: 0, QR: 0 }
+    for (const p of barPays) {
       if (p.method in barPaymentMethods) {
-        barPaymentMethods[p.method as keyof typeof barPaymentMethods] += Number(p.amount)
+        barPaymentMethods[p.method as keyof typeof barPaymentMethods] += num(p._sum.amount)
       }
     }
+    const barCashBalance =
+      barPaymentMethods.CASH - cashCash("BAR", "EXPENSE") - cashCash("BAR", "CASH_DROP")
 
-    // Bar cash drawer: Cash Sales minus Cash Expenses minus Cash Drops
-    const barCashExpenses = cashMovements
-      .filter((m: any) => m.module === "BAR" && m.movementType === "EXPENSE")
-      .reduce((sum: number, m: any) => sum + m.payments.filter((p: any) => p.method === "CASH").reduce((s: number, p: any) => s + Number(p.amount), 0), 0)
+    const productNames = topGroups.length
+      ? await prisma.product.findMany({
+          where: { id: { in: topGroups.map((g) => g.productId) } },
+          select: { id: true, name: true },
+        })
+      : []
+    const nameById = new Map(productNames.map((p) => [p.id, p.name]))
+    const topProducts = topGroups.map((g) => ({
+      name: nameById.get(g.productId) ?? "",
+      quantity: g._sum.quantity ?? 0,
+      total: num(g._sum.total),
+    }))
 
-    const barCashDropsVal = cashMovements
-      .filter((m: any) => m.module === "BAR" && m.movementType === "CASH_DROP")
-      .reduce((sum: number, m: any) => sum + m.payments.filter((p: any) => p.method === "CASH").reduce((s: number, p: any) => s + Number(p.amount), 0), 0)
-
-    const barCashBalance = barPaymentMethods.CASH - barCashExpenses - barCashDropsVal
-
-    // Top Products Sold
-    const productQuantities: Record<string, { quantity: number; total: number }> = {}
-    for (const sale of barSales) {
-      const name = sale.product.name
-      if (!productQuantities[name]) {
-        productQuantities[name] = { quantity: 0, total: 0 }
-      }
-      productQuantities[name].quantity += sale.quantity
-      productQuantities[name].total += Number(sale.total)
-    }
-    const topProducts = Object.entries(productQuantities)
-      .map(([name, data]) => ({ name, quantity: data.quantity, total: data.total }))
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5)
-
-    // 4. COMBINED TOTALS
+    // COMBINED TOTALS
     const totalCombinedIncome = entranceIncome + barIncome
     const combinedNetOperating = (entranceIncome - entranceExpenses) + (barIncome - barExpenses)
     const combinedCashBalance = entranceCashBalance + barCashBalance

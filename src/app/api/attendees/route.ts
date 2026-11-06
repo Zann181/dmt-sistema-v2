@@ -41,48 +41,42 @@ export async function GET(req: Request) {
     if (statsOnly) {
       if (!branchId || !eventId) return NextResponse.json({ error: "Contexto incompleto" }, { status: 400 })
 
-      const cats = await prisma.attendeeCategory.findMany({
-        where: { branchId }
-      })
-
-      const attendees = await prisma.attendee.findMany({
-        where: { branchId, eventId, inactiveAt: null },
-        select: {
-          id: true,
-          categoryId: true,
-          paidAmount: true,
-          hasCheckedIn: true,
-          createdAt: true,
-          checkedInAt: true
-        }
-      })
-
-      const totalCount = attendees.length
-      const checkedInCount = attendees.filter((a: any) => a.hasCheckedIn).length
-      const pendingCount = totalCount - checkedInCount
-      const totalIncome = attendees.reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
-
+      // Agregado en la base: no se descargan todos los asistentes en cada consulta
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      const todayIncome = attendees
-        .filter((a: any) => new Date(a.createdAt) >= today)
-        .reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
+      const activeWhere = { branchId, eventId, inactiveAt: null }
+      const [cats, groups, todayAgg] = await Promise.all([
+        prisma.attendeeCategory.findMany({ where: { branchId } }),
+        prisma.attendee.groupBy({
+          by: ["categoryId", "hasCheckedIn"],
+          where: activeWhere,
+          _count: { _all: true },
+          _sum: { paidAmount: true },
+        }),
+        prisma.attendee.aggregate({
+          where: { ...activeWhere, createdAt: { gte: today } },
+          _sum: { paidAmount: true },
+        }),
+      ])
+
+      const totalCount = groups.reduce((s, g) => s + g._count._all, 0)
+      const checkedInCount = groups.filter((g) => g.hasCheckedIn).reduce((s, g) => s + g._count._all, 0)
+      const pendingCount = totalCount - checkedInCount
+      const totalIncome = groups.reduce((s, g) => s + Number(g._sum.paidAmount ?? 0), 0)
+      const todayIncome = Number(todayAgg._sum.paidAmount ?? 0)
 
       const categoryStats = cats.map((c: any) => {
-        const catAttendees = attendees.filter((a: any) => a.categoryId === c.id)
-        const total = catAttendees.length
-        const checkedIn = catAttendees.filter((a: any) => a.hasCheckedIn).length
-        const pending = total - checkedIn
-        const income = catAttendees.reduce((sum: number, a: any) => sum + Number(a.paidAmount), 0)
-
+        const mine = groups.filter((g) => g.categoryId === c.id)
+        const total = mine.reduce((s, g) => s + g._count._all, 0)
+        const checkedIn = mine.filter((g) => g.hasCheckedIn).reduce((s, g) => s + g._count._all, 0)
         return {
           id: c.id,
           name: c.name,
           price: Number(c.price),
           total,
           checkedIn,
-          pending,
-          income
+          pending: total - checkedIn,
+          income: mine.reduce((s, g) => s + Number(g._sum.paidAmount ?? 0), 0),
         }
       })
 
